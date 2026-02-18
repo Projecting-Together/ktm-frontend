@@ -5,31 +5,47 @@ import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
+import PropertyDetails from "./pages/PropertyDetails";
+import { useState } from "react";
+import { Property } from "@/../../shared/types";
 
+/**
+ * Zillow Kathmandu Clone - Main App
+ * Design: Modern Minimalist with Himalayan Warmth
+ * Color Palette: Deep Slate, Warm Terracotta, Sage Green, Gold
+ * Typography: Poppins (headings) + Inter (body)
+ */
 
 function Router() {
+  const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
+
+  if (selectedProperty) {
+    return (
+      <PropertyDetails
+        property={selectedProperty}
+        onBack={() => setSelectedProperty(null)}
+      />
+    );
+  }
+
   return (
     <Switch>
-      <Route path={"/"} component={Home} />
+      <Route
+        path={"/"}
+        component={() => (
+          <Home onSelectProperty={setSelectedProperty} />
+        )}
+      />
       <Route path={"/404"} component={NotFound} />
-      {/* Final fallback route */}
       <Route component={NotFound} />
     </Switch>
   );
 }
 
-// NOTE: About Theme
-// - First choose a default theme according to your design style (dark or light bg), than change color palette in index.css
-//   to keep consistent foreground/background color across components
-// - If you want to make theme switchable, pass `switchable` ThemeProvider and use `useTheme` hook
-
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider
-        defaultTheme="light"
-        // switchable
-      >
+      <ThemeProvider defaultTheme="light">
         <TooltipProvider>
           <Toaster />
           <Router />
