@@ -14,7 +14,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, MapPin } from "lucide-react";
+import { Search, MapPin, Map } from "lucide-react";
+import { Link } from "wouter";
 import { useState } from "react";
 
 interface SearchBarProps {
@@ -99,8 +100,17 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
         </div>
       </div>
 
-      {/* Search Button */}
-      <div className="flex justify-end">
+      {/* Search Buttons */}
+      <div className="flex justify-end gap-3">
+        <Link href="/map-search">
+          <Button
+            variant="outline"
+            className="border-accent text-accent hover:bg-accent/10 font-medium gap-2 px-8"
+          >
+            <Map className="w-4 h-4" />
+            Map Search
+          </Button>
+        </Link>
         <Button
           onClick={handleSearch}
           className="bg-accent hover:bg-accent/90 text-accent-foreground font-medium gap-2 px-8"

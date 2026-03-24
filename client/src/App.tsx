@@ -6,6 +6,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import PropertyDetails from "./pages/PropertyDetails";
+import MapSearch from "./pages/MapSearch";
 import { useState } from "react";
 import { Property } from "@/../../shared/types";
 
@@ -34,6 +35,12 @@ function Router() {
         path={"/"}
         component={() => (
           <Home onSelectProperty={setSelectedProperty} />
+        )}
+      />
+      <Route
+        path={"/map-search"}
+        component={() => (
+          <MapSearch onSelectProperty={setSelectedProperty} />
         )}
       />
       <Route path={"/404"} component={NotFound} />
