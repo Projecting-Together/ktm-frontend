@@ -7,8 +7,10 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import PropertyDetails from "./pages/PropertyDetails";
 import MapSearch from "./pages/MapSearch";
-import { useState } from "react";
+import MapSearchBackend from "./pages/MapSearchBackend";
+import { useState, useEffect } from "react";
 import { Property } from "@/../../shared/types";
+import { initializeAuth } from "./lib/api-backend";
 
 /**
  * Zillow Kathmandu Clone - Main App
@@ -40,7 +42,7 @@ function Router() {
       <Route
         path={"/map-search"}
         component={() => (
-          <MapSearch onSelectProperty={setSelectedProperty} />
+          <MapSearchBackend />
         )}
       />
       <Route path={"/404"} component={NotFound} />
@@ -50,6 +52,11 @@ function Router() {
 }
 
 function App() {
+  useEffect(() => {
+    // Initialize authentication on app load
+    initializeAuth();
+  }, []);
+
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light">
