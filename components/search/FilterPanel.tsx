@@ -229,6 +229,7 @@ export function FilterPanel({ mode = "sidebar" }: FilterPanelProps) {
               <span className="text-sm">{label}</span>
               <button
                 role="switch"
+                data-testid={`toggle-${key}`}
                 aria-checked={!!store[key]}
                 onClick={() => store.setFilter(key, !store[key] || undefined)}
                 className={cn(

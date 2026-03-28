@@ -40,9 +40,22 @@ export const useFilterStore = create<FilterState & FilterActions>((set, get) => 
 
   resetFilters: () =>
     set((state) => ({
+      // Restore required defaults
       ...DEFAULT_FILTERS,
+      // Preserve UI-only state
       isFilterPanelOpen: state.isFilterPanelOpen,
       view: state.view,
+      // Explicitly clear all optional filters (Zustand merges, so we must set to undefined)
+      listing_type: undefined,
+      neighborhood: undefined,
+      min_price: undefined,
+      max_price: undefined,
+      bedrooms: undefined,
+      bathrooms: undefined,
+      furnished: undefined,
+      verified: undefined,
+      amenities: undefined,
+      keyword: undefined,
     })),
 
   toggleFilterPanel: () =>

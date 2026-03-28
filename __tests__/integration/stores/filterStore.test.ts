@@ -1,0 +1,129 @@
+import { useFilterStore, selectApiFilters } from "@/lib/stores/filterStore";
+
+// Helper: reset only the data fields — do NOT pass true (replace) as that wipes actions
+const resetStoreData = () => {
+  useFilterStore.setState({
+    page: 1,
+    limit: 20,
+    sort_by: "created_at",
+    sort_order: "desc",
+    isFilterPanelOpen: false,
+    view: "grid",
+    listing_type: undefined,
+    neighborhood: undefined,
+    min_price: undefined,
+    max_price: undefined,
+    bedrooms: undefined,
+    bathrooms: undefined,
+    furnished: undefined,
+    verified: undefined,
+    amenities: undefined,
+    keyword: undefined,
+  });
+};
+
+describe("filterStore", () => {
+  beforeEach(() => {
+    resetStoreData();
+  });
+
+  it("starts with default page=1 and limit=20", () => {
+    const state = useFilterStore.getState();
+    expect(state.page).toBe(1);
+    expect(state.limit).toBe(20);
+  });
+
+  it("starts with no listing_type filter", () => {
+    expect(useFilterStore.getState().listing_type).toBeUndefined();
+  });
+
+  it("starts with no neighborhood filter", () => {
+    expect(useFilterStore.getState().neighborhood).toBeUndefined();
+  });
+
+  it("setFilter sets listing_type", () => {
+    useFilterStore.getState().setFilter("listing_type", "apartment");
+    expect(useFilterStore.getState().listing_type).toBe("apartment");
+  });
+
+  it("setFilter sets neighborhood", () => {
+    useFilterStore.getState().setFilter("neighborhood", "thamel");
+    expect(useFilterStore.getState().neighborhood).toBe("thamel");
+  });
+
+  it("setFilter sets min_price and max_price", () => {
+    useFilterStore.getState().setFilter("min_price", 10000);
+    useFilterStore.getState().setFilter("max_price", 30000);
+    expect(useFilterStore.getState().min_price).toBe(10000);
+    expect(useFilterStore.getState().max_price).toBe(30000);
+  });
+
+  it("setFilter sets bedrooms", () => {
+    useFilterStore.getState().setFilter("bedrooms", 2);
+    expect(useFilterStore.getState().bedrooms).toBe(2);
+  });
+
+  it("setFilter resets page to 1 when a filter changes", () => {
+    useFilterStore.getState().setFilter("page", 3);
+    useFilterStore.getState().setFilter("listing_type", "apartment");
+    expect(useFilterStore.getState().page).toBe(1);
+  });
+
+  it("resetFilters clears all custom filters", () => {
+    useFilterStore.getState().setFilter("listing_type", "apartment");
+    useFilterStore.getState().setFilter("neighborhood", "thamel");
+    useFilterStore.getState().setFilter("max_price", 30000);
+    useFilterStore.getState().resetFilters();
+    const state = useFilterStore.getState();
+    expect(state.listing_type).toBeUndefined();
+    expect(state.neighborhood).toBeUndefined();
+    expect(state.max_price).toBeUndefined();
+  });
+
+  it("toggleNeighborhood adds a neighborhood as comma-separated string", () => {
+    useFilterStore.getState().toggleNeighborhood("thamel");
+    expect(useFilterStore.getState().neighborhood).toContain("thamel");
+  });
+
+  it("toggleNeighborhood removes a neighborhood when toggled again", () => {
+    useFilterStore.getState().toggleNeighborhood("thamel");
+    useFilterStore.getState().toggleNeighborhood("thamel");
+    const nbh = useFilterStore.getState().neighborhood;
+    expect(!nbh || !nbh.includes("thamel")).toBe(true);
+  });
+
+  it("toggleNeighborhood supports multiple neighborhoods", () => {
+    useFilterStore.getState().toggleNeighborhood("thamel");
+    useFilterStore.getState().toggleNeighborhood("lazimpat");
+    const nbh = useFilterStore.getState().neighborhood ?? "";
+    expect(nbh).toContain("thamel");
+    expect(nbh).toContain("lazimpat");
+  });
+
+  it("toggleListingType adds a listing type", () => {
+    useFilterStore.getState().toggleListingType("apartment");
+    expect(useFilterStore.getState().listing_type).toContain("apartment");
+  });
+
+  it("toggleListingType removes a type when toggled again", () => {
+    useFilterStore.getState().toggleListingType("apartment");
+    useFilterStore.getState().toggleListingType("apartment");
+    const lt = useFilterStore.getState().listing_type;
+    expect(!lt || !lt.includes("apartment")).toBe(true);
+  });
+
+  it("selectApiFilters strips UI-only state (isFilterPanelOpen, view)", () => {
+    useFilterStore.getState().setFilter("listing_type", "apartment");
+    const apiFilters = selectApiFilters(useFilterStore.getState());
+    expect(apiFilters).not.toHaveProperty("isFilterPanelOpen");
+    expect(apiFilters).not.toHaveProperty("view");
+    expect(apiFilters.listing_type).toBe("apartment");
+  });
+
+  it("selectApiFilters does not include store action functions", () => {
+    const apiFilters = selectApiFilters(useFilterStore.getState());
+    expect(apiFilters).not.toHaveProperty("setFilter");
+    expect(apiFilters).not.toHaveProperty("resetFilters");
+    expect(apiFilters).not.toHaveProperty("toggleNeighborhood");
+  });
+});

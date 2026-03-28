@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useState, useRef } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
-import { LayoutGrid, List, SlidersHorizontal } from "lucide-react";
+import { LayoutGrid, List, SlidersHorizontal, ChevronDown, Check } from "lucide-react";
 import { ListingCard, ListingCardSkeleton } from "@/components/listings/ListingCard";
 import { FilterPanel } from "@/components/search/FilterPanel";
 import { SearchBar } from "@/components/search/SearchBar";
@@ -16,6 +16,60 @@ const SORT_OPTIONS = [
   { value: "price:desc", label: "Price: high to low" },
   { value: "area_sqft:desc", label: "Largest first" },
 ];
+
+// Custom sort dropdown using buttons — works reliably with Playwright and React
+function SortDropdown({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const current = SORT_OPTIONS.find((o) => o.value === value) ?? SORT_OPTIONS[0];
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative" data-testid="sort-dropdown">
+      <button
+        data-testid="sort-trigger"
+        onClick={() => setOpen((o) => !o)}
+        className="flex h-9 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-sm font-medium hover:bg-muted"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+      >
+        {current.label}
+        <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", open && "rotate-180")} />
+      </button>
+      {open && (
+        <div
+          role="listbox"
+          className="absolute right-0 top-full z-50 mt-1 min-w-[180px] rounded-xl border border-border bg-card py-1 shadow-lg"
+        >
+          {SORT_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              role="option"
+              aria-selected={opt.value === value}
+              data-testid={`sort-option-${opt.value.replace(":", "-")}`}
+              onClick={() => { onChange(opt.value); setOpen(false); }}
+              className={cn(
+                "flex w-full items-center gap-2 px-4 py-2 text-left text-sm hover:bg-muted",
+                opt.value === value && "text-accent font-medium"
+              )}
+            >
+              {opt.value === value && <Check className="h-3.5 w-3.5 shrink-0" />}
+              {opt.value !== value && <span className="h-3.5 w-3.5 shrink-0" />}
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function SearchPageClient() {
   const router = useRouter();
@@ -79,11 +133,10 @@ export default function SearchPageClient() {
             className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium hover:bg-muted md:hidden">
             <SlidersHorizontal className="h-4 w-4" /> Filters
           </button>
-          <select value={`${store.sort_by ?? "created_at"}:${store.sort_order ?? "desc"}`}
-            onChange={(e) => { const [by, ord] = e.target.value.split(":"); store.setFilters({ sort_by: by, sort_order: ord as "asc"|"desc" }); }}
-            className="h-9 rounded-lg border border-border bg-card px-2 text-sm focus:border-accent focus:outline-none">
-            {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-          </select>
+          <SortDropdown
+            value={`${store.sort_by ?? "created_at"}:${store.sort_order ?? "desc"}`}
+            onChange={(val) => { const [by, ord] = val.split(":"); store.setFilters({ sort_by: by, sort_order: ord as "asc"|"desc" }); }}
+          />
           <div className="hidden items-center rounded-lg border border-border bg-card sm:flex">
             {(["grid", "list"] as const).map((v) => (
               <button key={v} onClick={() => store.setView(v)}
