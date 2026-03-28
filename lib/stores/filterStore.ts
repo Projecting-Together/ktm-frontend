@@ -1,0 +1,95 @@
+"use client";
+
+import { create } from "zustand";
+import type { ListingFilters, FurnishingType, ListingType } from "@/lib/api/types";
+
+export interface FilterState extends ListingFilters {
+  // UI-only state (not serialized to URL)
+  isFilterPanelOpen: boolean;
+  view: "grid" | "list" | "map";
+}
+
+interface FilterActions {
+  setFilter: <K extends keyof ListingFilters>(key: K, value: ListingFilters[K]) => void;
+  setFilters: (filters: Partial<ListingFilters>) => void;
+  resetFilters: () => void;
+  toggleFilterPanel: () => void;
+  setView: (view: FilterState["view"]) => void;
+  // Helpers
+  toggleNeighborhood: (slug: string) => void;
+  toggleListingType: (type: ListingType) => void;
+  toggleAmenity: (code: string) => void;
+}
+
+const DEFAULT_FILTERS: ListingFilters = {
+  page: 1,
+  limit: 20,
+  sort_by: "created_at",
+  sort_order: "desc",
+};
+
+export const useFilterStore = create<FilterState & FilterActions>((set, get) => ({
+  ...DEFAULT_FILTERS,
+  isFilterPanelOpen: false,
+  view: "grid",
+
+  setFilter: (key, value) => set((state) => ({ ...state, [key]: value, page: 1 })),
+
+  setFilters: (filters) =>
+    set((state) => ({ ...state, ...filters, page: 1 })),
+
+  resetFilters: () =>
+    set((state) => ({
+      ...DEFAULT_FILTERS,
+      isFilterPanelOpen: state.isFilterPanelOpen,
+      view: state.view,
+    })),
+
+  toggleFilterPanel: () =>
+    set((state) => ({ isFilterPanelOpen: !state.isFilterPanelOpen })),
+
+  setView: (view) => set({ view }),
+
+  toggleNeighborhood: (slug) => {
+    const current = (get().neighborhood ?? "").split(",").filter(Boolean);
+    const next = current.includes(slug)
+      ? current.filter((n) => n !== slug)
+      : [...current, slug];
+    set({ neighborhood: next.join(",") || undefined, page: 1 });
+  },
+
+  toggleListingType: (type) => {
+    const current = get().listing_type ?? "";
+    const types = current.split(",").filter(Boolean);
+    const next = types.includes(type)
+      ? types.filter((t) => t !== type)
+      : [...types, type];
+    set({ listing_type: next.join(",") || undefined, page: 1 });
+  },
+
+  toggleAmenity: (code) => {
+    const current = get().amenities ?? [];
+    const next = current.includes(code)
+      ? current.filter((c) => c !== code)
+      : [...current, code];
+    set({ amenities: next.length ? next : undefined, page: 1 });
+  },
+}));
+
+// Selector: extract only the API-relevant filters (strip UI state)
+export function selectApiFilters(state: FilterState): ListingFilters {
+  const {
+    isFilterPanelOpen: _panel,
+    view: _view,
+    setFilter: _sf,
+    setFilters: _sfs,
+    resetFilters: _rf,
+    toggleFilterPanel: _tfp,
+    setView: _sv,
+    toggleNeighborhood: _tn,
+    toggleListingType: _tlt,
+    toggleAmenity: _ta,
+    ...filters
+  } = state as FilterState & FilterActions;
+  return filters;
+}

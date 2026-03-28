@@ -1,239 +1,144 @@
 "use client";
 
-import dynamic from "next/dynamic";
-import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
-import { getListings, initializeAuth, ListingFilters, ListingListItem } from "@/lib/api/client";
+import { useEffect, useCallback } from "react";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import { LayoutGrid, List, SlidersHorizontal } from "lucide-react";
+import { ListingCard, ListingCardSkeleton } from "@/components/listings/ListingCard";
+import { FilterPanel } from "@/components/search/FilterPanel";
+import { SearchBar } from "@/components/search/SearchBar";
+import { useFilterStore, selectApiFilters } from "@/lib/stores/filterStore";
+import { useListings } from "@/lib/hooks/useListings";
+import { cn } from "@/lib/utils";
 
-const SearchMap = dynamic(() => import("@/components/map/SearchMap").then((m) => m.SearchMap), { ssr: false });
-
-function asNumber(value: string | null, fallback: number) {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : fallback;
-}
+const SORT_OPTIONS = [
+  { value: "created_at:desc", label: "Newest first" },
+  { value: "price:asc", label: "Price: low to high" },
+  { value: "price:desc", label: "Price: high to low" },
+  { value: "area_sqft:desc", label: "Largest first" },
+];
 
 export default function SearchPageClient() {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
+  const store = useFilterStore();
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [items, setItems] = useState<ListingListItem[]>([]);
-  const [total, setTotal] = useState(0);
-
-  const queryState = useMemo(
-    () => ({
-      search: searchParams.get("search") ?? "",
-      listing_type: searchParams.get("listing_type") ?? "rent",
-      city: searchParams.get("city") ?? "",
-      min_price: asNumber(searchParams.get("min_price"), 0),
-      max_price: asNumber(searchParams.get("max_price"), 0),
-      page: Math.max(asNumber(searchParams.get("page"), 1), 1),
-      limit: Math.max(asNumber(searchParams.get("limit"), 20), 1),
-      view: (searchParams.get("view") === "map" ? "map" : "list") as "list" | "map",
-      sort_by: searchParams.get("sort_by") || "created_at",
-      sort_order: (searchParams.get("sort_order") === "asc" ? "asc" : "desc") as "asc" | "desc",
-    }),
-    [searchParams],
-  );
-
+  // Hydrate store from URL on mount
   useEffect(() => {
-    initializeAuth();
+    const params: Record<string, unknown> = {};
+    searchParams.forEach((value, key) => {
+      if (["page", "limit", "min_price", "max_price", "bedrooms"].includes(key)) params[key] = Number(value);
+      else if (["verified", "parking", "pets_allowed"].includes(key)) params[key] = value === "true";
+      else if (key === "amenities") {
+        const existing = params[key] as string[] | undefined;
+        params[key] = existing ? [...existing, value] : [value];
+      } else params[key] = value;
+    });
+    store.setFilters(params as never);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    async function fetchData() {
-      setLoading(true);
-      setError(null);
-      const filters: ListingFilters = {
-        search: queryState.search || undefined,
-        listing_type: queryState.listing_type || undefined,
-        city: queryState.city || undefined,
-        min_price: queryState.min_price > 0 ? queryState.min_price : undefined,
-        max_price: queryState.max_price > 0 ? queryState.max_price : undefined,
-        skip: (queryState.page - 1) * queryState.limit,
-        limit: queryState.limit,
-        sort_by: queryState.sort_by,
-        sort_order: queryState.sort_order,
-      };
-
-      const response = await getListings(filters);
-      if (response.error) {
-        setError(response.error.message);
-        setItems([]);
-        setTotal(0);
-      } else {
-        const page = response.data;
-        setItems(page?.items ?? []);
-        setTotal(response.meta?.total ?? page?.total ?? 0);
-      }
-      setLoading(false);
+  const syncUrl = useCallback(() => {
+    const filters = selectApiFilters(store as never);
+    const params = new URLSearchParams();
+    for (const [key, val] of Object.entries(filters)) {
+      if (val === undefined || val === null || val === "") continue;
+      if (Array.isArray(val)) val.forEach((v) => params.append(key, String(v)));
+      else params.set(key, String(val));
     }
-    fetchData();
-  }, [queryState]);
+    const qs = params.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  }, [store, router, pathname]);
 
-  function updateQuery(next: Record<string, string | number>) {
-    const params = new URLSearchParams(searchParams.toString());
-    Object.entries(next).forEach(([key, value]) => {
-      if (value === "" || value === 0) {
-        params.delete(key);
-      } else {
-        params.set(key, String(value));
-      }
-    });
-    if (!("page" in next)) {
-      params.set("page", "1");
-    }
-    router.replace(`/apartments?${params.toString()}`);
-  }
+  useEffect(() => { syncUrl(); }, [
+    store.search, store.neighborhood, store.listing_type, store.min_price, store.max_price,
+    store.bedrooms, store.furnishing, store.parking, store.pets_allowed, store.verified,
+    store.amenities, store.available_from, store.sort_by, store.sort_order, store.page, syncUrl,
+  ]);
 
-  function setView(view: "list" | "map") {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("view", view);
-    router.replace(`/apartments?${params.toString()}`);
-  }
-
-  const totalPages = Math.max(Math.ceil(total / queryState.limit), 1);
+  const filters = selectApiFilters(store as never);
+  const { data, isLoading, isError } = useListings(filters);
+  const listings = data?.items ?? [];
+  const total = data?.total ?? 0;
+  const totalPages = data?.total_pages ?? 1;
 
   return (
-    <main className="container py-8">
-      <div className="mb-6 flex items-center justify-between gap-4">
-        <div>
-          <h1>Apartments Search</h1>
-          <p className="text-sm text-slate-600">URL-driven filters with backend contract integration.</p>
-        </div>
-        <nav className="flex gap-2 text-sm">
-          <button
-            type="button"
-            className={queryState.view === "list" ? "font-semibold underline" : ""}
-            onClick={() => setView("list")}
-          >
-            List
-          </button>
-          <span className="text-slate-400">|</span>
-          <button
-            type="button"
-            className={queryState.view === "map" ? "font-semibold underline" : ""}
-            onClick={() => setView("map")}
-          >
-            Map
-          </button>
-          <Link href="/login">Login</Link>
-        </nav>
+    <div className="container py-6">
+      <div className="mb-4 md:hidden">
+        <SearchBar size="sm" defaultValue={store.search ?? ""} defaultLocation={store.neighborhood ?? ""}
+          onSearch={(q, loc) => store.setFilters({ search: q || undefined, neighborhood: loc || undefined })} />
       </div>
 
-      <section className="mb-6 grid grid-cols-1 gap-3 md:grid-cols-3">
-        <input
-          value={queryState.search}
-          onChange={(e) => updateQuery({ search: e.target.value })}
-          placeholder="Search keyword"
-          className="rounded border px-3 py-2"
-        />
-        <input
-          value={queryState.city}
-          onChange={(e) => updateQuery({ city: e.target.value })}
-          placeholder="City"
-          className="rounded border px-3 py-2"
-        />
-        <select
-          value={queryState.listing_type}
-          onChange={(e) => updateQuery({ listing_type: e.target.value })}
-          className="rounded border px-3 py-2"
-        >
-          <option value="rent">Rent</option>
-          <option value="sale">Sale</option>
-        </select>
-        <input
-          value={queryState.min_price || ""}
-          onChange={(e) => updateQuery({ min_price: Number(e.target.value || 0) })}
-          type="number"
-          placeholder="Min price"
-          className="rounded border px-3 py-2"
-        />
-        <input
-          value={queryState.max_price || ""}
-          onChange={(e) => updateQuery({ max_price: Number(e.target.value || 0) })}
-          type="number"
-          placeholder="Max price"
-          className="rounded border px-3 py-2"
-        />
-        <input
-          value={queryState.limit}
-          onChange={(e) => updateQuery({ limit: Number(e.target.value || 20) })}
-          type="number"
-          min={1}
-          max={100}
-          className="rounded border px-3 py-2"
-        />
-        <select
-          value={queryState.sort_by}
-          onChange={(e) => updateQuery({ sort_by: e.target.value })}
-          className="rounded border px-3 py-2"
-        >
-          <option value="created_at">Newest</option>
-          <option value="price">Price</option>
-          <option value="area_sqft">Area</option>
-          <option value="bedrooms">Bedrooms</option>
-        </select>
-        <select
-          value={queryState.sort_order}
-          onChange={(e) => updateQuery({ sort_order: e.target.value })}
-          className="rounded border px-3 py-2"
-        >
-          <option value="desc">Descending</option>
-          <option value="asc">Ascending</option>
-        </select>
-      </section>
-
-      {loading ? <p>Loading listings...</p> : null}
-      {error ? <p className="mb-4 rounded border border-red-300 bg-red-50 px-3 py-2 text-red-700">{error}</p> : null}
-
-      {queryState.view === "map" ? (
-        <section className="mb-6">
-          <SearchMap listings={items} />
-        </section>
-      ) : null}
-
-      <section className="space-y-3">
-        {items.map((listing) => (
-          <article key={listing.id} className="rounded border p-4">
-            <h2 className="text-lg font-semibold">
-              <Link href={`/apartments/${listing.id}`} className="hover:underline">
-                {listing.title}
-              </Link>
-            </h2>
-            <p className="text-sm text-slate-600">
-              {listing.location?.city ?? "Unknown city"} · {listing.bedrooms ?? 0} bed · {listing.bathrooms ?? 0} bath
-            </p>
-            <p className="mt-2 text-sm">
-              {listing.currency ?? "NPR"} {listing.price ?? "—"}
-            </p>
-          </article>
-        ))}
-      </section>
-
-      <footer className="mt-6 flex items-center justify-between">
-        <p className="text-sm text-slate-600">
-          Total: {total} · Page {queryState.page} / {totalPages}
-        </p>
-        <div className="flex gap-2">
-          <button
-            className="rounded border px-3 py-1 text-sm disabled:opacity-50"
-            disabled={queryState.page <= 1}
-            onClick={() => updateQuery({ page: queryState.page - 1 })}
-          >
-            Previous
-          </button>
-          <button
-            className="rounded border px-3 py-1 text-sm disabled:opacity-50"
-            disabled={queryState.page >= totalPages}
-            onClick={() => updateQuery({ page: queryState.page + 1 })}
-          >
-            Next
-          </button>
+      <div className="mb-5 flex items-center justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-bold">{isLoading ? "Searching..." : `${total.toLocaleString()} Properties`}</h1>
+          {store.neighborhood && <p className="text-sm text-muted-foreground capitalize">in {store.neighborhood.replace(",", ", ")}</p>}
         </div>
-      </footer>
-    </main>
+        <div className="flex items-center gap-2">
+          <button onClick={store.toggleFilterPanel}
+            className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium hover:bg-muted md:hidden">
+            <SlidersHorizontal className="h-4 w-4" /> Filters
+          </button>
+          <select value={`${store.sort_by ?? "created_at"}:${store.sort_order ?? "desc"}`}
+            onChange={(e) => { const [by, ord] = e.target.value.split(":"); store.setFilters({ sort_by: by, sort_order: ord as "asc"|"desc" }); }}
+            className="h-9 rounded-lg border border-border bg-card px-2 text-sm focus:border-accent focus:outline-none">
+            {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+          <div className="hidden items-center rounded-lg border border-border bg-card sm:flex">
+            {(["grid", "list"] as const).map((v) => (
+              <button key={v} onClick={() => store.setView(v)}
+                className={cn("flex h-9 w-9 items-center justify-center transition-colors",
+                  store.view === v ? "bg-accent text-white" : "text-muted-foreground hover:text-foreground")}>
+                {v === "grid" ? <LayoutGrid className="h-4 w-4" /> : <List className="h-4 w-4" />}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex gap-6">
+        <div className="hidden w-64 shrink-0 md:block"><FilterPanel mode="sidebar" /></div>
+
+        {store.isFilterPanelOpen && (
+          <div className="fixed inset-0 z-50 md:hidden">
+            <div className="absolute inset-0 bg-black/50" onClick={store.toggleFilterPanel} />
+            <div className="absolute bottom-0 left-0 right-0 max-h-[85vh] overflow-y-auto rounded-t-2xl bg-card">
+              <div className="sticky top-0 flex items-center justify-between border-b border-border bg-card px-5 py-4">
+                <h3 className="font-semibold">Filters</h3>
+                <button onClick={store.toggleFilterPanel} className="text-muted-foreground">✕</button>
+              </div>
+              <FilterPanel mode="drawer" />
+            </div>
+          </div>
+        )}
+
+        <div className="flex-1 min-w-0">
+          {isError && <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-6 text-center text-sm text-destructive">Failed to load listings. Please try again.</div>}
+          {isLoading ? (
+            <div className={cn("grid gap-5", store.view === "grid" ? "grid-cols-1 sm:grid-cols-2 xl:grid-cols-3" : "grid-cols-1")}>
+              {Array.from({ length: 9 }).map((_, i) => <ListingCardSkeleton key={i} variant={store.view === "list" ? "list" : "grid"} />)}
+            </div>
+          ) : listings.length === 0 ? (
+            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-20 text-center">
+              <p className="text-4xl">🏠</p>
+              <h3 className="mt-4 text-lg font-semibold">No listings found</h3>
+              <p className="mt-2 text-sm text-muted-foreground">Try adjusting your filters or searching in a different neighborhood.</p>
+              <button onClick={store.resetFilters} className="btn-primary mt-4">Clear all filters</button>
+            </div>
+          ) : (
+            <div className={cn("grid gap-5", store.view === "grid" ? "grid-cols-1 sm:grid-cols-2 xl:grid-cols-3" : "grid-cols-1")}>
+              {listings.map((listing) => <ListingCard key={listing.id} listing={listing} variant={store.view === "list" ? "list" : "grid"} />)}
+            </div>
+          )}
+          {totalPages > 1 && (
+            <div className="mt-8 flex items-center justify-center gap-2">
+              <button disabled={store.page === 1} onClick={() => store.setFilter("page", (store.page ?? 1) - 1)} className="btn-secondary px-4 py-2 text-sm disabled:opacity-40">Previous</button>
+              <span className="text-sm text-muted-foreground">Page {store.page ?? 1} of {totalPages}</span>
+              <button disabled={(store.page ?? 1) >= totalPages} onClick={() => store.setFilter("page", (store.page ?? 1) + 1)} className="btn-secondary px-4 py-2 text-sm disabled:opacity-40">Next</button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }

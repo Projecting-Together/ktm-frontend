@@ -1,310 +1,177 @@
+/**
+ * KTM Apartments — API Client
+ * Typed fetch wrapper with JWT access-token management.
+ * Access token: in-memory only (15-min expiry).
+ * Refresh token: httpOnly cookie (30-day expiry, browser-managed).
+ */
 import type {
-  Amenity,
-  Listing,
-  ListingFilters,
-  ListingListItem,
-  PaginatedResponse,
-  TokenPair,
-  User,
+  ApiResponse, TokenPair, User, Listing, ListingListItem,
+  ListingFilters, PaginatedResponse, Amenity, Neighborhood,
+  Inquiry, CreateInquiryPayload, VisitRequest, CreateVisitPayload,
+  Favorite, PresignedUrlResponse, MediaConfirmPayload, ListingStats,
+  AuditLog, AdminAnalyticsOverview,
 } from "./types";
 
-export type {
-  Amenity,
-  Listing,
-  ListingFilters,
-  ListingListItem,
-  ListingImage,
-  ListingLocation,
-  PaginatedResponse,
-  TokenPair,
-  User,
-  UserProfile,
-} from "./types";
+export type { Listing, ListingListItem, ListingFilters, PaginatedResponse, Amenity, Neighborhood, User, Inquiry, VisitRequest, Favorite, AuditLog, AdminAnalyticsOverview };
 
-export interface ApiError {
-  code: string;
-  message: string;
-  details?: Record<string, unknown>;
-}
-
-export interface ApiResponse<T> {
-  data?: T;
-  error?: ApiError;
-  meta?: {
-    total: number;
-    page: number;
-    page_size: number;
-    total_pages: number;
-    has_next?: boolean;
-    has_prev?: boolean;
-  };
-}
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "https://api.ktmapartments.com/api/v1";
 
 let accessToken: string | null = null;
-let refreshToken: string | null = null;
+export function setAccessToken(t: string | null) { accessToken = t; }
+export function getAccessToken() { return accessToken; }
+export function clearTokens() { accessToken = null; }
+export function persistTokens(tokens: TokenPair) { accessToken = tokens.access_token; }
+export function initializeAuth() { /* access token is in-memory only */ }
 
-function getBackendURL() {
-  if (typeof window === "undefined") {
-    return process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
-  }
-  if (process.env.NEXT_PUBLIC_API_URL) {
-    return process.env.NEXT_PUBLIC_API_URL;
-  }
-  return "http://localhost:8000/api/v1";
-}
-
-function readStoredTokens() {
-  if (typeof window === "undefined") {
-    return;
-  }
-  accessToken = localStorage.getItem("accessToken");
-  refreshToken = localStorage.getItem("refreshToken");
-}
-
-function persistTokens(tokens: TokenPair) {
-  accessToken = tokens.access_token;
-  refreshToken = tokens.refresh_token;
-  if (typeof window !== "undefined") {
-    localStorage.setItem("accessToken", tokens.access_token);
-    localStorage.setItem("refreshToken", tokens.refresh_token);
-    document.cookie = `accessToken=${tokens.access_token}; Path=/; SameSite=Lax`;
-  }
-}
-
-function persistRole(role: string) {
-  if (typeof window !== "undefined") {
-    localStorage.setItem("userRole", role);
-    document.cookie = `userRole=${role}; Path=/; SameSite=Lax`;
-  }
-}
-
-function clearTokens() {
-  accessToken = null;
-  refreshToken = null;
-  if (typeof window !== "undefined") {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
-    localStorage.removeItem("userRole");
-    document.cookie = "accessToken=; Path=/; Max-Age=0; SameSite=Lax";
-    document.cookie = "userRole=; Path=/; Max-Age=0; SameSite=Lax";
-  }
-}
-
-/** Normalize FastAPI HTTPException detail (string | object | array) and custom handlers. */
-function detailToMessage(detail: unknown): string {
-  if (detail == null) return "";
-  if (typeof detail === "string") return detail;
-  if (Array.isArray(detail)) {
-    return detail
-      .map((entry) => {
-        if (entry && typeof entry === "object" && "msg" in entry) {
-          const e = entry as { msg?: unknown; loc?: unknown };
-          const loc = Array.isArray(e.loc) ? e.loc.join(".") : "";
-          return loc ? `${loc}: ${String(e.msg)}` : String(e.msg);
-        }
-        return JSON.stringify(entry);
-      })
-      .filter(Boolean)
-      .join("; ");
-  }
-  if (typeof detail === "object" && detail !== null) {
-    const o = detail as Record<string, unknown>;
-    if (typeof o.message === "string") return o.message;
-  }
-  return JSON.stringify(detail);
-}
-
-function toApiError(status: number, payload: unknown): ApiError {
-  if (payload && typeof payload === "object") {
-    const obj = payload as Record<string, unknown>;
-    const fromDetail = detailToMessage(obj.detail);
-    const message =
-      fromDetail ||
-      (typeof obj.message === "string" && obj.message) ||
-      (typeof obj.error === "string" && obj.error) ||
-      `Request failed with status ${status}`;
-    return {
-      code: `HTTP_${status}`,
-      message,
-      details: obj,
-    };
-  }
-  return {
-    code: `HTTP_${status}`,
-    message: `Request failed with status ${status}`,
+async function apiFetch<T>(path: string, options: RequestInit = {}, withAuth = true): Promise<ApiResponse<T>> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...(options.headers as Record<string, string>),
   };
-}
-
-function parsePayload<T>(payload: unknown): ApiResponse<T> {
-  if (payload && typeof payload === "object") {
-    const obj = payload as Record<string, unknown>;
-
-    if ("data" in obj || "error" in obj) {
-      return obj as ApiResponse<T>;
-    }
-
-    if ("items" in obj && "total" in obj) {
-      return {
-        data: obj as T,
-        meta: {
-          total: Number(obj.total ?? 0),
-          page: Number(obj.page ?? 1),
-          page_size: Number(obj.page_size ?? 20),
-          total_pages: Number(obj.total_pages ?? 1),
-          has_next: Boolean(obj.has_next),
-          has_prev: Boolean(obj.has_prev),
-        },
-      };
-    }
-
-    return { data: obj as T };
-  }
-
-  if (Array.isArray(payload)) {
-    return { data: payload as T };
-  }
-
-  return { data: payload as T };
-}
-
-async function apiCall<T>(endpoint: string, options: RequestInit = {}, retryOnAuth = true): Promise<ApiResponse<T>> {
-  if (accessToken === null && typeof window !== "undefined") {
-    readStoredTokens();
-  }
-
-  const url = `${getBackendURL()}${endpoint}`;
-  const headers = new Headers(options.headers);
-  headers.set("Content-Type", "application/json");
-  if (accessToken) {
-    headers.set("Authorization", `Bearer ${accessToken}`);
-  }
+  if (withAuth && accessToken) headers["Authorization"] = `Bearer ${accessToken}`;
 
   try {
-    const response = await fetch(url, { ...options, headers });
+    const res = await fetch(`${API_BASE}${path}`, { ...options, headers, credentials: "include" });
 
-    if (response.status === 401 && retryOnAuth && refreshToken) {
+    if (res.status === 401 && withAuth) {
       const refreshed = await refreshAccessToken();
       if (refreshed) {
-        return apiCall<T>(endpoint, options, false);
+        headers["Authorization"] = `Bearer ${accessToken}`;
+        const retry = await fetch(`${API_BASE}${path}`, { ...options, headers, credentials: "include" });
+        if (retry.ok) {
+          const data = retry.status === 204 ? null : await retry.json();
+          return { data: data as T, error: null };
+        }
       }
+      clearTokens();
+      return { data: null, error: { message: "Unauthorized", status: 401 } };
     }
 
-    if (response.status === 204) {
-      return { data: undefined as T };
+    if (!res.ok) {
+      let body: { detail?: string; message?: string } = {};
+      try { body = await res.json(); } catch { /* ignore */ }
+      const message = typeof body.detail === "string" ? body.detail : body.message ?? `HTTP ${res.status}`;
+      return { data: null, error: { message, status: res.status } };
     }
 
-    const raw = await response.text();
-    const payload = raw ? (JSON.parse(raw) as unknown) : undefined;
-
-    if (!response.ok) {
-      return { error: toApiError(response.status, payload) };
-    }
-
-    return parsePayload<T>(payload);
-  } catch (error) {
-    return {
-      error: {
-        code: "NETWORK_ERROR",
-        message: error instanceof Error ? error.message : "Unexpected network failure",
-      },
-    };
+    if (res.status === 204) return { data: null, error: null };
+    return { data: await res.json() as T, error: null };
+  } catch (err) {
+    return { data: null, error: { message: err instanceof Error ? err.message : "Network error" } };
   }
 }
 
-/** Build query string matching backend filters (omit empty; search only if len >= 2). */
+// Auth
+export async function register(email: string, password: string) {
+  return apiFetch<TokenPair>("/auth/register", { method: "POST", body: JSON.stringify({ email, password }) }, false);
+}
+export async function login(email: string, password: string) {
+  const res = await apiFetch<TokenPair>("/auth/login", { method: "POST", body: JSON.stringify({ email, password }) }, false);
+  if (res.data) persistTokens(res.data);
+  return res;
+}
+export async function logout() { await apiFetch("/auth/logout", { method: "POST" }); clearTokens(); }
+export async function refreshAccessToken(): Promise<boolean> {
+  const res = await apiFetch<TokenPair>("/auth/refresh", { method: "POST" }, false);
+  if (res.data) { persistTokens(res.data); return true; }
+  clearTokens(); return false;
+}
+export async function verifyEmail(token: string) {
+  return apiFetch<{ message: string }>("/auth/verify-email", { method: "POST", body: JSON.stringify({ token }) }, false);
+}
+export async function getCurrentUser() { return apiFetch<User>("/auth/me"); }
+
+// Listings
 export function buildListingQueryParams(filters: ListingFilters): URLSearchParams {
   const params = new URLSearchParams();
-  Object.entries(filters).forEach(([key, value]) => {
-    if (value === undefined || value === null || value === "") {
-      return;
-    }
-    if (key === "search" && String(value).trim().length < 2) {
-      return;
-    }
-    params.set(key, String(value));
-  });
+  for (const [key, val] of Object.entries(filters)) {
+    if (val === undefined || val === null || val === "") continue;
+    if (Array.isArray(val)) val.forEach((v) => params.append(key, String(v)));
+    else params.set(key, String(val));
+  }
   return params;
 }
-
-export function initializeAuth() {
-  readStoredTokens();
-}
-
-export function isAuthenticated() {
-  return Boolean(accessToken || (typeof window !== "undefined" && localStorage.getItem("accessToken")));
-}
-
-export async function register(email: string, password: string, role = "user") {
-  return apiCall<User>("/auth/register", {
-    method: "POST",
-    body: JSON.stringify({ email, password, role }),
-  });
-}
-
-export async function login(email: string, password: string) {
-  const response = await apiCall<TokenPair>("/auth/login", {
-    method: "POST",
-    body: JSON.stringify({ email, password }),
-  });
-  if (response.data) {
-    persistTokens(response.data);
-    const me = await getCurrentUser();
-    if (me.data?.role) {
-      persistRole(me.data.role);
-    }
-  }
-  return response;
-}
-
-export async function logout() {
-  if (refreshToken) {
-    await apiCall("/auth/logout", {
-      method: "POST",
-      body: JSON.stringify({ refresh_token: refreshToken }),
-    });
-  }
-  clearTokens();
-}
-
-export async function refreshAccessToken() {
-  if (!refreshToken) {
-    return false;
-  }
-  const response = await apiCall<TokenPair>(
-    "/auth/refresh",
-    {
-      method: "POST",
-      body: JSON.stringify({ refresh_token: refreshToken }),
-    },
-    false,
-  );
-  if (!response.data) {
-    clearTokens();
-    return false;
-  }
-  persistTokens(response.data);
-  return true;
-}
-
-/** GET /listings/ — items are ListingList rows; PaginatedResponse from backend. Uses trailing slash to avoid 307 redirect. */
 export async function getListings(filters: ListingFilters = {}) {
-  const params = buildListingQueryParams(filters);
-  const query = params.toString();
-  const path = query ? `/listings/?${query}` : `/listings/`;
-  return apiCall<PaginatedResponse<ListingListItem>>(path);
+  const q = buildListingQueryParams(filters).toString();
+  return apiFetch<PaginatedResponse<ListingListItem>>(q ? `/listings/?${q}` : "/listings/", {}, false);
+}
+export async function getListing(slugOrId: string) { return apiFetch<Listing>(`/listings/${slugOrId}`, {}, false); }
+export async function createListing(payload: Partial<Listing>) {
+  return apiFetch<Listing>("/listings", { method: "POST", body: JSON.stringify(payload) });
+}
+export async function updateListing(id: string, payload: Partial<Listing>) {
+  return apiFetch<Listing>(`/listings/${id}`, { method: "PATCH", body: JSON.stringify(payload) });
+}
+export async function deleteListing(id: string) { return apiFetch<null>(`/listings/${id}`, { method: "DELETE" }); }
+export async function publishListing(id: string) { return apiFetch<Listing>(`/listings/${id}/publish`, { method: "POST" }); }
+export async function markListingRented(id: string) { return apiFetch<Listing>(`/listings/${id}/mark-rented`, { method: "POST" }); }
+export async function getListingStats(id: string) { return apiFetch<ListingStats>(`/listings/${id}/stats`); }
+
+// Media
+export async function getPresignedUrl(listingId: string, filename: string, contentType: string) {
+  return apiFetch<PresignedUrlResponse>("/media/presigned-url", { method: "POST", body: JSON.stringify({ listing_id: listingId, filename, content_type: contentType }) });
+}
+export async function confirmMediaUpload(payload: MediaConfirmPayload) {
+  return apiFetch<{ id: string }>("/media/confirm", { method: "POST", body: JSON.stringify(payload) });
+}
+export async function deleteMedia(mediaId: string) { return apiFetch<null>(`/media/${mediaId}`, { method: "DELETE" }); }
+export async function reorderMedia(listingId: string, order: string[]) {
+  return apiFetch<null>(`/listings/${listingId}/media/reorder`, { method: "PATCH", body: JSON.stringify({ order }) });
 }
 
-/** GET /listings/{listing_id} */
-export async function getListing(listingId: string) {
-  return apiCall<Listing>(`/listings/${listingId}`);
-}
-
-export async function getCurrentUser() {
-  return apiCall<User>("/auth/me");
-}
-
-/** GET /amenities/ — returns Amenity[] (not wrapped in { items }). */
+// Amenities
 export async function getAmenities(skip = 0, limit = 100) {
-  const params = new URLSearchParams({ skip: String(skip), limit: String(limit) });
-  return apiCall<Amenity[]>(`/amenities/?${params.toString()}`);
+  return apiFetch<Amenity[]>(`/amenities/?skip=${skip}&limit=${limit}`, {}, false);
 }
+
+// Neighborhoods
+export async function getNeighborhoods() { return apiFetch<Neighborhood[]>("/neighborhoods/", {}, false); }
+export async function getNeighborhood(slug: string) { return apiFetch<Neighborhood>(`/neighborhoods/${slug}`, {}, false); }
+
+// Inquiries
+export async function createInquiry(payload: CreateInquiryPayload) {
+  return apiFetch<Inquiry>("/inquiries", { method: "POST", body: JSON.stringify(payload) });
+}
+export async function getMyInquiries() { return apiFetch<Inquiry[]>("/inquiries/sent"); }
+export async function getReceivedInquiries() { return apiFetch<Inquiry[]>("/inquiries/received"); }
+export async function replyToInquiry(id: string, reply: string) {
+  return apiFetch<Inquiry>(`/inquiries/${id}/reply`, { method: "PATCH", body: JSON.stringify({ owner_reply: reply }) });
+}
+
+// Visits
+export async function createVisitRequest(payload: CreateVisitPayload) {
+  return apiFetch<VisitRequest>("/visits", { method: "POST", body: JSON.stringify(payload) });
+}
+export async function getMyVisitRequests() { return apiFetch<VisitRequest[]>("/visits/my"); }
+export async function getReceivedVisitRequests() { return apiFetch<VisitRequest[]>("/visits/received"); }
+export async function confirmVisit(id: string, confirmedDate: string) {
+  return apiFetch<VisitRequest>(`/visits/${id}/confirm`, { method: "PATCH", body: JSON.stringify({ confirmed_date: confirmedDate }) });
+}
+
+// Favorites
+export async function getFavorites() { return apiFetch<Favorite[]>("/favorites"); }
+export async function addFavorite(listingId: string) {
+  return apiFetch<Favorite>("/favorites", { method: "POST", body: JSON.stringify({ listing_id: listingId }) });
+}
+export async function removeFavorite(listingId: string) { return apiFetch<null>(`/favorites/${listingId}`, { method: "DELETE" }); }
+
+// Admin
+export async function adminGetPendingListings(page = 1) {
+  return apiFetch<PaginatedResponse<ListingListItem>>(`/admin/listings?status=pending&page=${page}`);
+}
+export async function adminApproveListing(id: string) {
+  return apiFetch<Listing>(`/admin/listings/${id}/approve`, { method: "PATCH" });
+}
+export async function adminRejectListing(id: string, reason: string) {
+  return apiFetch<Listing>(`/admin/listings/${id}/reject`, { method: "PATCH", body: JSON.stringify({ reason }) });
+}
+export async function adminGetUsers(page = 1) {
+  return apiFetch<PaginatedResponse<User>>(`/admin/users?page=${page}`);
+}
+export async function adminSuspendUser(id: string, reason: string) {
+  return apiFetch<User>(`/admin/users/${id}/suspend`, { method: "PATCH", body: JSON.stringify({ reason }) });
+}
+export async function adminGetAuditLog(page = 1) {
+  return apiFetch<PaginatedResponse<AuditLog>>(`/admin/audit-log?page=${page}`);
+}
+export async function adminGetAnalytics() { return apiFetch<AdminAnalyticsOverview>("/admin/analytics/overview"); }
