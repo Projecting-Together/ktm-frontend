@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import {
@@ -9,6 +8,7 @@ import {
   Wifi, Car, Zap, Droplets
 } from "lucide-react";
 import { VerifiedBadge } from "@/components/common/VerifiedBadge";
+import { ListingCoverImage } from "@/components/listings/ListingCoverImage";
 import { useToggleFavorite, useIsFavorite } from "@/lib/hooks/useFavorites";
 import { useAuthStore } from "@/lib/stores/authStore";
 import { formatPrice, formatDate, buildWhatsAppUrl, cn, getStatusColor } from "@/lib/utils";
@@ -23,7 +23,10 @@ export default function ListingDetailClient({ listing }: Props) {
   const { mutate: toggleFavorite } = useToggleFavorite();
 
   const images = listing.images ?? [];
-  const coverImg = images[activeImg]?.webp_url ?? images[activeImg]?.image_url ?? "/placeholder-property.jpg";
+  const coverImg =
+    images.length > 0
+      ? images[activeImg]?.webp_url ?? images[activeImg]?.image_url ?? null
+      : null;
 
   const whatsappUrl = listing.owner?.whatsapp_number
     ? buildWhatsAppUrl(listing.owner.whatsapp_number, `Hi, I am interested in: ${listing.title} - ktmapartments.com/apartments/${listing.slug}`)
@@ -46,7 +49,15 @@ export default function ListingDetailClient({ listing }: Props) {
           {/* Image gallery */}
           <div className="relative overflow-hidden rounded-2xl bg-muted">
             <div className="relative aspect-[16/10]">
-              <Image src={coverImg} alt={listing.title} fill className="object-cover" sizes="(max-width: 1024px) 100vw, 66vw" priority />
+              <ListingCoverImage
+                src={coverImg}
+                alt={listing.title}
+                fill
+                compact={false}
+                imgClassName="object-cover"
+                sizes="(max-width: 1024px) 100vw, 66vw"
+                priority
+              />
               {listing.is_verified && <div className="absolute left-4 top-4"><VerifiedBadge size="md" /></div>}
               {listing.status !== "active" && (
                 <div className="absolute right-4 top-4">
@@ -75,7 +86,13 @@ export default function ListingDetailClient({ listing }: Props) {
                   <button key={img.id} onClick={() => setActiveImg(i)}
                     className={cn("relative h-16 w-24 shrink-0 overflow-hidden rounded-lg border-2 transition-all",
                       i === activeImg ? "border-accent" : "border-transparent opacity-60 hover:opacity-100")}>
-                    <Image src={img.webp_url ?? img.image_url ?? "/placeholder-property.jpg"} alt="" fill className="object-cover" sizes="96px" />
+                    <ListingCoverImage
+                      src={img.webp_url ?? img.image_url ?? null}
+                      alt=""
+                      fill
+                      imgClassName="object-cover"
+                      sizes="96px"
+                    />
                   </button>
                 ))}
               </div>

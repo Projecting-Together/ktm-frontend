@@ -29,6 +29,8 @@ export function useListings(filters: ListingFilters = {}) {
     },
     placeholderData: keepPreviousData,
     staleTime: 30 * 1000,
+    /** One failed request is enough: timeout + manual “Try again” avoids two long waits. */
+    retry: 0,
   });
 }
 

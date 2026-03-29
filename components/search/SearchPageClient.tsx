@@ -1,14 +1,27 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useEffect, useCallback, useState, useRef } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
-import { LayoutGrid, List, SlidersHorizontal, ChevronDown, Check } from "lucide-react";
+import { LayoutGrid, List, Loader2, Map as MapIcon, SlidersHorizontal, ChevronDown, Check } from "lucide-react";
 import { ListingCard, ListingCardSkeleton } from "@/components/listings/ListingCard";
 import { FilterPanel } from "@/components/search/FilterPanel";
 import { SearchBar } from "@/components/search/SearchBar";
 import { useFilterStore, selectApiFilters } from "@/lib/stores/filterStore";
 import { useListings } from "@/lib/hooks/useListings";
 import { cn } from "@/lib/utils";
+
+const SearchMapDynamic = dynamic(
+  () => import("@/components/map/SearchMap").then((m) => m.SearchMap),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex min-h-[min(70vh,560px)] w-full items-center justify-center rounded-xl border border-border bg-muted/30 text-sm text-muted-foreground">
+        Loading map…
+      </div>
+    ),
+  },
+);
 
 const SORT_OPTIONS = [
   { value: "created_at:desc", label: "Newest first" },
@@ -46,7 +59,7 @@ function SortDropdown({ value, onChange }: { value: string; onChange: (v: string
       {open && (
         <div
           role="listbox"
-          className="absolute right-0 top-full z-50 mt-1 min-w-[180px] rounded-xl border border-border bg-card py-1 shadow-lg"
+          className="absolute right-0 top-full z-[600] mt-1 min-w-[180px] rounded-xl border border-border bg-card py-1 shadow-lg"
         >
           {SORT_OPTIONS.map((opt) => (
             <button
@@ -81,7 +94,23 @@ export default function SearchPageClient() {
   useEffect(() => {
     const params: Record<string, unknown> = {};
     searchParams.forEach((value, key) => {
-      if (["page", "limit", "min_price", "max_price", "bedrooms"].includes(key)) params[key] = Number(value);
+      if (
+        [
+          "page",
+          "limit",
+          "min_price",
+          "max_price",
+          "bedrooms",
+          "min_lat",
+          "max_lat",
+          "min_lng",
+          "max_lng",
+          "lat",
+          "lng",
+          "radius_km",
+        ].includes(key)
+      )
+        params[key] = Number(value);
       else if (["verified", "parking", "pets_allowed"].includes(key)) params[key] = value === "true";
       else if (key === "amenities") {
         const existing = params[key] as string[] | undefined;
@@ -107,14 +136,31 @@ export default function SearchPageClient() {
   useEffect(() => { syncUrl(); }, [
     store.search, store.neighborhood, store.listing_type, store.min_price, store.max_price,
     store.bedrooms, store.furnishing, store.parking, store.pets_allowed, store.verified,
-    store.amenities, store.available_from, store.sort_by, store.sort_order, store.page, syncUrl,
+    store.amenities, store.available_from, store.sort_by, store.sort_order, store.page,
+    store.min_lat, store.max_lat, store.min_lng, store.max_lng, store.lat, store.lng, store.radius_km,
+    syncUrl,
   ]);
 
   const filters = selectApiFilters(store as never);
-  const { data, isLoading, isError } = useListings(filters);
+  const { data, isPending, isError, error, refetch, isFetching } = useListings(filters);
   const listings = data?.items ?? [];
   const total = data?.total ?? 0;
   const totalPages = data?.total_pages ?? 1;
+
+  const [showSlowLoadHint, setShowSlowLoadHint] = useState(false);
+  useEffect(() => {
+    if (!isFetching) {
+      setShowSlowLoadHint(false);
+      return;
+    }
+    const t = window.setTimeout(() => setShowSlowLoadHint(true), 7000);
+    return () => {
+      window.clearTimeout(t);
+      setShowSlowLoadHint(false);
+    };
+  }, [isFetching]);
+
+  const errorMessage = error instanceof Error ? error.message : "Something went wrong.";
 
   return (
     <div className="container py-6">
@@ -124,25 +170,57 @@ export default function SearchPageClient() {
       </div>
 
       <div className="mb-5 flex items-center justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold">{isLoading ? "Searching..." : `${total.toLocaleString()} Properties`}</h1>
-          {store.neighborhood && <p className="text-sm text-muted-foreground capitalize">in {store.neighborhood.replace(",", ", ")}</p>}
+        <div className="min-w-0 flex-1">
+          <h1 className="flex items-center gap-2 text-xl font-bold">
+            {isPending ? (
+              <>
+                <Loader2 className="h-5 w-5 shrink-0 animate-spin text-accent" aria-hidden />
+                Searching…
+              </>
+            ) : (
+              `${total.toLocaleString()} Properties`
+            )}
+          </h1>
+          {showSlowLoadHint && isFetching && !isError && (
+            <p className="mt-1 text-sm text-muted-foreground">
+              Still loading — the API may be slow, or your connection may be unstable. Requests time out after about 25 seconds; then you&apos;ll see an error with a retry option.
+            </p>
+          )}
+          {store.neighborhood && (
+            <p className="text-sm text-muted-foreground capitalize">in {store.neighborhood.replace(",", ", ")}</p>
+          )}
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={store.toggleFilterPanel}
-            className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium hover:bg-muted md:hidden">
+          <button
+            type="button"
+            onClick={store.toggleFilterPanel}
+            className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium hover:bg-muted md:hidden"
+          >
             <SlidersHorizontal className="h-4 w-4" /> Filters
           </button>
           <SortDropdown
             value={`${store.sort_by ?? "created_at"}:${store.sort_order ?? "desc"}`}
             onChange={(val) => { const [by, ord] = val.split(":"); store.setFilters({ sort_by: by, sort_order: ord as "asc"|"desc" }); }}
           />
-          <div className="hidden items-center rounded-lg border border-border bg-card sm:flex">
-            {(["grid", "list"] as const).map((v) => (
-              <button key={v} onClick={() => store.setView(v)}
-                className={cn("flex h-9 w-9 items-center justify-center transition-colors",
-                  store.view === v ? "bg-accent text-white" : "text-muted-foreground hover:text-foreground")}>
-                {v === "grid" ? <LayoutGrid className="h-4 w-4" /> : <List className="h-4 w-4" />}
+          <div
+            className="flex shrink-0 items-center rounded-lg border border-border bg-card"
+            role="group"
+            aria-label="Result layout"
+          >
+            {(["grid", "list", "map"] as const).map((v) => (
+              <button
+                key={v}
+                type="button"
+                data-testid={`view-${v}`}
+                onClick={() => store.setView(v)}
+                className={cn(
+                  "flex min-h-10 min-w-10 items-center justify-center transition-colors sm:h-9 sm:w-9",
+                  store.view === v ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground",
+                )}
+                aria-pressed={store.view === v}
+                aria-label={v === "grid" ? "Grid view" : v === "list" ? "List view" : "Map view"}
+              >
+                {v === "grid" ? <LayoutGrid className="h-4 w-4" /> : v === "list" ? <List className="h-4 w-4" /> : <MapIcon className="h-4 w-4" />}
               </button>
             ))}
           </div>
@@ -153,7 +231,7 @@ export default function SearchPageClient() {
         <div className="hidden w-64 shrink-0 md:block"><FilterPanel mode="sidebar" /></div>
 
         {store.isFilterPanelOpen && (
-          <div className="fixed inset-0 z-50 md:hidden">
+          <div className="fixed inset-0 z-[2000] md:hidden">
             <div className="absolute inset-0 bg-black/50" onClick={store.toggleFilterPanel} />
             <div className="absolute bottom-0 left-0 right-0 max-h-[85vh] overflow-y-auto rounded-t-2xl bg-card">
               <div className="sticky top-0 flex items-center justify-between border-b border-border bg-card px-5 py-4">
@@ -166,17 +244,34 @@ export default function SearchPageClient() {
         )}
 
         <div className="flex-1 min-w-0">
-          {isError && <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-6 text-center text-sm text-destructive">Failed to load listings. Please try again.</div>}
-          {isLoading ? (
-            <div className={cn("grid gap-5", store.view === "grid" ? "grid-cols-1 sm:grid-cols-2 xl:grid-cols-3" : "grid-cols-1")}>
-              {Array.from({ length: 9 }).map((_, i) => <ListingCardSkeleton key={i} variant={store.view === "list" ? "list" : "grid"} />)}
+          {isError ? (
+            <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-6 text-center">
+              <p className="text-sm font-semibold text-destructive">Couldn&apos;t load listings</p>
+              <p className="mt-2 text-sm text-destructive/90">{errorMessage}</p>
+              <button type="button" onClick={() => void refetch()} className="btn-primary mt-4">
+                Try again
+              </button>
             </div>
+          ) : isPending ? (
+            store.view === "map" ? (
+              <div className="flex min-h-[min(70vh,560px)] w-full items-center justify-center rounded-xl border border-border bg-muted/20 text-sm text-muted-foreground">
+                Loading map…
+              </div>
+            ) : (
+              <div className={cn("grid gap-5", store.view === "grid" ? "grid-cols-1 sm:grid-cols-2 xl:grid-cols-3" : "grid-cols-1")}>
+                {Array.from({ length: 9 }).map((_, i) => (
+                  <ListingCardSkeleton key={i} variant={store.view === "list" ? "list" : "grid"} />
+                ))}
+              </div>
+            )
+          ) : store.view === "map" ? (
+            <SearchMapDynamic listings={listings} className="w-full" />
           ) : listings.length === 0 ? (
             <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-20 text-center">
               <p className="text-4xl">🏠</p>
               <h3 className="mt-4 text-lg font-semibold">No listings found</h3>
               <p className="mt-2 text-sm text-muted-foreground">Try adjusting your filters or searching in a different neighborhood.</p>
-              <button onClick={store.resetFilters} className="btn-primary mt-4">Clear all filters</button>
+              <button type="button" onClick={store.resetFilters} className="btn-primary mt-4">Clear all filters</button>
             </div>
           ) : (
             <div className={cn("grid gap-5", store.view === "grid" ? "grid-cols-1 sm:grid-cols-2 xl:grid-cols-3" : "grid-cols-1")}>

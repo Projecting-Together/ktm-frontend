@@ -1,4 +1,9 @@
-import { http, HttpResponse } from "msw";
+/**
+ * MSW handlers aligned with `lib/api/client.ts` paths.
+ * Requests use `NEXT_PUBLIC_API_URL` as origin + `/listings/`, etc. — pathname is always `/api/v1/...`.
+ */
+import { http, HttpResponse, passthrough } from "msw";
+import type { ListingStats } from "@/lib/api/types";
 import {
   mockListingsPage1,
   mockThamelListings,
@@ -16,274 +21,430 @@ import {
   mockFavorites,
   mockAdminAnalytics,
   mockAuditLogs,
-  mockReports,
+  mockAmenities,
 } from "@/test-utils/mockData";
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+/** Next.js chunks & dev endpoints must not be mocked — prevents 404 / wrong MIME on `/_next/static/*`. */
+const passthroughNextAssets = http.all(
+  ({ request }) => {
+    const p = new URL(request.url).pathname;
+    return p.startsWith("/_next/") || p.startsWith("/__nextjs");
+  },
+  () => passthrough()
+);
+
+function pathname(request: Request) {
+  return new URL(request.url).pathname;
+}
+
+function filterListingItems(request: Request) {
+  const url = new URL(request.url);
+  const neighborhood = url.searchParams.get("neighborhood");
+  const status = url.searchParams.get("status");
+  const priceMax = url.searchParams.get("price_max") ?? url.searchParams.get("max_price");
+  const beds = url.searchParams.get("beds") ?? url.searchParams.get("bedrooms");
+  const furnishing = url.searchParams.get("furnishing");
+  const verified = url.searchParams.get("verified");
+
+  if (status === "pending") return mockPendingListings;
+  if (neighborhood === "thamel") return mockThamelListings;
+
+  let filtered = [...mockListingItems];
+  if (priceMax) filtered = filtered.filter((l) => Number(l.price) <= Number(priceMax));
+  if (beds) filtered = filtered.filter((l) => (l.bedrooms ?? 0) >= Number(beds));
+  if (furnishing) filtered = filtered.filter((l) => l.furnishing === furnishing);
+  if (verified === "true") filtered = filtered.filter((l) => l.is_verified);
+
+  return {
+    ...mockListingsPage1,
+    items: filtered,
+    total: filtered.length,
+  };
+}
 
 export const handlers = [
+  passthroughNextAssets,
   // ── AUTH ──────────────────────────────────────────────────────────────────
-  http.post(`${API}/api/v1/auth/login`, async ({ request }) => {
-    const body = await request.json() as { email: string; password: string };
-    if (body.email === "ram.sharma@gmail.com" && body.password === "password123") {
-      return HttpResponse.json({ tokens: mockAuthTokens, user: mockRenter });
+  http.post(
+    ({ request }) => pathname(request) === "/api/v1/auth/login",
+    async ({ request }) => {
+      const body = (await request.json()) as { email: string; password: string };
+      if (body.email === "ram.sharma@gmail.com" && body.password === "password123") {
+        return HttpResponse.json(mockAuthTokens);
+      }
+      if (body.email === "sita.thapa@gmail.com" && body.password === "password123") {
+        return HttpResponse.json(mockOwnerAuthTokens);
+      }
+      return HttpResponse.json({ detail: "Invalid email or password" }, { status: 401 });
     }
-    if (body.email === "sita.thapa@gmail.com" && body.password === "password123") {
-      return HttpResponse.json({ tokens: mockOwnerAuthTokens, user: mockOwner });
+  ),
+
+  http.post(
+    ({ request }) => pathname(request) === "/api/v1/auth/register",
+    async ({ request }) => {
+      const body = (await request.json()) as { email: string; password: string };
+      if (body.email === "existing@gmail.com") {
+        return HttpResponse.json({ detail: "Email already registered" }, { status: 409 });
+      }
+      return HttpResponse.json(mockAuthTokens, { status: 201 });
     }
-    return HttpResponse.json(
-      { detail: "Invalid email or password" },
-      { status: 401 }
-    );
-  }),
+  ),
 
-  http.post(`${API}/api/v1/auth/register`, async ({ request }) => {
-    const body = await request.json() as { email: string; role: string };
-    if (body.email === "existing@gmail.com") {
-      return HttpResponse.json(
-        { detail: "Email already registered" },
-        { status: 409 }
-      );
+  http.post(
+    ({ request }) => pathname(request) === "/api/v1/auth/refresh",
+    () => HttpResponse.json(mockAuthTokens)
+  ),
+
+  http.post(
+    ({ request }) => pathname(request) === "/api/v1/auth/logout",
+    () => HttpResponse.json({ message: "Logged out successfully" })
+  ),
+
+  http.post(
+    ({ request }) => pathname(request) === "/api/v1/auth/verify-email",
+    () => HttpResponse.json({ message: "Email verified" })
+  ),
+
+  http.get(
+    ({ request }) => pathname(request) === "/api/v1/auth/me",
+    ({ request }) => {
+      const auth = request.headers.get("Authorization");
+      if (!auth?.startsWith("Bearer ")) {
+        return HttpResponse.json({ detail: "Not authenticated" }, { status: 401 });
+      }
+      const token = auth.slice(7);
+      if (token === mockOwnerAuthTokens.access_token) return HttpResponse.json(mockOwner);
+      return HttpResponse.json(mockRenter);
     }
-    return HttpResponse.json(
-      {
-        tokens: mockAuthTokens,
-        user: { ...mockRenter, email: body.email, role: body.role },
-      },
-      { status: 201 }
-    );
-  }),
+  ),
 
-  http.post(`${API}/api/v1/auth/logout`, () => {
-    return HttpResponse.json({ message: "Logged out successfully" });
-  }),
-
-  http.get(`${API}/api/v1/auth/me`, ({ request }) => {
-    const auth = request.headers.get("Authorization");
-    if (!auth || !auth.startsWith("Bearer ")) {
-      return HttpResponse.json({ detail: "Not authenticated" }, { status: 401 });
+  // ── LISTINGS (specific paths before `/listings/:id`) ─────────────────────
+  http.get(
+    ({ request }) => /^\/api\/v1\/listings\/[^/]+\/stats$/.test(pathname(request)),
+    ({ request }) => {
+      const id = pathname(request).split("/")[4];
+      const stats: ListingStats = {
+        listing_id: id,
+        views: 120,
+        inquiries: 3,
+        favorites: 8,
+        visits_requested: 2,
+      };
+      return HttpResponse.json(stats);
     }
-    if (auth.includes("owner")) {
-      return HttpResponse.json(mockOwner);
+  ),
+
+  http.post(
+    ({ request }) => /^\/api\/v1\/listings\/[^/]+\/publish$/.test(pathname(request)),
+    ({ request }) => {
+      const id = pathname(request).split("/")[4];
+      const listing = mockListings.find((l) => l.id === id);
+      if (!listing) return HttpResponse.json({ detail: "Listing not found" }, { status: 404 });
+      return HttpResponse.json({ ...listing, status: "active" as const });
     }
-    return HttpResponse.json(mockRenter);
-  }),
+  ),
 
-  // ── LISTINGS ──────────────────────────────────────────────────────────────
-  http.get(`${API}/api/v1/listings`, ({ request }) => {
-    const url = new URL(request.url);
-    const neighborhood = url.searchParams.get("neighborhood");
-    const status = url.searchParams.get("status");
-    const priceMax = url.searchParams.get("price_max") ?? url.searchParams.get("max_price");
-    const beds = url.searchParams.get("beds") ?? url.searchParams.get("bedrooms");
-    const furnishing = url.searchParams.get("furnishing");
-    const verified = url.searchParams.get("verified");
-
-    // Simulate backend filtering
-    if (status === "pending") return HttpResponse.json(mockPendingListings);
-    if (neighborhood === "thamel") return HttpResponse.json(mockThamelListings);
-
-    let filtered = [...mockListingItems];
-    if (priceMax) filtered = filtered.filter(l => Number(l.price) <= Number(priceMax));
-    if (beds) filtered = filtered.filter(l => (l.bedrooms ?? 0) >= Number(beds));
-    if (furnishing) filtered = filtered.filter(l => l.furnishing === furnishing);
-    if (verified === "true") filtered = filtered.filter(l => l.is_verified);
-
-    return HttpResponse.json({
-      ...mockListingsPage1,
-      items: filtered,
-      total: filtered.length,
-    });
-  }),
-
-  http.get(`${API}/api/v1/listings/:slug`, ({ params }) => {
-    const listing = mockListings.find(
-      (l) => l.slug === params.slug || l.id === params.slug
-    );
-    if (!listing) {
-      return HttpResponse.json({ detail: "Listing not found" }, { status: 404 });
+  http.post(
+    ({ request }) => /^\/api\/v1\/listings\/[^/]+\/mark-rented$/.test(pathname(request)),
+    ({ request }) => {
+      const id = pathname(request).split("/")[4];
+      const listing = mockListings.find((l) => l.id === id);
+      if (!listing) return HttpResponse.json({ detail: "Listing not found" }, { status: 404 });
+      return HttpResponse.json({ ...listing, status: "rented" as const });
     }
-    return HttpResponse.json(listing);
-  }),
+  ),
 
-  http.post(`${API}/api/v1/listings`, async ({ request }) => {
-    const body = await request.json() as Record<string, unknown>;
-    const newListing = {
-      ...mockListings[0],
-      id: "lst-new-001",
-      slug: `new-listing-${Date.now()}`,
-      title: body.title ?? "New Listing",
-      status: "pending",
-      is_verified: false,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-    return HttpResponse.json(newListing, { status: 201 });
-  }),
+  http.patch(
+    ({ request }) => /^\/api\/v1\/listings\/[^/]+\/media\/reorder$/.test(pathname(request)),
+    () => HttpResponse.json(null, { status: 204 })
+  ),
 
-  http.patch(`${API}/api/v1/listings/:id`, async ({ params, request }) => {
-    const body = await request.json() as Record<string, unknown>;
-    const listing = mockListings.find((l) => l.id === params.id);
-    if (!listing) {
-      return HttpResponse.json({ detail: "Listing not found" }, { status: 404 });
+  http.get(
+    ({ request }) => {
+      const p = pathname(request);
+      return (p === "/api/v1/listings" || p === "/api/v1/listings/") && request.method === "GET";
+    },
+    ({ request }) => HttpResponse.json(filterListingItems(request))
+  ),
+
+  http.post(
+    ({ request }) => {
+      const p = pathname(request);
+      return (p === "/api/v1/listings" || p === "/api/v1/listings/") && request.method === "POST";
+    },
+    async ({ request }) => {
+      const body = (await request.json()) as Record<string, unknown>;
+      const newListing = {
+        ...mockListings[0],
+        id: "lst-new-001",
+        slug: `new-listing-${Date.now()}`,
+        title: (body.title as string) ?? "New Listing",
+        status: "pending" as const,
+        is_verified: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      return HttpResponse.json(newListing, { status: 201 });
     }
-    return HttpResponse.json({ ...listing, ...body, updated_at: new Date().toISOString() });
-  }),
+  ),
 
-  http.delete(`${API}/api/v1/listings/:id`, ({ params }) => {
-    const listing = mockListings.find((l) => l.id === params.id);
-    if (!listing) {
-      return HttpResponse.json({ detail: "Listing not found" }, { status: 404 });
+  http.get(
+    ({ request }) => {
+      const p = pathname(request);
+      if (p === "/api/v1/listings" || p === "/api/v1/listings/") return false;
+      return /^\/api\/v1\/listings\/[^/]+$/.test(p);
+    },
+    ({ request }) => {
+      const slug = pathname(request).split("/").pop()!;
+      const listing = mockListings.find((l) => l.slug === slug || l.id === slug);
+      if (!listing) return HttpResponse.json({ detail: "Listing not found" }, { status: 404 });
+      return HttpResponse.json(listing);
     }
-    return HttpResponse.json({ message: "Listing deleted successfully" });
-  }),
+  ),
 
-  http.post(`${API}/api/v1/listings/:id/publish`, ({ params }) => {
-    const listing = mockListings.find((l) => l.id === params.id);
-    if (!listing) {
-      return HttpResponse.json({ detail: "Listing not found" }, { status: 404 });
+  http.patch(
+    ({ request }) => /^\/api\/v1\/listings\/[^/]+$/.test(pathname(request)),
+    async ({ request }) => {
+      const id = pathname(request).split("/").pop()!;
+      const body = (await request.json()) as Record<string, unknown>;
+      const listing = mockListings.find((l) => l.id === id);
+      if (!listing) return HttpResponse.json({ detail: "Listing not found" }, { status: 404 });
+      return HttpResponse.json({ ...listing, ...body, updated_at: new Date().toISOString() });
     }
-    return HttpResponse.json({ ...listing, status: "active" });
-  }),
+  ),
 
-  // ── NEIGHBORHOODS ─────────────────────────────────────────────────────────
-  http.get(`${API}/api/v1/neighborhoods`, () => {
-    return HttpResponse.json({ items: mockNeighborhoods, total: mockNeighborhoods.length });
-  }),
-
-  http.get(`${API}/api/v1/neighborhoods/:slug`, ({ params }) => {
-    const nbh = mockNeighborhoods.find((n) => n.slug === params.slug);
-    if (!nbh) {
-      return HttpResponse.json({ detail: "Neighborhood not found" }, { status: 404 });
+  http.delete(
+    ({ request }) => /^\/api\/v1\/listings\/[^/]+$/.test(pathname(request)),
+    ({ request }) => {
+      const id = pathname(request).split("/").pop()!;
+      const listing = mockListings.find((l) => l.id === id);
+      if (!listing) return HttpResponse.json({ detail: "Listing not found" }, { status: 404 });
+      return HttpResponse.json(null, { status: 204 });
     }
-    return HttpResponse.json(nbh);
-  }),
-
-  // ── FAVORITES ─────────────────────────────────────────────────────────────
-  http.get(`${API}/api/v1/users/me/favorites`, () => {
-    return HttpResponse.json({ items: mockFavorites, total: mockFavorites.length });
-  }),
-
-  http.post(`${API}/api/v1/users/me/favorites/:listingId`, ({ params }) => {
-    const newFav = {
-      user_id: "usr-renter-001",
-      listing_id: params.listingId as string,
-      created_at: new Date().toISOString(),
-    };
-    return HttpResponse.json(newFav, { status: 201 });
-  }),
-
-  http.delete(`${API}/api/v1/users/me/favorites/:listingId`, () => {
-    return HttpResponse.json({ message: "Removed from favorites" });
-  }),
-
-  // ── INQUIRIES ─────────────────────────────────────────────────────────────
-  http.get(`${API}/api/v1/users/me/inquiries`, () => {
-    return HttpResponse.json({ items: mockInquiries, total: mockInquiries.length });
-  }),
-
-  http.post(`${API}/api/v1/listings/:id/inquiries`, async ({ params, request }) => {
-    const body = await request.json() as { message: string; move_in_date?: string };
-    const newInquiry = {
-      ...mockInquiries[0],
-      id: "inq-new-001",
-      listing_id: params.id as string,
-      message: body.message,
-      move_in_date: body.move_in_date ?? null,
-      status: "pending",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-    return HttpResponse.json(newInquiry, { status: 201 });
-  }),
-
-  http.get(`${API}/api/v1/manage/inquiries`, () => {
-    return HttpResponse.json({ items: mockInquiries, total: mockInquiries.length });
-  }),
-
-  // ── VISIT REQUESTS ────────────────────────────────────────────────────────
-  http.get(`${API}/api/v1/users/me/visits`, () => {
-    return HttpResponse.json({ items: mockVisitRequests, total: mockVisitRequests.length });
-  }),
-
-  http.post(`${API}/api/v1/listings/:id/visits`, async ({ params, request }) => {
-    const body = await request.json() as { preferred_date: string; notes?: string };
-    const newVisit = {
-      ...mockVisitRequests[0],
-      id: "vis-new-001",
-      listing_id: params.id as string,
-      preferred_date: body.preferred_date,
-      notes: body.notes ?? null,
-      status: "pending",
-      created_at: new Date().toISOString(),
-    };
-    return HttpResponse.json(newVisit, { status: 201 });
-  }),
-
-  // ── ADMIN ─────────────────────────────────────────────────────────────────
-  http.get(`${API}/api/v1/admin/listings`, () => {
-    return HttpResponse.json(mockPendingListings);
-  }),
-
-  http.patch(`${API}/api/v1/admin/listings/:id/approve`, ({ params }) => {
-    const listing = mockListings.find((l) => l.id === params.id);
-    if (!listing) {
-      return HttpResponse.json({ detail: "Listing not found" }, { status: 404 });
-    }
-    return HttpResponse.json({ ...listing, status: "active", is_verified: true });
-  }),
-
-  http.patch(`${API}/api/v1/admin/listings/:id/reject`, ({ params }) => {
-    const listing = mockListings.find((l) => l.id === params.id);
-    if (!listing) {
-      return HttpResponse.json({ detail: "Listing not found" }, { status: 404 });
-    }
-    return HttpResponse.json({ ...listing, status: "rejected" });
-  }),
-
-  http.get(`${API}/api/v1/admin/users`, () => {
-    return HttpResponse.json({
-      items: [mockRenter, mockOwner, mockAdmin],
-      total: 3,
-      page: 1,
-      page_size: 20,
-      total_pages: 1,
-    });
-  }),
-
-  http.patch(`${API}/api/v1/admin/users/:id/suspend`, ({ params }) => {
-    return HttpResponse.json({ id: params.id, status: "suspended" });
-  }),
-
-  http.get(`${API}/api/v1/admin/analytics/overview`, () => {
-    return HttpResponse.json(mockAdminAnalytics);
-  }),
-
-  http.get(`${API}/api/v1/admin/audit-log`, () => {
-    return HttpResponse.json({ items: mockAuditLogs, total: mockAuditLogs.length });
-  }),
+  ),
 
   // ── MEDIA ─────────────────────────────────────────────────────────────────
-  http.post(`${API}/api/v1/media/presigned-url`, async ({ request }) => {
-    const body = await request.json() as { filename: string; content_type: string };
-    return HttpResponse.json({
-      upload_url: `https://r2.ktmapartments.com/upload/${body.filename}?token=mock`,
-      storage_key: `listings/mock/${body.filename}`,
-      public_url: `https://images.ktmapartments.com/listings/mock/${body.filename}`,
-    });
-  }),
+  http.post(
+    ({ request }) => pathname(request) === "/api/v1/media/presigned-url",
+    async ({ request }) => {
+      const body = (await request.json()) as { filename: string; content_type: string };
+      return HttpResponse.json({
+        upload_url: `https://r2.ktmapartments.com/upload/${body.filename}?token=mock`,
+        storage_key: `listings/mock/${body.filename}`,
+        public_url: `https://images.ktmapartments.com/listings/mock/${body.filename}`,
+      });
+    }
+  ),
 
-  http.post(`${API}/api/v1/media/confirm`, async () => {
-    return HttpResponse.json({
-      id: "img-new-001",
-      listing_id: "lst-001",
-      image_url: "https://images.ktmapartments.com/listings/mock/image-1.jpg",
-      webp_url: "https://images.ktmapartments.com/listings/mock/image-1.webp",
-      storage_key: "listings/mock/image-1.webp",
-      sort_order: 0,
-      is_primary: false,
-      is_cover: false,
-      upload_status: "complete",
-    });
-  }),
+  http.post(
+    ({ request }) => pathname(request) === "/api/v1/media/confirm",
+    async () =>
+      HttpResponse.json({
+        id: "img-new-001",
+      })
+  ),
+
+  http.delete(
+    ({ request }) => /^\/api\/v1\/media\/[^/]+$/.test(pathname(request)),
+    () => HttpResponse.json(null, { status: 204 })
+  ),
+
+  // ── AMENITIES / NEIGHBORHOODS ───────────────────────────────────────────────
+  http.get(
+    ({ request }) => /^\/api\/v1\/amenities\/?/.test(pathname(request)),
+    () => HttpResponse.json(mockAmenities)
+  ),
+
+  http.get(
+    ({ request }) => pathname(request) === "/api/v1/neighborhoods" || pathname(request) === "/api/v1/neighborhoods/",
+    () => HttpResponse.json(mockNeighborhoods)
+  ),
+
+  http.get(
+    ({ request }) => /^\/api\/v1\/neighborhoods\/[^/]+$/.test(pathname(request)),
+    ({ request }) => {
+      const slug = pathname(request).split("/").pop()!;
+      const nbh = mockNeighborhoods.find((n) => n.slug === slug);
+      if (!nbh) return HttpResponse.json({ detail: "Neighborhood not found" }, { status: 404 });
+      return HttpResponse.json(nbh);
+    }
+  ),
+
+  // ── INQUIRIES ─────────────────────────────────────────────────────────────
+  http.post(
+    ({ request }) => pathname(request) === "/api/v1/inquiries",
+    async ({ request }) => {
+      const body = (await request.json()) as { listing_id: string; message: string; move_in_date?: string | null };
+      const newInquiry = {
+        ...mockInquiries[0],
+        id: "inq-new-001",
+        listing_id: body.listing_id,
+        message: body.message,
+        move_in_date: body.move_in_date ?? null,
+        status: "pending" as const,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      return HttpResponse.json(newInquiry, { status: 201 });
+    }
+  ),
+
+  http.get(
+    ({ request }) => pathname(request) === "/api/v1/inquiries/sent",
+    () => HttpResponse.json(mockInquiries)
+  ),
+
+  http.get(
+    ({ request }) => pathname(request) === "/api/v1/inquiries/received",
+    () => HttpResponse.json(mockInquiries)
+  ),
+
+  http.patch(
+    ({ request }) => /^\/api\/v1\/inquiries\/[^/]+\/reply$/.test(pathname(request)),
+    async ({ request }) => {
+      const id = pathname(request).split("/")[4];
+      const body = (await request.json()) as { owner_reply: string };
+      const inquiry = mockInquiries.find((i) => i.id === id);
+      if (!inquiry) return HttpResponse.json({ detail: "Inquiry not found" }, { status: 404 });
+      return HttpResponse.json({ ...inquiry, owner_reply: body.owner_reply });
+    }
+  ),
+
+  // ── VISITS ────────────────────────────────────────────────────────────────
+  http.post(
+    ({ request }) => pathname(request) === "/api/v1/visits",
+    async ({ request }) => {
+      const body = (await request.json()) as { listing_id: string; preferred_date: string; notes?: string };
+      const newVisit = {
+        ...mockVisitRequests[0],
+        id: "vis-new-001",
+        listing_id: body.listing_id,
+        preferred_date: body.preferred_date,
+        notes: body.notes ?? null,
+        status: "pending" as const,
+        created_at: new Date().toISOString(),
+      };
+      return HttpResponse.json(newVisit, { status: 201 });
+    }
+  ),
+
+  http.get(
+    ({ request }) => pathname(request) === "/api/v1/visits/my",
+    () => HttpResponse.json(mockVisitRequests)
+  ),
+
+  http.get(
+    ({ request }) => pathname(request) === "/api/v1/visits/received",
+    () => HttpResponse.json(mockVisitRequests)
+  ),
+
+  http.patch(
+    ({ request }) => /^\/api\/v1\/visits\/[^/]+\/confirm$/.test(pathname(request)),
+    async ({ request }) => {
+      const id = pathname(request).split("/")[4];
+      const body = (await request.json()) as { confirmed_date: string };
+      const visit = mockVisitRequests.find((v) => v.id === id);
+      if (!visit) return HttpResponse.json({ detail: "Visit not found" }, { status: 404 });
+      return HttpResponse.json({
+        ...visit,
+        status: "confirmed" as const,
+        confirmed_date: body.confirmed_date,
+      });
+    }
+  ),
+
+  // ── FAVORITES ────────────────────────────────────────────────────────────
+  http.get(
+    ({ request }) => pathname(request) === "/api/v1/favorites",
+    () => HttpResponse.json(mockFavorites)
+  ),
+
+  http.post(
+    ({ request }) => pathname(request) === "/api/v1/favorites",
+    async ({ request }) => {
+      const body = (await request.json()) as { listing_id: string };
+      const listing = mockListingItems.find((l) => l.id === body.listing_id) ?? mockListingItems[0];
+      return HttpResponse.json(
+        {
+          user_id: "usr-renter-001",
+          listing_id: body.listing_id,
+          created_at: new Date().toISOString(),
+          listing,
+        },
+        { status: 201 }
+      );
+    }
+  ),
+
+  http.delete(
+    ({ request }) => /^\/api\/v1\/favorites\/[^/]+$/.test(pathname(request)),
+    () => HttpResponse.json(null, { status: 204 })
+  ),
+
+  // ── ADMIN ─────────────────────────────────────────────────────────────────
+  http.get(
+    ({ request }) => pathname(request).startsWith("/api/v1/admin/listings"),
+    () => HttpResponse.json(mockPendingListings)
+  ),
+
+  http.patch(
+    ({ request }) => /^\/api\/v1\/admin\/listings\/[^/]+\/approve$/.test(pathname(request)),
+    ({ request }) => {
+      const id = pathname(request).split("/")[5];
+      const listing = mockListings.find((l) => l.id === id);
+      if (!listing) return HttpResponse.json({ detail: "Listing not found" }, { status: 404 });
+      return HttpResponse.json({ ...listing, status: "active" as const, is_verified: true });
+    }
+  ),
+
+  http.patch(
+    ({ request }) => /^\/api\/v1\/admin\/listings\/[^/]+\/reject$/.test(pathname(request)),
+    ({ request }) => {
+      const id = pathname(request).split("/")[5];
+      const listing = mockListings.find((l) => l.id === id);
+      if (!listing) return HttpResponse.json({ detail: "Listing not found" }, { status: 404 });
+      return HttpResponse.json({ ...listing, status: "rejected" as const });
+    }
+  ),
+
+  http.get(
+    ({ request }) => pathname(request).startsWith("/api/v1/admin/users"),
+    () =>
+      HttpResponse.json({
+        items: [mockRenter, mockOwner, mockAdmin],
+        total: 3,
+        page: 1,
+        page_size: 20,
+        total_pages: 1,
+        has_next: false,
+        has_prev: false,
+      })
+  ),
+
+  http.patch(
+    ({ request }) => /^\/api\/v1\/admin\/users\/[^/]+\/suspend$/.test(pathname(request)),
+    ({ request }) => {
+      const id = pathname(request).split("/")[5];
+      return HttpResponse.json({ ...mockRenter, id, status: "suspended" as const });
+    }
+  ),
+
+  http.get(
+    ({ request }) => pathname(request).startsWith("/api/v1/admin/audit-log"),
+    () =>
+      HttpResponse.json({
+        items: mockAuditLogs,
+        total: mockAuditLogs.length,
+        page: 1,
+        page_size: 20,
+        total_pages: 1,
+        has_next: false,
+        has_prev: false,
+      })
+  ),
+
+  http.get(
+    ({ request }) => pathname(request) === "/api/v1/admin/analytics/overview",
+    () => HttpResponse.json(mockAdminAnalytics)
+  ),
 ];

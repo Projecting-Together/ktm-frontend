@@ -190,6 +190,15 @@ export interface ListingFilters {
   search?: string;
   sort_by?: "created_at" | "price" | "area_sqft" | "bedrooms" | string;
   sort_order?: "asc" | "desc" | string;
+  /** PostGIS bbox (reserved; backend not wired yet). */
+  min_lat?: number;
+  max_lat?: number;
+  min_lng?: number;
+  max_lng?: number;
+  /** PostGIS radius search (reserved; backend not wired yet). */
+  lat?: number;
+  lng?: number;
+  radius_km?: number;
 }
 
 export type InquiryStatus = "pending" | "replied" | "closed";

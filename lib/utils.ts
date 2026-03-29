@@ -38,9 +38,18 @@ export function formatRelativeTime(dateStr: string | null | undefined): string {
   return `${Math.floor(diffDays / 365)} years ago`;
 }
 
-export function getListingCoverImage(listing: Pick<ListingListItem | Listing, "images">): string {
-  const cover = listing.images?.find((img) => img.is_cover || img.is_primary);
-  return cover?.webp_url ?? cover?.image_url ?? listing.images?.[0]?.webp_url ?? listing.images?.[0]?.image_url ?? "/placeholder-property.jpg";
+/** Cover URL for a listing, or `null` if there are no images (use `ListingCoverImage` fallback). */
+export function getListingCoverImage(listing: Pick<ListingListItem | Listing, "images">): string | null {
+  const imgs = listing.images;
+  if (!imgs?.length) return null;
+  const cover = imgs.find((img) => img.is_cover || img.is_primary);
+  return (
+    cover?.webp_url ??
+    cover?.image_url ??
+    imgs[0]?.webp_url ??
+    imgs[0]?.image_url ??
+    null
+  );
 }
 
 export function getListingLocation(listing: Pick<ListingListItem, "location">): string {

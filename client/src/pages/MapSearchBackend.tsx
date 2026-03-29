@@ -5,7 +5,9 @@
  */
 
 import { useState, useEffect, useRef, useMemo } from "react";
+import L from "leaflet";
 import { MapView } from "@/components/Map";
+import { ensureLeafletDefaultIcons } from "../../../components/map/leaflet-defaults";
 import PropertyDetailsModal from "@/components/PropertyDetailsModal";
 import Filters from "@/components/Filters";
 import { Button } from "@/components/ui/button";
@@ -19,13 +21,12 @@ import PropertyCard from "@/components/PropertyCard";
 import { SearchFilters } from "@/../../shared/types";
 
 interface MarkerData {
-  marker: google.maps.Marker | any;
-  infoWindow: google.maps.InfoWindow;
+  marker: L.Marker;
   listing: Listing;
 }
 
 export default function MapSearchBackend() {
-  const mapRef = useRef<google.maps.Map | null>(null);
+  const mapRef = useRef<L.Map | null>(null);
   const markersRef = useRef<Map<string, MarkerData>>(new Map());
 
   const [listingType, setListingType] = useState<"rent" | "sale">("rent");
@@ -142,31 +143,24 @@ export default function MapSearchBackend() {
 
   // Update markers when properties change
   useEffect(() => {
-    if (!mapRef.current) return;
+    const map = mapRef.current;
+    if (!map) return;
+    ensureLeafletDefaultIcons();
 
-    // Clear existing markers
     markersRef.current.forEach(({ marker }) => {
-      marker.setMap(null);
+      marker.remove();
     });
     markersRef.current.clear();
 
-    // Add new markers
     displayedListings.forEach((listing) => {
       if (!listing.location?.latitude || !listing.location?.longitude) return;
 
-      const position = {
-        lat: Number(listing.location.latitude),
-        lng: Number(listing.location.longitude),
-      };
+      const lat = Number(listing.location.latitude);
+      const lng = Number(listing.location.longitude);
 
-      const marker = new google.maps.Marker({
-        position,
-        map: mapRef.current,
-        title: listing.title,
-      });
+      const marker = L.marker([lat, lng], { title: listing.title }).addTo(map);
 
-      // Create info window content
-      const infoWindowContent = `
+      const html = `
         <div class="p-2 max-w-xs">
           <h3 class="font-semibold text-sm">${listing.title}</h3>
           <p class="text-xs text-gray-600">${listing.location?.city || "Kathmandu"}</p>
@@ -180,20 +174,12 @@ export default function MapSearchBackend() {
         </div>
       `;
 
-      const infoWindow = new google.maps.InfoWindow({
-        content: infoWindowContent,
-      });
-
-      marker.addListener("click", () => {
-        // Close all other info windows
-        markersRef.current.forEach(({ infoWindow: iw }) => {
-          iw.close();
-        });
-        infoWindow.open(mapRef.current, marker);
+      marker.bindPopup(html);
+      marker.on("click", () => {
         setSelectedListing(listing);
       });
 
-      markersRef.current.set(listing.id, { marker, infoWindow, listing });
+      markersRef.current.set(listing.id, { marker, listing });
     });
   }, [displayedListings]);
 
@@ -299,12 +285,12 @@ export default function MapSearchBackend() {
         <div className="flex-1 overflow-hidden">
           {viewMode === "map" ? (
             <MapView
+              initialCenter={{ lat: 27.7172, lng: 85.324 }}
+              initialZoom={13}
               onMapReady={(map) => {
                 mapRef.current = map;
-                // Set initial center to Kathmandu
-                map.setCenter({ lat: 27.7172, lng: 85.324 });
-                map.setZoom(13);
               }}
+              className="h-full min-h-[400px] w-full"
             />
           ) : (
             <div className="overflow-y-auto p-6">

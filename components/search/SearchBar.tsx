@@ -114,7 +114,7 @@ export function SearchBar({
 
         {/* Neighborhood suggestions */}
         {showSuggestions && filteredNeighborhoods.length > 0 && (
-          <div className="absolute left-0 right-0 top-full z-50 rounded-b-xl border border-t-0 border-border bg-card shadow-lg">
+          <div className="absolute left-0 right-0 top-full z-[600] rounded-b-xl border border-t-0 border-border bg-card shadow-lg">
             {filteredNeighborhoods.slice(0, 6).map((n) => (
               <button
                 key={n.slug}

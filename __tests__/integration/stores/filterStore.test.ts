@@ -19,6 +19,14 @@ const resetStoreData = () => {
     verified: undefined,
     amenities: undefined,
     keyword: undefined,
+    search: undefined,
+    min_lat: undefined,
+    max_lat: undefined,
+    min_lng: undefined,
+    max_lng: undefined,
+    lat: undefined,
+    lng: undefined,
+    radius_km: undefined,
   });
 };
 

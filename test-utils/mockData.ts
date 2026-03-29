@@ -21,6 +21,7 @@ import type {
   AdminAnalyticsOverview,
   AuditLog,
   Report,
+  TokenPair,
 } from "@/lib/api/types";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -184,35 +185,80 @@ export const mockAdmin: User = {
 // ─────────────────────────────────────────────────────────────────────────────
 // LISTING IMAGES helper
 // ─────────────────────────────────────────────────────────────────────────────
+/**
+ * Public Unsplash URLs (verified HTTP 200, hotlink-friendly). Used for mock listings so map/cards
+ * do not rely on production CDN paths that may 404 in local dev.
+ */
+const MOCK_LISTING_IMAGE_URLS = [
+  "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1600&q=80",
+  "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1600&q=80",
+  "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1600&q=80",
+  "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=1600&q=80",
+  "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1600&q=80",
+  "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1600&q=80",
+  "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=80",
+  "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1600&q=80",
+];
+
 function makeImages(listingId: string, count: number): ListingImage[] {
-  return Array.from({ length: count }, (_, i) => ({
-    id: `img-${listingId}-${i + 1}`,
-    listing_id: listingId,
-    image_url: `https://images.ktmapartments.com/listings/${listingId}/photo-${i + 1}.jpg`,
-    webp_url: `https://images.ktmapartments.com/listings/${listingId}/photo-${i + 1}.webp`,
-    storage_key: `listings/${listingId}/photo-${i + 1}.webp`,
-    alt_text: `Property photo ${i + 1}`,
-    sort_order: i,
-    is_primary: i === 0,
-    is_cover: i === 0,
-    upload_status: "complete" as const,
-    created_at: "2024-11-15T08:30:00Z",
-  }));
+  const n = Number.parseInt(listingId.replace(/\D/g, ""), 10) || 0;
+  return Array.from({ length: count }, (_, i) => {
+    const url = MOCK_LISTING_IMAGE_URLS[(n + i) % MOCK_LISTING_IMAGE_URLS.length];
+    return {
+      id: `img-${listingId}-${i + 1}`,
+      listing_id: listingId,
+      image_url: url,
+      webp_url: url,
+      storage_key: `listings/${listingId}/photo-${i + 1}.webp`,
+      alt_text: `Property photo ${i + 1}`,
+      sort_order: i,
+      is_primary: i === 0,
+      is_cover: i === 0,
+      upload_status: "complete" as const,
+      created_at: "2024-11-15T08:30:00Z",
+    };
+  });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // LISTING LOCATIONS helper
 // ─────────────────────────────────────────────────────────────────────────────
-function makeLocation(listingId: string, neighborhood: Neighborhood, addressLine: string): ListingLocation {
+/**
+ * Small deterministic offset from the neighborhood center so map markers are not stacked
+ * on one pixel (SearchMap / Leaflet need `location.latitude` & `location.longitude`).
+ */
+function listingLatLngOffset(listingId: string): { dLat: number; dLng: number } {
+  let hash = 0;
+  for (let i = 0; i < listingId.length; i++) {
+    hash = (hash << 5) - hash + listingId.charCodeAt(i);
+    hash |= 0;
+  }
+  const spread = 0.00028;
+  const dLat = ((hash % 19) - 9) * spread;
+  const dLng = ((((hash >> 5) % 19) - 9) * spread);
+  return { dLat, dLng };
+}
+
+function makeLocation(
+  listingId: string,
+  neighborhood: Neighborhood,
+  addressLine: string,
+  overrides?: Partial<Pick<ListingLocation, "city" | "district" | "municipality">>,
+): ListingLocation {
+  const baseLat = neighborhood.lat ?? 27.7172;
+  const baseLng = neighborhood.lng ?? 85.324;
+  const { dLat, dLng } = listingLatLngOffset(listingId);
   return {
     location_id: `loc-${listingId}`,
     listing_id: listingId,
     address_line: addressLine,
-    city: "Kathmandu",
-    municipality: "Kathmandu Metropolitan City",
-    district: "Kathmandu",
+    city: overrides?.city ?? "Kathmandu",
+    municipality: overrides?.municipality ?? "Kathmandu Metropolitan City",
+    district: overrides?.district ?? "Kathmandu",
     province: "Bagmati",
     neighborhood,
+    latitude: baseLat + dLat,
+    longitude: baseLng + dLng,
   };
 }
 
@@ -424,7 +470,11 @@ export const mockListings: Listing[] = [
     pets_allowed: true,
     smoking_allowed: false,
     available_from: null,
-    location: makeLocation("lst-005", mockNeighborhoods[4], "Dattatreya Square, Bhaktapur"),
+    location: makeLocation("lst-005", mockNeighborhoods[4], "Dattatreya Square, Bhaktapur", {
+      city: "Bhaktapur",
+      district: "Bhaktapur",
+      municipality: "Bhaktapur Municipality",
+    }),
     owner: {
       user_id: "usr-owner-001",
       first_name: "Sita",
@@ -650,16 +700,18 @@ export const mockFavorites: Favorite[] = [
 // ─────────────────────────────────────────────────────────────────────────────
 // AUTH TOKENS (simulated JWT responses)
 // ─────────────────────────────────────────────────────────────────────────────
-export const mockAuthTokens = {
-  access_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c3ItcmVudGVyLTAwMSIsImVtYWlsIjoicmFtLnNoYXJtYUBnbWFpbC5jb20iLCJyb2xlIjoicmVudGVyIiwic3RhdHVzIjoiYWN0aXZlIiwiaWF0IjoxNzEwMDAwMDAwLCJleHAiOjE3MTAwMDA5MDB9.mock_signature",
+export const mockAuthTokens: TokenPair = {
+  access_token:
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c3ItcmVudGVyLTAwMSIsImVtYWlsIjoicmFtLnNoYXJtYUBnbWFpbC5jb20iLCJyb2xlIjoicmVudGVyIiwic3RhdHVzIjoiYWN0aXZlIiwiaWF0IjoxNzEwMDAwMDAwLCJleHAiOjE3MTAwMDA5MDB9.mock_signature",
+  refresh_token: "mock-refresh-renter",
   token_type: "bearer",
-  user: mockRenter,
 };
 
-export const mockOwnerAuthTokens = {
-  access_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c3Itb3duZXItMDAxIiwiZW1haWwiOiJzaXRhLnRoYXBhQGdtYWlsLmNvbSIsInJvbGUiOiJvd25lciIsInN0YXR1cyI6ImFjdGl2ZSIsImlhdCI6MTcxMDAwMDAwMCwiZXhwIjoxNzEwMDAwOTAwfQ.mock_signature",
+export const mockOwnerAuthTokens: TokenPair = {
+  access_token:
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c3Itb3duZXItMDAxIiwiZW1haWwiOiJzaXRhLnRoYXBhQGdtYWlsLmNvbSIsInJvbGUiOiJvd25lciIsInN0YXR1cyI6ImFjdGl2ZSIsImlhdCI6MTcxMDAwMDAwMCwiZXhwIjoxNzEwMDAwOTAwfQ.mock_signature",
+  refresh_token: "mock-refresh-owner",
   token_type: "bearer",
-  user: mockOwner,
 };
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -1,9 +1,9 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { Heart, MapPin, Bed, Bath, Square } from "lucide-react";
 import { cn, formatPrice, getListingCoverImage, getListingLocation, formatBedBath, formatRelativeTime } from "@/lib/utils";
+import { ListingCoverImage } from "@/components/listings/ListingCoverImage";
 import { VerifiedBadge } from "@/components/common/VerifiedBadge";
 import { useToggleFavorite, useIsFavorite } from "@/lib/hooks/useFavorites";
 import { useAuthStore } from "@/lib/stores/authStore";
@@ -36,11 +36,11 @@ export function ListingCard({ listing, variant = "grid", className }: ListingCar
     return (
       <Link href={`/apartments/${listing.slug}`} className={cn("listing-card flex overflow-hidden", className)}>
         <div className="relative h-36 w-48 shrink-0 sm:h-44 sm:w-56">
-          <Image
+          <ListingCoverImage
             src={coverImage}
             alt={listing.title}
             fill
-            className="object-cover"
+            imgClassName="object-cover"
             sizes="(max-width: 640px) 192px, 224px"
           />
           {listing.is_verified && (
@@ -103,11 +103,11 @@ export function ListingCard({ listing, variant = "grid", className }: ListingCar
     <Link href={`/apartments/${listing.slug}`} className={cn("listing-card group block overflow-hidden", className)}>
       {/* Image */}
       <div className="relative aspect-[4/3] overflow-hidden bg-muted">
-        <Image
+        <ListingCoverImage
           src={coverImage}
           alt={listing.title}
           fill
-          className="object-cover transition-transform duration-300 group-hover:scale-105"
+          imgClassName="object-cover transition-transform duration-300 group-hover:scale-105"
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
         />
         {/* Badges */}

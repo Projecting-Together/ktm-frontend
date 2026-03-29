@@ -16,6 +16,28 @@ export type { Listing, ListingListItem, ListingFilters, PaginatedResponse, Ameni
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "https://api.ktmapartments.com/api/v1";
 
+/** Abort slow/hung requests so the UI does not stay on “Searching…” forever. */
+const API_FETCH_TIMEOUT_MS = 25_000;
+
+function mergeFetchSignals(userSignal: AbortSignal | undefined): AbortSignal {
+  const timeoutSignal = AbortSignal.timeout(API_FETCH_TIMEOUT_MS);
+  if (!userSignal) return timeoutSignal;
+  return AbortSignal.any([userSignal, timeoutSignal]);
+}
+
+function mapFetchFailure(err: unknown): string {
+  if (err instanceof DOMException && err.name === "AbortError") {
+    return "Request timed out. The server may be slow or unreachable — check your connection and try again.";
+  }
+  if (err instanceof TypeError) {
+    const m = err.message.toLowerCase();
+    if (m.includes("fetch") || m.includes("network") || m.includes("failed")) {
+      return "Cannot reach the API server. Check your internet connection, firewall, or NEXT_PUBLIC_API_URL in development.";
+    }
+  }
+  return err instanceof Error ? err.message : "Network error";
+}
+
 let accessToken: string | null = null;
 export function setAccessToken(t: string | null) { accessToken = t; }
 export function getAccessToken() { return accessToken; }
@@ -31,13 +53,26 @@ async function apiFetch<T>(path: string, options: RequestInit = {}, withAuth = t
   if (withAuth && accessToken) headers["Authorization"] = `Bearer ${accessToken}`;
 
   try {
-    const res = await fetch(`${API_BASE}${path}`, { ...options, headers, credentials: "include" });
+    const { signal: userSignal, ...restOptions } = options;
+    const signal = mergeFetchSignals(userSignal ?? undefined);
+    const res = await fetch(`${API_BASE}${path}`, {
+      ...restOptions,
+      headers,
+      credentials: "include",
+      signal,
+    });
 
     if (res.status === 401 && withAuth) {
       const refreshed = await refreshAccessToken();
       if (refreshed) {
         headers["Authorization"] = `Bearer ${accessToken}`;
-        const retry = await fetch(`${API_BASE}${path}`, { ...options, headers, credentials: "include" });
+        const retrySignal = mergeFetchSignals(userSignal ?? undefined);
+        const retry = await fetch(`${API_BASE}${path}`, {
+          ...restOptions,
+          headers,
+          credentials: "include",
+          signal: retrySignal,
+        });
         if (retry.ok) {
           const data = retry.status === 204 ? null : await retry.json();
           return { data: data as T, error: null };
@@ -57,7 +92,7 @@ async function apiFetch<T>(path: string, options: RequestInit = {}, withAuth = t
     if (res.status === 204) return { data: null, error: null };
     return { data: await res.json() as T, error: null };
   } catch (err) {
-    return { data: null, error: { message: err instanceof Error ? err.message : "Network error" } };
+    return { data: null, error: { message: mapFetchFailure(err) } };
   }
 }
 

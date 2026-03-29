@@ -5,9 +5,11 @@
  */
 
 import { useState, useEffect, useRef, useMemo } from "react";
+import L from "leaflet";
 import { Property, SearchFilters } from "@/../../shared/types";
 import { sampleProperties } from "@/lib/sampleData";
 import { MapView } from "@/components/Map";
+import { ensureLeafletDefaultIcons } from "../../../components/map/leaflet-defaults";
 import PropertyCard from "@/components/PropertyCard";
 import PropertyDetailsModal from "@/components/PropertyDetailsModal";
 import Filters from "@/components/Filters";
@@ -22,13 +24,12 @@ interface MapSearchProps {
 }
 
 interface MarkerData {
-  marker: google.maps.Marker | any;
-  infoWindow: google.maps.InfoWindow;
+  marker: L.Marker;
   property: Property;
 }
 
 export default function MapSearch({ onSelectProperty }: MapSearchProps) {
-  const mapRef = useRef<google.maps.Map | null>(null);
+  const mapRef = useRef<L.Map | null>(null);
   const markersRef = useRef<Map<string, MarkerData>>(new Map());
 
   const [listingType, setListingType] = useState<"sale" | "rent">("sale");
@@ -95,78 +96,51 @@ export default function MapSearch({ onSelectProperty }: MapSearchProps) {
 
   // Update markers when properties change
   useEffect(() => {
-    if (!mapRef.current) return;
+    const map = mapRef.current;
+    if (!map) return;
+    ensureLeafletDefaultIcons();
 
-    // Clear existing markers
-    markersRef.current.forEach(({ marker, infoWindow }) => {
-      marker.setMap(null);
-      infoWindow.close();
+    markersRef.current.forEach(({ marker }) => {
+      marker.remove();
     });
     markersRef.current.clear();
 
-    // Add new markers
     displayedProperties.forEach((property) => {
       try {
-        // Create marker with custom label showing price
         const priceLabel = `₹${(property.price / 10000000).toFixed(1)}Cr`;
-        
-        const marker = new google.maps.Marker({
-          position: { lat: property.latitude, lng: property.longitude },
-          map: mapRef.current,
+        const marker = L.marker([property.latitude, property.longitude], {
           title: property.title,
-          label: {
-            text: priceLabel,
-            color: "white",
-            fontSize: "12px",
-            fontWeight: "bold",
-          },
-        });
+        }).addTo(map);
 
-        // Create info window content
         const infoWindowContent = document.createElement("div");
         infoWindowContent.style.cssText = "padding: 12px; max-width: 280px; font-family: system-ui;";
         infoWindowContent.innerHTML = `
           <div style="display: flex; flex-direction: column; gap: 8px;">
             <h3 style="font-weight: 600; font-size: 14px; margin: 0;">${property.title}</h3>
             <p style="font-size: 12px; color: #666; margin: 0;">${property.address}</p>
-            <p style="font-weight: bold; font-size: 14px; margin: 0; color: #d97757;">₹${(property.price / 10000000).toFixed(1)}Cr</p>
+            <p style="font-weight: bold; font-size: 14px; margin: 0; color: #d97757;">${priceLabel}</p>
             <p style="font-size: 12px; color: #666; margin: 0;">${property.bedrooms} bed • ${property.bathrooms} bath • ${property.squareFeet} sqft</p>
-            <button style="padding: 6px 12px; background: #d97757; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">View Details</button>
+            <button type="button" style="padding: 6px 12px; background: #d97757; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">View Details</button>
           </div>
         `;
 
-        const infoWindow = new google.maps.InfoWindow({
-          content: infoWindowContent,
+        marker.bindPopup(infoWindowContent);
+        marker.on("popupopen", () => {
+          setSelectedProperty(property);
         });
-
-        marker.addListener("click", () => {
-          // Close all other info windows
-          markersRef.current.forEach(({ infoWindow: iw }) => {
-            iw.close();
-          });
-          infoWindow.open(mapRef.current, marker);
+        marker.on("click", () => {
           setSelectedProperty(property);
         });
 
-        // Add click handler to the View Details button
-        const handleDetailsClick = () => {
-          setSelectedProperty(property);
-          if (onSelectProperty) {
-            onSelectProperty(property);
-          }
-        };
-
-        // Store the handler for later cleanup
         const detailsButton = infoWindowContent.querySelector("button");
         if (detailsButton) {
-          detailsButton.addEventListener("click", handleDetailsClick);
+          detailsButton.addEventListener("click", () => {
+            setSelectedProperty(property);
+            onSelectProperty?.(property);
+          });
         }
 
-        markersRef.current.set(property.id, {
-          marker,
-          infoWindow,
-          property,
-        });
+        markersRef.current.set(property.id, { marker, property });
       } catch (error) {
         console.error("Error creating marker:", error);
       }
@@ -191,12 +165,9 @@ export default function MapSearch({ onSelectProperty }: MapSearchProps) {
     setSelectedProperty(property);
     setShowPropertyModal(true);
     if (mapRef.current) {
-      mapRef.current.panTo({ lat: property.latitude, lng: property.longitude });
-      mapRef.current.setZoom(16);
+      mapRef.current.setView([property.latitude, property.longitude], 16);
     }
-    if (onSelectProperty) {
-      onSelectProperty(property);
-    }
+    onSelectProperty?.(property);
   };
 
   return (
@@ -289,7 +260,7 @@ export default function MapSearch({ onSelectProperty }: MapSearchProps) {
             onMapReady={(map) => {
               mapRef.current = map;
             }}
-            className="w-full h-full"
+            className="h-full min-h-[400px] w-full"
           />
 
           {/* View Mode Toggle */}
