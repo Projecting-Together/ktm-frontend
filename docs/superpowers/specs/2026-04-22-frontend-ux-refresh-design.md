@@ -31,7 +31,7 @@
 - Map: `components/map/SearchMap.tsx` (Leaflet)
 - State + URL: `lib/stores/filterStore.ts` (includes `neighborhood` + bbox fields today)
 - MSW: `msw/handlers.ts` (still filters by `neighborhood=...`)
-- Public neighborhood browsing: `app/(public)/neighborhoods/*` + nav/footer links
+- Legacy neighborhood URLs: handled via `next.config.ts` redirects to `/apartments` (the old `app/(public)/neighborhoods/*` routes are removed)
 - Auth UI: `app/(auth)/login/page.tsx`, `app/(auth)/register/page.tsx`
 - Validation: `lib/validations/listingSchema.ts` (auth + listing form)
 
@@ -172,7 +172,8 @@
   - `__tests__/unit/components/FilterPanel.test.tsx` (no neighborhood, slider present)
   - store tests `__tests__/integration/stores/filterStore.test.ts` (neighborhood removed)
 - Update e2e:
-  - remove/replace `__tests__/e2e/neighborhoods.spec.ts`
+  - add `__tests__/e2e/neighborhood-redirects.spec.ts` (legacy `/neighborhoods` URLs)
+  - keep `__tests__/e2e/home.spec.ts` focused on `/` (no `/neighborhoods` anchors); move `/apartments` UI flows to `__tests__/e2e/apartments-search.spec.ts` as needed
   - ensure `search-filters.spec.ts` and `map` flows still pass with bbox button behavior
 
 ## Mermaid: Search/Map/URL Flow
