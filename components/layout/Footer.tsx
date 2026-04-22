@@ -4,7 +4,6 @@ import { Building2, Phone, Mail, MapPin } from "lucide-react";
 const FOOTER_LINKS = {
   Explore: [
     { href: "/apartments", label: "Apartments" },
-    { href: "/neighborhoods", label: "Neighborhoods" },
     { href: "/agents", label: "Agents" },
     { href: "/news", label: "News" },
     { href: "/market-insights", label: "Market Insights" },
@@ -22,14 +21,6 @@ const FOOTER_LINKS = {
     { href: "/terms", label: "Terms of Service" },
   ],
 };
-
-const NEIGHBORHOODS = [
-  { href: "/neighborhoods/thamel", label: "Thamel" },
-  { href: "/neighborhoods/lazimpat", label: "Lazimpat" },
-  { href: "/neighborhoods/patan", label: "Patan" },
-  { href: "/neighborhoods/bhaktapur", label: "Bhaktapur" },
-  { href: "/neighborhoods/koteshwor", label: "Koteshwor" },
-];
 
 export function Footer() {
   return (
@@ -84,24 +75,6 @@ export function Footer() {
               </ul>
             </div>
           ))}
-        </div>
-
-        {/* Popular neighborhoods */}
-        <div className="mt-10 border-t border-primary-foreground/10 pt-8">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-primary-foreground/50">
-            Popular Neighborhoods
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {NEIGHBORHOODS.map((n) => (
-              <Link
-                key={n.href}
-                href={n.href}
-                className="rounded-full border border-primary-foreground/20 px-3 py-1 text-xs text-primary-foreground/70 transition-colors hover:border-accent hover:text-accent"
-              >
-                {n.label}
-              </Link>
-            ))}
-          </div>
         </div>
 
         {/* Bottom bar */}
