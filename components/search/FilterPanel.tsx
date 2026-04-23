@@ -224,6 +224,7 @@ export function FilterPanel({ mode = "sidebar" }: FilterPanelProps) {
               <button
                 role="switch"
                 data-testid={`toggle-${key}`}
+                aria-label={label}
                 aria-checked={!!store[key]}
                 onClick={() => store.setFilter(key, !store[key] || undefined)}
                 className={cn(

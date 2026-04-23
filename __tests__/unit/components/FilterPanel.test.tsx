@@ -60,9 +60,9 @@ describe("FilterPanel", () => {
 
   it("renders verified listings switch", () => {
     render(<FilterPanel />);
-    // FilterPanel may have multiple switches (verified, parking, pet-friendly)
-    const switches = screen.getAllByRole("switch");
-    expect(switches.length).toBeGreaterThan(0);
+    expect(screen.getByRole("switch", { name: /parking available/i })).toBeInTheDocument();
+    expect(screen.getByRole("switch", { name: /pet-friendly/i })).toBeInTheDocument();
+    expect(screen.getByRole("switch", { name: /verified listings only/i })).toBeInTheDocument();
   });
 
   it("renders parking and pet-friendly toggles", () => {
