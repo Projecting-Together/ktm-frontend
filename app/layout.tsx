@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Providers } from "@/lib/providers/Providers";
 import { applyThemeVariables } from "@/lib/theme/applyTheme";
+import { themeTokens } from "@/lib/theme/tokens";
 
 const themeVariables = applyThemeVariables();
 
@@ -32,7 +33,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#FAF8F4" },
+    { media: "(prefers-color-scheme: light)", color: themeTokens.color.background },
     { media: "(prefers-color-scheme: dark)", color: "#0A1929" },
   ],
 };

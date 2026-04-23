@@ -128,7 +128,7 @@ export default function SettingsProfilePage() {
         </div>
       </form>
 
-      <p role="status" aria-live="polite" className="mt-3 text-sm text-emerald-600">
+      <p role="status" aria-live="polite" className="mt-3 text-sm text-verified">
         {savedNotice}
       </p>
     </div>

@@ -165,7 +165,7 @@
   }
   @media (min-width: 640px) { .container { padding-left: 1.5rem; padding-right: 1.5rem; } }
   @media (min-width: 1024px) { .container { padding-left: 2rem; padding-right: 2rem; max-width: 1280px; } }
-  .badge-verified { @apply inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700; }
+  .badge-verified { @apply inline-flex items-center gap-1 rounded-full bg-verified/15 px-2 py-0.5 text-xs font-semibold text-verified; }
   .listing-card { @apply rounded-xl border border-border bg-card shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-0.5; }
   .skeleton { @apply animate-pulse rounded-md bg-muted; }
   .btn-primary { @apply inline-flex items-center justify-center rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-accent-foreground shadow-sm transition-all hover:bg-accent/90 hover:shadow-md active:scale-95 disabled:pointer-events-none disabled:opacity-50; }

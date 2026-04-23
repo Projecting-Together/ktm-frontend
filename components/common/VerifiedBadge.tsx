@@ -23,7 +23,7 @@ export function VerifiedBadge({ size = "md", className, showLabel = true }: Veri
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full bg-emerald-100 font-semibold text-emerald-700",
+        "inline-flex items-center rounded-full bg-verified/15 font-semibold text-verified",
         sizeClasses[size],
         className
       )}
