@@ -1,5 +1,5 @@
 {
-  "name": "zillow-kathmandu-clone",
+  "name": "ktm-appartments",
   "version": "1.0.0",
   "type": "module",
   "license": "MIT",
@@ -134,10 +134,24 @@
     "url": "https://github.com/Projecting-Together/ktm-frontend/issues"
   },
   "homepage": "https://github.com/Projecting-Together/ktm-frontend#readme",
-  "description": "",
+  "description": "paltform for the rent,buy,sell appartment, house, land",
   "msw": {
     "workerDirectory": [
       "public"
     ]
-  }
+  },
+  "directories": {
+    "doc": "docs",
+    "lib": "lib"
+  },
+  "keywords": [
+    "buy",
+    "appratment",
+    "buy",
+    "house",
+    "sell",
+    "house",
+    "sell",
+    "appartmnet"
+  ]
 }
