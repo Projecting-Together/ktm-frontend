@@ -56,7 +56,7 @@ export default function RegisterPage() {
               <div className="relative">
                 <input id="password" {...register("password")} type={showPw ? "text" : "password"} placeholder="Min. 8 characters" autoComplete="new-password"
                   className="h-11 w-full rounded-lg border border-border bg-background px-3 pr-10 text-sm placeholder:text-muted-foreground focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent" />
-                <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                <button type="button" aria-label={showPw ? "Hide password" : "Show password"} aria-pressed={showPw} onClick={() => setShowPw(!showPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                   {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
