@@ -32,6 +32,75 @@ describe("contract adapters", () => {
     expect(listings[1].location).toBeNull();
   });
 
+  it("falls back to null for unsupported listing enum values", () => {
+    const [listing] = adaptListingsForSearch([
+      {
+        id: "listing-enum",
+        slug: "listing-enum",
+        title: "Enum fallback",
+        currency: "NPR",
+        status: "active",
+        created_at: "2026-01-01T00:00:00Z",
+        listing_type: "castle" as never,
+        furnishing: "luxury" as never,
+        price_period: "weekly" as never,
+      },
+    ]);
+
+    expect(listing.listing_type).toBeNull();
+    expect(listing.furnishing).toBeNull();
+    expect(listing.price_period).toBeNull();
+  });
+
+  it("drops malformed image entries and normalizes valid image fields", () => {
+    const [listing] = adaptListingsForSearch([
+      {
+        id: "listing-images",
+        slug: "listing-images",
+        title: "Image normalize",
+        currency: "NPR",
+        status: "active",
+        created_at: "2026-01-01T00:00:00Z",
+        images: [
+          null,
+          "invalid-shape",
+          {
+            id: "img-1",
+            listing_id: "listing-images",
+            image_url: "https://cdn.example.com/1.jpg",
+            sort_order: 5,
+            is_primary: true,
+            is_cover: false,
+          },
+          {
+            image_url: "  ",
+          },
+          {
+            image_url: "https://cdn.example.com/2.jpg",
+          },
+        ] as never,
+      },
+    ]);
+
+    expect(listing.images).toHaveLength(2);
+    expect(listing.images[0]).toMatchObject({
+      id: "img-1",
+      listing_id: "listing-images",
+      image_url: "https://cdn.example.com/1.jpg",
+      sort_order: 5,
+      is_primary: true,
+      is_cover: false,
+    });
+    expect(listing.images[1]).toMatchObject({
+      id: "listing-images-image-4",
+      listing_id: "listing-images",
+      image_url: "https://cdn.example.com/2.jpg",
+      sort_order: 4,
+      is_primary: false,
+      is_cover: false,
+    });
+  });
+
   it("adapts listings for map markers and filters invalid coordinates", () => {
     const markers = adaptListingsForMap([
       {
