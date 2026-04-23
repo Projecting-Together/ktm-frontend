@@ -3,6 +3,8 @@ import "./globals.css";
 import { Providers } from "@/lib/providers/Providers";
 import { applyThemeVariables } from "@/lib/theme/applyTheme";
 
+const themeVariables = applyThemeVariables();
+
 export const metadata: Metadata = {
   metadataBase: new URL("https://ktmapartments.com"),
   title: {
@@ -36,8 +38,6 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  const themeVariables = applyThemeVariables();
-
   return (
     <html lang="en" suppressHydrationWarning data-scroll-behavior="smooth">
       <head>
