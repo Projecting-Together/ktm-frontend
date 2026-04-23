@@ -72,12 +72,6 @@ export function SearchMap({ listings, className }: SearchMapProps) {
                     />
                   </div>
                   <p className="text-sm font-semibold leading-tight">{listing.title}</p>
-                  {listing.price != null && (
-                    <p className="mt-1 text-sm text-accent">
-                      NPR {Number(listing.price).toLocaleString()}
-                      {listing.price_period ? ` / ${listing.price_period}` : ""}
-                    </p>
-                  )}
                   <Link
                     href={`/apartments/${listing.slug}`}
                     className="mt-2 inline-block text-xs font-medium text-accent underline"
