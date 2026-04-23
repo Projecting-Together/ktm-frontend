@@ -10,7 +10,6 @@ const resetStoreData = () => {
     isFilterPanelOpen: false,
     view: "grid",
     listing_type: undefined,
-    neighborhood: undefined,
     min_price: undefined,
     max_price: undefined,
     bedrooms: undefined,
@@ -48,18 +47,9 @@ describe("filterStore", () => {
     expect(useFilterStore.getState().listing_type).toBeUndefined();
   });
 
-  it("starts with no neighborhood filter", () => {
-    expect(useFilterStore.getState().neighborhood).toBeUndefined();
-  });
-
   it("setFilter sets listing_type", () => {
     useFilterStore.getState().setFilter("listing_type", "apartment");
     expect(useFilterStore.getState().listing_type).toBe("apartment");
-  });
-
-  it("setFilter sets neighborhood", () => {
-    useFilterStore.getState().setFilter("neighborhood", "thamel");
-    expect(useFilterStore.getState().neighborhood).toBe("thamel");
   });
 
   it("setFilter sets min_price and max_price", () => {
@@ -102,7 +92,6 @@ describe("filterStore", () => {
 
   it("resetFilters clears all custom filters", () => {
     useFilterStore.getState().setFilter("listing_type", "apartment");
-    useFilterStore.getState().setFilter("neighborhood", "thamel");
     useFilterStore.getState().setFilter("max_price", 30000);
     useFilterStore.getState().setFilter("parking", true);
     useFilterStore.getState().setFilter("pets_allowed", true);
@@ -111,32 +100,11 @@ describe("filterStore", () => {
     useFilterStore.getState().resetFilters();
     const state = useFilterStore.getState();
     expect(state.listing_type).toBeUndefined();
-    expect(state.neighborhood).toBeUndefined();
     expect(state.max_price).toBeUndefined();
     expect(state.parking).toBeUndefined();
     expect(state.pets_allowed).toBeUndefined();
     expect(state.available_from).toBeUndefined();
     expect(state.furnishing).toBeUndefined();
-  });
-
-  it("toggleNeighborhood adds a neighborhood as comma-separated string", () => {
-    useFilterStore.getState().toggleNeighborhood("thamel");
-    expect(useFilterStore.getState().neighborhood).toContain("thamel");
-  });
-
-  it("toggleNeighborhood removes a neighborhood when toggled again", () => {
-    useFilterStore.getState().toggleNeighborhood("thamel");
-    useFilterStore.getState().toggleNeighborhood("thamel");
-    const nbh = useFilterStore.getState().neighborhood;
-    expect(!nbh || !nbh.includes("thamel")).toBe(true);
-  });
-
-  it("toggleNeighborhood supports multiple neighborhoods", () => {
-    useFilterStore.getState().toggleNeighborhood("thamel");
-    useFilterStore.getState().toggleNeighborhood("lazimpat");
-    const nbh = useFilterStore.getState().neighborhood ?? "";
-    expect(nbh).toContain("thamel");
-    expect(nbh).toContain("lazimpat");
   });
 
   it("toggleListingType adds a listing type", () => {
@@ -153,7 +121,6 @@ describe("filterStore", () => {
 
   it("selectApiFilters strips UI-only state (isFilterPanelOpen, view)", () => {
     useFilterStore.getState().setFilter("listing_type", "apartment");
-    useFilterStore.getState().setFilter("neighborhood", "thamel");
     const apiFilters = selectApiFilters(useFilterStore.getState());
     expect(apiFilters).not.toHaveProperty("isFilterPanelOpen");
     expect(apiFilters).not.toHaveProperty("view");
@@ -167,5 +134,11 @@ describe("filterStore", () => {
     expect(apiFilters).not.toHaveProperty("setPriceRange");
     expect(apiFilters).not.toHaveProperty("resetFilters");
     expect(apiFilters).not.toHaveProperty("toggleNeighborhood");
+  });
+
+  it("store API does not expose neighborhood helper actions", () => {
+    const state = useFilterStore.getState() as unknown as Record<string, unknown>;
+    expect(state).not.toHaveProperty("toggleNeighborhood");
+    expect(state).not.toHaveProperty("neighborhood");
   });
 });

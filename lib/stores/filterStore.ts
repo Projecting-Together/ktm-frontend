@@ -1,28 +1,29 @@
 "use client";
 
 import { create } from "zustand";
-import type { ListingFilters, FurnishingType, ListingType } from "@/lib/api/types";
+import type { ListingFilters, ListingType } from "@/lib/api/types";
 
-export interface FilterState extends ListingFilters {
+type SearchFilters = Omit<ListingFilters, "neighborhood">;
+
+export interface FilterState extends SearchFilters {
   // UI-only state (not serialized to URL)
   isFilterPanelOpen: boolean;
   view: "grid" | "list" | "map";
 }
 
 interface FilterActions {
-  setFilter: <K extends keyof ListingFilters>(key: K, value: ListingFilters[K]) => void;
-  setFilters: (filters: Partial<ListingFilters>) => void;
+  setFilter: <K extends keyof SearchFilters>(key: K, value: SearchFilters[K]) => void;
+  setFilters: (filters: Partial<SearchFilters>) => void;
   setPriceRange: (min?: number, max?: number) => void;
   resetFilters: () => void;
   toggleFilterPanel: () => void;
   setView: (view: FilterState["view"]) => void;
   // Helpers
-  toggleNeighborhood: (slug: string) => void;
   toggleListingType: (type: ListingType) => void;
   toggleAmenity: (code: string) => void;
 }
 
-const DEFAULT_FILTERS: ListingFilters = {
+const DEFAULT_FILTERS: SearchFilters = {
   page: 1,
   limit: 20,
   sort_by: "created_at",
@@ -57,9 +58,9 @@ const API_FILTER_KEYS = [
   "lat",
   "lng",
   "radius_km",
-] as const satisfies ReadonlyArray<keyof ListingFilters>;
+] as const satisfies ReadonlyArray<keyof SearchFilters>;
 
-function normalizePriceRange(min?: number, max?: number): Pick<ListingFilters, "min_price" | "max_price"> {
+function normalizePriceRange(min?: number, max?: number): Pick<SearchFilters, "min_price" | "max_price"> {
   const minPrice = Number.isFinite(min) ? min : undefined;
   const maxPrice = Number.isFinite(max) ? max : undefined;
 
@@ -79,7 +80,7 @@ export const useFilterStore = create<FilterState & FilterActions>((set, get) => 
     set((state) => ({
       ...state,
       [key]: value,
-      page: key === "page" ? (value as ListingFilters["page"]) : 1,
+      page: key === "page" ? (value as SearchFilters["page"]) : 1,
     })),
 
   setFilters: (filters) =>
@@ -108,7 +109,6 @@ export const useFilterStore = create<FilterState & FilterActions>((set, get) => 
       view: state.view,
       // Explicitly clear all optional filters (Zustand merges, so we must set to undefined)
       listing_type: undefined,
-      neighborhood: undefined,
       min_price: undefined,
       max_price: undefined,
       bedrooms: undefined,
@@ -134,14 +134,6 @@ export const useFilterStore = create<FilterState & FilterActions>((set, get) => 
     set((state) => ({ isFilterPanelOpen: !state.isFilterPanelOpen })),
 
   setView: (view) => set({ view }),
-
-  toggleNeighborhood: (slug) => {
-    const current = (get().neighborhood ?? "").split(",").filter(Boolean);
-    const next = current.includes(slug)
-      ? current.filter((n) => n !== slug)
-      : [...current, slug];
-    set({ neighborhood: next.join(",") || undefined, page: 1 });
-  },
 
   toggleListingType: (type) => {
     const current = get().listing_type ?? "";
