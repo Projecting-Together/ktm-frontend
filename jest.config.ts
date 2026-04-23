@@ -23,8 +23,8 @@ const config: Config = {
     "^@mswjs/interceptors$": `${INTERCEPTORS}/lib/node/index.cjs`,
   },
   testMatch: [
-    "<rootDir>/__tests__/unit/**/*.test.{ts,tsx}",
-    "<rootDir>/__tests__/integration/**/*.test.{ts,tsx}",
+    "**/__tests__/unit/**/*.test.{ts,tsx}",
+    "**/__tests__/integration/**/*.test.{ts,tsx}",
   ],
   collectCoverageFrom: [
     "components/**/*.{ts,tsx}",
