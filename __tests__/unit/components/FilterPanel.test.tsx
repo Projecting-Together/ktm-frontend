@@ -31,9 +31,24 @@ describe("FilterPanel", () => {
 
   it("renders bedroom count buttons", () => {
     render(<FilterPanel />);
-    expect(screen.getByRole("button", { name: /^1$/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /^2$/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /^3$/ })).toBeInTheDocument();
+    const bedroomsHeading = screen.getByText(/bedrooms/i);
+    const bedroomsSection = bedroomsHeading.parentElement;
+    expect(bedroomsSection).not.toBeNull();
+    const bedroomButtons = screen
+      .getAllByRole("button")
+      .filter((button) => bedroomsSection?.contains(button) && ["1", "2", "3", "4+"].includes(button.textContent ?? ""));
+    expect(bedroomButtons).toHaveLength(4);
+  });
+
+  it("renders bathroom selector options", () => {
+    render(<FilterPanel />);
+    const bathroomsHeading = screen.getByText(/bathrooms/i);
+    const bathroomsSection = bathroomsHeading.parentElement;
+    expect(bathroomsSection).not.toBeNull();
+    const bathroomButtons = screen
+      .getAllByRole("button")
+      .filter((button) => bathroomsSection?.contains(button) && ["1", "2", "3", "4+"].includes(button.textContent ?? ""));
+    expect(bathroomButtons).toHaveLength(4);
   });
 
   it("renders furnishing radio labels", () => {
@@ -66,5 +81,18 @@ describe("FilterPanel", () => {
     render(<FilterPanel />);
     const btn = screen.getByRole("button", { name: /^room$/i });
     expect(() => fireEvent.click(btn)).not.toThrow();
+  });
+
+  it("clicking bathroom option activates reset affordance", () => {
+    render(<FilterPanel />);
+    const bathroomsHeading = screen.getByText(/bathrooms/i);
+    const bathroomsSection = bathroomsHeading.parentElement;
+    expect(bathroomsSection).not.toBeNull();
+    const bathroomButton = bathroomsSection
+      ? screen.getAllByRole("button", { name: /^2$/ }).find((button) => bathroomsSection.contains(button))
+      : undefined;
+    expect(bathroomButton).toBeDefined();
+    if (bathroomButton) fireEvent.click(bathroomButton);
+    expect(screen.getByRole("button", { name: /reset/i })).toBeInTheDocument();
   });
 });

@@ -19,6 +19,7 @@ const BEDROOM_OPTIONS = [
   { value: 3, label: "3" },
   { value: 4, label: "4+" },
 ];
+const BATHROOM_OPTIONS = BEDROOM_OPTIONS;
 
 const FURNISHING_OPTIONS = [
   { value: "fully", label: "Fully Furnished" },
@@ -48,6 +49,7 @@ export function FilterPanel({ mode = "sidebar" }: FilterPanelProps) {
     store.min_price != null,
     store.max_price != null,
     store.bedrooms != null,
+    store.bathrooms != null,
     store.furnishing != null,
     store.parking,
     store.pets_allowed,
@@ -155,6 +157,27 @@ export function FilterPanel({ mode = "sidebar" }: FilterPanelProps) {
               className={cn(
                 "flex h-9 w-9 items-center justify-center rounded-lg border border-border text-sm font-medium transition-colors hover:border-accent hover:text-accent",
                 store.bedrooms === opt.value && "border-accent bg-accent/10 text-accent"
+              )}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Bathrooms */}
+      <div>
+        <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Bathrooms
+        </p>
+        <div className="flex gap-2">
+          {BATHROOM_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => store.setFilter("bathrooms", store.bathrooms === opt.value ? undefined : opt.value)}
+              className={cn(
+                "flex h-9 w-9 items-center justify-center rounded-lg border border-border text-sm font-medium transition-colors hover:border-accent hover:text-accent",
+                store.bathrooms === opt.value && "border-accent bg-accent/10 text-accent"
               )}
             >
               {opt.label}
