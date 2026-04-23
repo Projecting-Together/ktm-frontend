@@ -9,6 +9,7 @@ import { FilterPanel } from "@/components/search/FilterPanel";
 import { SearchBar } from "@/components/search/SearchBar";
 import { useFilterStore, selectApiFilters } from "@/lib/stores/filterStore";
 import { useListings } from "@/lib/hooks/useListings";
+import { adaptListingsForSearch } from "@/lib/contracts/adapters";
 import { cn } from "@/lib/utils";
 
 const SearchMapDynamic = dynamic(
@@ -150,7 +151,7 @@ export default function SearchPageClient() {
 
   const filters = selectApiFilters(store as never);
   const { data, isPending, isError, error, refetch, isFetching } = useListings(filters);
-  const listings = data?.items ?? [];
+  const listings = adaptListingsForSearch(data?.items);
   const total = data?.total ?? 0;
   const totalPages = data?.total_pages ?? 1;
 

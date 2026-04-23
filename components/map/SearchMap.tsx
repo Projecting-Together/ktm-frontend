@@ -4,7 +4,8 @@ import { Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import { useEffect, useMemo } from "react";
 import Link from "next/link";
-import type { ListingListItem } from "@/lib/api/client";
+import type { ListingListItem } from "@/lib/api/types";
+import { adaptListingsForMap } from "@/lib/contracts/adapters";
 import { MapView } from "./MapView";
 import { cn, getListingCoverImage } from "@/lib/utils";
 import { ListingCoverImage } from "@/components/listings/ListingCoverImage";
@@ -26,19 +27,7 @@ interface SearchMapProps {
 }
 
 export function SearchMap({ listings, className }: SearchMapProps) {
-  const normalizedListings = useMemo(
-    () =>
-      listings.flatMap((listing) => {
-        const lat = listing.location?.latitude;
-        const lng = listing.location?.longitude;
-        if (lat == null || lng == null) return [];
-        const normalizedLat = Number(lat);
-        const normalizedLng = Number(lng);
-        if (Number.isNaN(normalizedLat) || Number.isNaN(normalizedLng)) return [];
-        return [{ listing, lat: normalizedLat, lng: normalizedLng }];
-      }),
-    [listings],
-  );
+  const normalizedListings = useMemo(() => adaptListingsForMap(listings), [listings]);
 
   const points: [number, number][] = useMemo(
     () => normalizedListings.map(({ lat, lng }) => [lat, lng]),
