@@ -1,46 +1,26 @@
 import { test, expect } from "@playwright/test";
 
-test.describe("Neighborhoods Pages", () => {
-  test("neighborhoods index page renders", async ({ page }) => {
+test.describe("Neighborhoods Removed", () => {
+  test("navbar/footer/home surfaces do not expose neighborhoods links", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForLoadState("networkidle");
+
+    await expect(page.getByRole("link", { name: /^neighborhoods$/i })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: /explore all neighborhoods/i })).toHaveCount(0);
+    await expect(page.locator("footer")).not.toContainText(/popular neighborhoods/i);
+  });
+
+  test("neighborhoods index route returns 404", async ({ page }) => {
     const response = await page.goto("/neighborhoods");
-    expect(response?.status()).not.toBe(404);
+    expect(response?.status()).toBe(404);
     await page.waitForLoadState("networkidle");
-    await expect(page.locator("body")).not.toContainText("This page could not be found");
+    await expect(page.locator("body")).toContainText("This page could not be found");
   });
 
-  test("neighborhood detail page for thamel renders", async ({ page }) => {
+  test("neighborhood detail route returns 404", async ({ page }) => {
     const response = await page.goto("/neighborhoods/thamel");
-    expect(response?.status()).not.toBe(404);
+    expect(response?.status()).toBe(404);
     await page.waitForLoadState("networkidle");
-    await expect(page.locator("body")).not.toContainText("This page could not be found");
-    const body = await page.textContent("body");
-    expect(body?.toLowerCase()).toContain("thamel");
-  });
-
-  test("neighborhood detail page for lazimpat renders", async ({ page }) => {
-    const response = await page.goto("/neighborhoods/lazimpat");
-    expect(response?.status()).not.toBe(404);
-    await page.waitForLoadState("networkidle");
-    await expect(page.locator("body")).not.toContainText("This page could not be found");
-    const body = await page.textContent("body");
-    expect(body?.toLowerCase()).toContain("lazimpat");
-  });
-
-  test("neighborhood detail page for patan renders", async ({ page }) => {
-    const response = await page.goto("/neighborhoods/patan");
-    expect(response?.status()).not.toBe(404);
-    await page.waitForLoadState("networkidle");
-    await expect(page.locator("body")).not.toContainText("This page could not be found");
-    const body = await page.textContent("body");
-    expect(body?.toLowerCase()).toContain("patan");
-  });
-
-  test("neighborhood index shows Kathmandu neighborhoods", async ({ page }) => {
-    await page.goto("/neighborhoods");
-    await page.waitForLoadState("networkidle");
-    const body = await page.textContent("body");
-    expect(body?.toLowerCase()).toContain("thamel");
-    expect(body?.toLowerCase()).toContain("lazimpat");
-    expect(body?.toLowerCase()).toContain("patan");
+    await expect(page.locator("body")).toContainText("This page could not be found");
   });
 });
