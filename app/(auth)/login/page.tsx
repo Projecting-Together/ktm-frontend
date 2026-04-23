@@ -53,6 +53,9 @@ export default function LoginPage() {
             <button type="submit" disabled={isPending} className="btn-primary w-full justify-center gap-2 h-11">
               {isPending ? <><Loader2 className="h-4 w-4 animate-spin" /> Signing in...</> : "Sign in"}
             </button>
+            <button type="button" className="h-11 w-full rounded-lg border border-border bg-background text-sm font-medium text-foreground transition-colors hover:bg-muted">
+              Sign in with Google
+            </button>
           </form>
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
