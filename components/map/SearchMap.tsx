@@ -6,7 +6,6 @@ import { useEffect, useMemo } from "react";
 import Link from "next/link";
 import type { ListingListItem } from "@/lib/api/client";
 import { MapView } from "./MapView";
-import { ensureLeafletDefaultIcons } from "./leaflet-defaults";
 import { cn, getListingCoverImage } from "@/lib/utils";
 import { ListingCoverImage } from "@/components/listings/ListingCoverImage";
 import { VerifiedBadge } from "@/components/common/VerifiedBadge";
@@ -27,31 +26,30 @@ interface SearchMapProps {
 }
 
 export function SearchMap({ listings, className }: SearchMapProps) {
-  ensureLeafletDefaultIcons();
-
-  const withCoords = useMemo(
+  const normalizedListings = useMemo(
     () =>
-      listings.filter((l) => {
-        const lat = l.location?.latitude;
-        const lng = l.location?.longitude;
-        return lat != null && lng != null && !Number.isNaN(Number(lat)) && !Number.isNaN(Number(lng));
+      listings.flatMap((listing) => {
+        const lat = listing.location?.latitude;
+        const lng = listing.location?.longitude;
+        if (lat == null || lng == null) return [];
+        const normalizedLat = Number(lat);
+        const normalizedLng = Number(lng);
+        if (Number.isNaN(normalizedLat) || Number.isNaN(normalizedLng)) return [];
+        return [{ listing, lat: normalizedLat, lng: normalizedLng }];
       }),
     [listings],
   );
 
   const points: [number, number][] = useMemo(
-    () =>
-      withCoords.map((l) => [Number(l.location!.latitude), Number(l.location!.longitude)]),
-    [withCoords],
+    () => normalizedListings.map(({ lat, lng }) => [lat, lng]),
+    [normalizedListings],
   );
 
   return (
     <div className={cn("relative overflow-hidden rounded-xl border border-border", className)}>
       <MapView className="min-h-[min(70vh,560px)] h-[min(70vh,560px)]">
         {points.length > 0 ? <FitBounds positions={points} /> : null}
-        {withCoords.map((listing) => {
-          const lat = Number(listing.location!.latitude);
-          const lng = Number(listing.location!.longitude);
+        {normalizedListings.map(({ listing, lat, lng }) => {
           const img = getListingCoverImage(listing);
           return (
             <Marker key={listing.id} position={[lat, lng]}>
@@ -84,7 +82,7 @@ export function SearchMap({ listings, className }: SearchMapProps) {
           );
         })}
       </MapView>
-      {withCoords.length === 0 && (
+      {normalizedListings.length === 0 && (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-muted/20 p-4 text-center text-sm text-muted-foreground">
           No listings with map coordinates in this result set.
         </div>
