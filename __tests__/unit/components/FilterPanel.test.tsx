@@ -16,28 +16,39 @@ describe("FilterPanel", () => {
     expect(screen.getByRole("button", { name: /studio/i })).toBeInTheDocument();
   });
 
-  it("renders all Kathmandu neighborhood buttons", () => {
+  it("does not render a neighborhood filter section", () => {
     render(<FilterPanel />);
-    expect(screen.getByRole("button", { name: /^thamel$/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /^lazimpat$/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /^patan$/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /^bhaktapur$/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /^koteshwor$/i })).toBeInTheDocument();
+    expect(screen.queryByText(/neighborhood/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^thamel$/i })).not.toBeInTheDocument();
   });
 
-  it("renders price range quick-select buttons", () => {
+  it("renders price range slider and min/max inputs", () => {
     render(<FilterPanel />);
-    expect(screen.getByRole("button", { name: /under 10k/i })).toBeInTheDocument();
-    // "10K–20K" contains "10K" — use getAllByRole to avoid ambiguity
-    const buttons = screen.getAllByRole("button", { name: /10k/i });
-    expect(buttons.length).toBeGreaterThan(0);
+    expect(screen.getByRole("slider", { name: /price range/i })).toBeInTheDocument();
+    expect(screen.getByRole("spinbutton", { name: /minimum price/i })).toBeInTheDocument();
+    expect(screen.getByRole("spinbutton", { name: /maximum price/i })).toBeInTheDocument();
   });
 
   it("renders bedroom count buttons", () => {
     render(<FilterPanel />);
-    expect(screen.getByRole("button", { name: /^1$/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /^2$/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /^3$/ })).toBeInTheDocument();
+    const bedroomsHeading = screen.getByText(/bedrooms/i);
+    const bedroomsSection = bedroomsHeading.parentElement;
+    expect(bedroomsSection).not.toBeNull();
+    const bedroomButtons = screen
+      .getAllByRole("button")
+      .filter((button) => bedroomsSection?.contains(button) && ["1", "2", "3", "4+"].includes(button.textContent ?? ""));
+    expect(bedroomButtons).toHaveLength(4);
+  });
+
+  it("renders bathroom selector options", () => {
+    render(<FilterPanel />);
+    const bathroomsHeading = screen.getByText(/bathrooms/i);
+    const bathroomsSection = bathroomsHeading.parentElement;
+    expect(bathroomsSection).not.toBeNull();
+    const bathroomButtons = screen
+      .getAllByRole("button")
+      .filter((button) => bathroomsSection?.contains(button) && ["1", "2", "3", "4+"].includes(button.textContent ?? ""));
+    expect(bathroomButtons).toHaveLength(4);
   });
 
   it("renders furnishing radio labels", () => {
@@ -49,9 +60,9 @@ describe("FilterPanel", () => {
 
   it("renders verified listings switch", () => {
     render(<FilterPanel />);
-    // FilterPanel may have multiple switches (verified, parking, pet-friendly)
-    const switches = screen.getAllByRole("switch");
-    expect(switches.length).toBeGreaterThan(0);
+    expect(screen.getByRole("switch", { name: /parking available/i })).toBeInTheDocument();
+    expect(screen.getByRole("switch", { name: /pet-friendly/i })).toBeInTheDocument();
+    expect(screen.getByRole("switch", { name: /verified listings only/i })).toBeInTheDocument();
   });
 
   it("renders parking and pet-friendly toggles", () => {
@@ -66,9 +77,22 @@ describe("FilterPanel", () => {
     expect(() => fireEvent.click(btn)).not.toThrow();
   });
 
-  it("clicking Thamel neighborhood button does not throw", () => {
+  it("clicking room home-type button does not throw", () => {
     render(<FilterPanel />);
-    const btn = screen.getByRole("button", { name: /^thamel$/i });
+    const btn = screen.getByRole("button", { name: /^room$/i });
     expect(() => fireEvent.click(btn)).not.toThrow();
+  });
+
+  it("clicking bathroom option activates reset affordance", () => {
+    render(<FilterPanel />);
+    const bathroomsHeading = screen.getByText(/bathrooms/i);
+    const bathroomsSection = bathroomsHeading.parentElement;
+    expect(bathroomsSection).not.toBeNull();
+    const bathroomButton = bathroomsSection
+      ? screen.getAllByRole("button", { name: /^2$/ }).find((button) => bathroomsSection.contains(button))
+      : undefined;
+    expect(bathroomButton).toBeDefined();
+    if (bathroomButton) fireEvent.click(bathroomButton);
+    expect(screen.getByRole("button", { name: /reset/i })).toBeInTheDocument();
   });
 });

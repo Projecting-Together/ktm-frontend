@@ -122,66 +122,58 @@ describe("loginSchema", () => {
 });
 
 describe("registerSchema", () => {
-  it("passes with matching passwords and valid role", () => {
-    const result = registerSchema.safeParse({
-      email: "newuser@gmail.com",
-      password: "SecurePass1",
-      confirmPassword: "SecurePass1",
-      role: "renter",
-    });
+  const validRegistration = {
+    firstName: "Ram",
+    lastName: "Sharma",
+    email: "newuser@gmail.com",
+    password: "SecurePass1",
+    confirmPassword: "SecurePass1",
+  };
+
+  it("passes with matching passwords and required identity fields", () => {
+    const result = registerSchema.safeParse(validRegistration);
     expect(result.success).toBe(true);
   });
 
-  it("fails when passwords do not match", () => {
+  it("fails when firstName is missing", () => {
     const result = registerSchema.safeParse({
-      email: "newuser@gmail.com",
-      password: "SecurePass1",
-      confirmPassword: "DifferentPass2",
-      role: "renter",
+      ...validRegistration,
+      firstName: "",
     });
     expect(result.success).toBe(false);
   });
 
-  it("fails with invalid role", () => {
+  it("fails when lastName is missing", () => {
     const result = registerSchema.safeParse({
-      email: "newuser@gmail.com",
-      password: "SecurePass1",
-      confirmPassword: "SecurePass1",
-      role: "superadmin",
+      ...validRegistration,
+      lastName: "",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("fails when passwords do not match", () => {
+    const result = registerSchema.safeParse({
+      ...validRegistration,
+      confirmPassword: "DifferentPass2",
     });
     expect(result.success).toBe(false);
   });
 
   it("fails when password has no uppercase letter", () => {
     const result = registerSchema.safeParse({
-      email: "newuser@gmail.com",
+      ...validRegistration,
       password: "lowercase1",
       confirmPassword: "lowercase1",
-      role: "renter",
     });
     expect(result.success).toBe(false);
   });
 
   it("fails when password has no number", () => {
     const result = registerSchema.safeParse({
-      email: "newuser@gmail.com",
+      ...validRegistration,
       password: "NoNumbers!",
       confirmPassword: "NoNumbers!",
-      role: "renter",
     });
     expect(result.success).toBe(false);
-  });
-
-  it("accepts all valid roles", () => {
-    const roles = ["renter", "owner", "agent"] as const;
-    roles.forEach((role) => {
-      const result = registerSchema.safeParse({
-        email: "user@gmail.com",
-        password: "SecurePass1",
-        confirmPassword: "SecurePass1",
-        role,
-      });
-      expect(result.success).toBe(true);
-    });
   });
 });

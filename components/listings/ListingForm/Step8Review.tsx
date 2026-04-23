@@ -43,18 +43,18 @@ export function Step8Review({ images }: Props) {
           {checks.map((c) => (
             <div key={c.key} className="flex items-center gap-3 text-sm">
               {c.passed
-                ? <CheckCircle className="h-4 w-4 text-emerald-500 shrink-0" />
-                : <AlertCircle className="h-4 w-4 text-amber-500 shrink-0" />}
-              <span className={c.passed ? "text-foreground" : "text-amber-700"}>{c.label}</span>
+                ? <CheckCircle className="h-4 w-4 text-verified shrink-0" />
+                : <AlertCircle className="h-4 w-4 text-accent shrink-0" />}
+              <span className={c.passed ? "text-foreground" : "text-accent"}>{c.label}</span>
             </div>
           ))}
         </div>
         {allPassed ? (
-          <div className="mt-4 rounded-xl bg-emerald-50 border border-emerald-200 p-3 text-sm text-emerald-700 font-medium">
+          <div className="mt-4 rounded-xl border border-verified/40 bg-verified/10 p-3 text-sm font-medium text-verified">
             ✅ All checks passed! Your listing will be submitted for review.
           </div>
         ) : (
-          <div className="mt-4 rounded-xl bg-amber-50 border border-amber-200 p-3 text-sm text-amber-700">
+          <div className="mt-4 rounded-xl border border-accent/30 bg-accent/10 p-3 text-sm text-accent">
             ⚠️ Please fix the items above before submitting.
           </div>
         )}
@@ -86,9 +86,9 @@ export function Step8Review({ images }: Props) {
         </div>
       </div>
 
-      <div className="rounded-xl bg-blue-50 border border-blue-200 p-4 text-sm text-blue-800">
+      <div className="rounded-xl border border-border bg-muted p-4 text-sm text-foreground">
         <p className="font-semibold mb-1">📋 What happens next?</p>
-        <ol className="list-decimal list-inside space-y-1 text-xs text-blue-700">
+        <ol className="list-decimal list-inside space-y-1 text-xs text-muted-foreground">
           <li>Your listing is submitted for moderator review</li>
           <li>Our team reviews it within 24 hours</li>
           <li>You receive a notification when it goes live</li>

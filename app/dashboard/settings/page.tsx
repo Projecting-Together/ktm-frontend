@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useAuthStore } from "@/lib/stores/authStore";
 import { useLogout } from "@/lib/hooks/useAuth";
 import { LogOut, User, Bell, Shield } from "lucide-react";
@@ -22,6 +23,9 @@ export default function SettingsPage() {
             <div className="flex justify-between"><span className="text-muted-foreground">Role</span><span className="capitalize">{user?.role}</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Status</span><span className="capitalize">{user?.status}</span></div>
           </div>
+          <Link href="/dashboard/settings/profile" className="btn-secondary mt-4 inline-flex text-sm">
+            Edit profile details
+          </Link>
         </div>
 
         <div className="rounded-xl border border-border bg-card p-5">

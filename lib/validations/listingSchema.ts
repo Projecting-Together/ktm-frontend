@@ -7,6 +7,8 @@ export const loginSchema = z.object({
 });
 
 export const registerSchema = z.object({
+  firstName: z.string().trim().min(1, "First name is required"),
+  lastName: z.string().trim().min(1, "Last name is required"),
   email: z.string().email("Enter a valid email address"),
   password: z
     .string()
@@ -14,7 +16,6 @@ export const registerSchema = z.object({
     .regex(/[A-Z]/, "Must contain at least one uppercase letter")
     .regex(/[0-9]/, "Must contain at least one number"),
   confirmPassword: z.string(),
-  role: z.enum(["renter", "owner", "agent"]),
 }).refine((d) => d.password === d.confirmPassword, {
   message: "Passwords do not match",
   path: ["confirmPassword"],

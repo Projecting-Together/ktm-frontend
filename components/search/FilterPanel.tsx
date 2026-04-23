@@ -1,7 +1,7 @@
 "use client";
 
-import { X, SlidersHorizontal, RotateCcw } from "lucide-react";
-import { cn, KTM_NEIGHBORHOODS } from "@/lib/utils";
+import { SlidersHorizontal, RotateCcw } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useFilterStore } from "@/lib/stores/filterStore";
 import { useAmenities } from "@/lib/hooks/useNeighborhoods";
 
@@ -19,6 +19,7 @@ const BEDROOM_OPTIONS = [
   { value: 3, label: "3" },
   { value: 4, label: "4+" },
 ];
+const BATHROOM_OPTIONS = BEDROOM_OPTIONS;
 
 const FURNISHING_OPTIONS = [
   { value: "fully", label: "Fully Furnished" },
@@ -26,13 +27,9 @@ const FURNISHING_OPTIONS = [
   { value: "unfurnished", label: "Unfurnished" },
 ];
 
-const PRICE_PRESETS = [
-  { label: "Under 10K", max: 10000 },
-  { label: "10K–20K", min: 10000, max: 20000 },
-  { label: "20K–40K", min: 20000, max: 40000 },
-  { label: "40K–80K", min: 40000, max: 80000 },
-  { label: "80K+", min: 80000 },
-];
+const PRICE_MIN = 0;
+const PRICE_MAX = 200000;
+const PRICE_STEP = 1000;
 
 interface FilterPanelProps {
   mode?: "sidebar" | "drawer";
@@ -44,16 +41,15 @@ export function FilterPanel({ mode = "sidebar" }: FilterPanelProps) {
 
   const buildingAmenities = amenities.filter((a) => a.amenity_type === "building");
 
-  const activeNeighborhoods = (store.neighborhood ?? "").split(",").filter(Boolean);
   const activeTypes = (store.listing_type ?? "").split(",").filter(Boolean);
   const activeAmenities = store.amenities ?? [];
 
   const activeFilterCount = [
-    activeNeighborhoods.length > 0,
     activeTypes.length > 0,
     store.min_price != null,
     store.max_price != null,
     store.bedrooms != null,
+    store.bathrooms != null,
     store.furnishing != null,
     store.parking,
     store.pets_allowed,
@@ -91,43 +87,22 @@ export function FilterPanel({ mode = "sidebar" }: FilterPanelProps) {
         )}
       </div>
 
-      {/* Property Type */}
+      {/* Home Type */}
       <div>
         <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Property Type
+          Home Type
         </p>
-        <div className="flex flex-wrap gap-2">
+        <div className="grid grid-cols-2 gap-2">
           {LISTING_TYPES.map((type) => (
             <button
               key={type.value}
               onClick={() => store.toggleListingType(type.value as never)}
               className={cn(
-                "filter-chip",
-                activeTypes.includes(type.value) && "filter-chip-active"
+                "rounded-lg border border-border bg-background px-3 py-2 text-left text-sm font-medium transition-colors hover:border-accent hover:bg-accent/5",
+                activeTypes.includes(type.value) && "border-accent bg-accent/10 text-accent"
               )}
             >
               {type.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Neighborhoods */}
-      <div>
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Neighborhood
-        </p>
-        <div className="flex flex-wrap gap-2">
-          {KTM_NEIGHBORHOODS.map((n) => (
-            <button
-              key={n.slug}
-              onClick={() => store.toggleNeighborhood(n.slug)}
-              className={cn(
-                "filter-chip",
-                activeNeighborhoods.includes(n.slug) && "filter-chip-active"
-              )}
-            >
-              {n.name}
             </button>
           ))}
         </div>
@@ -138,34 +113,32 @@ export function FilterPanel({ mode = "sidebar" }: FilterPanelProps) {
         <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Price Range (NPR/month)
         </p>
-        <div className="flex flex-wrap gap-2 mb-3">
-          {PRICE_PRESETS.map((preset) => {
-            const isActive = store.min_price === preset.min && store.max_price === preset.max;
-            return (
-              <button
-                key={preset.label}
-                onClick={() => store.setFilters({ min_price: preset.min, max_price: preset.max })}
-                className={cn("filter-chip", isActive && "filter-chip-active")}
-              >
-                {preset.label}
-              </button>
-            );
-          })}
-        </div>
+        <input
+          type="range"
+          aria-label="Price range"
+          min={PRICE_MIN}
+          max={PRICE_MAX}
+          step={PRICE_STEP}
+          value={store.max_price ?? PRICE_MAX}
+          onChange={(e) => store.setPriceRange(store.min_price, Number(e.target.value))}
+          className="mb-3 w-full accent-accent"
+        />
         <div className="flex items-center gap-2">
           <input
             type="number"
+            aria-label="Minimum price"
             placeholder="Min"
             value={store.min_price ?? ""}
-            onChange={(e) => store.setFilter("min_price", e.target.value ? Number(e.target.value) : undefined)}
+            onChange={(e) => store.setPriceRange(e.target.value ? Number(e.target.value) : undefined, store.max_price)}
             className="h-8 w-full rounded-lg border border-border bg-background px-2 text-xs focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
           />
           <span className="text-muted-foreground">—</span>
           <input
             type="number"
+            aria-label="Maximum price"
             placeholder="Max"
             value={store.max_price ?? ""}
-            onChange={(e) => store.setFilter("max_price", e.target.value ? Number(e.target.value) : undefined)}
+            onChange={(e) => store.setPriceRange(store.min_price, e.target.value ? Number(e.target.value) : undefined)}
             className="h-8 w-full rounded-lg border border-border bg-background px-2 text-xs focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
           />
         </div>
@@ -184,6 +157,27 @@ export function FilterPanel({ mode = "sidebar" }: FilterPanelProps) {
               className={cn(
                 "flex h-9 w-9 items-center justify-center rounded-lg border border-border text-sm font-medium transition-colors hover:border-accent hover:text-accent",
                 store.bedrooms === opt.value && "border-accent bg-accent/10 text-accent"
+              )}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Bathrooms */}
+      <div>
+        <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Bathrooms
+        </p>
+        <div className="flex gap-2">
+          {BATHROOM_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => store.setFilter("bathrooms", store.bathrooms === opt.value ? undefined : opt.value)}
+              className={cn(
+                "flex h-9 w-9 items-center justify-center rounded-lg border border-border text-sm font-medium transition-colors hover:border-accent hover:text-accent",
+                store.bathrooms === opt.value && "border-accent bg-accent/10 text-accent"
               )}
             >
               {opt.label}
@@ -230,6 +224,7 @@ export function FilterPanel({ mode = "sidebar" }: FilterPanelProps) {
               <button
                 role="switch"
                 data-testid={`toggle-${key}`}
+                aria-label={label}
                 aria-checked={!!store[key]}
                 onClick={() => store.setFilter(key, !store[key] || undefined)}
                 className={cn(

@@ -4,9 +4,9 @@ import { Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import { useEffect, useMemo } from "react";
 import Link from "next/link";
-import type { ListingListItem } from "@/lib/api/client";
+import type { ListingListItem } from "@/lib/api/types";
+import { adaptListingsForMap } from "@/lib/contracts/adapters";
 import { MapView } from "./MapView";
-import { ensureLeafletDefaultIcons } from "./leaflet-defaults";
 import { cn, getListingCoverImage } from "@/lib/utils";
 import { ListingCoverImage } from "@/components/listings/ListingCoverImage";
 import { VerifiedBadge } from "@/components/common/VerifiedBadge";
@@ -27,31 +27,18 @@ interface SearchMapProps {
 }
 
 export function SearchMap({ listings, className }: SearchMapProps) {
-  ensureLeafletDefaultIcons();
-
-  const withCoords = useMemo(
-    () =>
-      listings.filter((l) => {
-        const lat = l.location?.latitude;
-        const lng = l.location?.longitude;
-        return lat != null && lng != null && !Number.isNaN(Number(lat)) && !Number.isNaN(Number(lng));
-      }),
-    [listings],
-  );
+  const normalizedListings = useMemo(() => adaptListingsForMap(listings), [listings]);
 
   const points: [number, number][] = useMemo(
-    () =>
-      withCoords.map((l) => [Number(l.location!.latitude), Number(l.location!.longitude)]),
-    [withCoords],
+    () => normalizedListings.map(({ lat, lng }) => [lat, lng]),
+    [normalizedListings],
   );
 
   return (
     <div className={cn("relative overflow-hidden rounded-xl border border-border", className)}>
       <MapView className="min-h-[min(70vh,560px)] h-[min(70vh,560px)]">
         {points.length > 0 ? <FitBounds positions={points} /> : null}
-        {withCoords.map((listing) => {
-          const lat = Number(listing.location!.latitude);
-          const lng = Number(listing.location!.longitude);
+        {normalizedListings.map(({ listing, lat, lng }) => {
           const img = getListingCoverImage(listing);
           return (
             <Marker key={listing.id} position={[lat, lng]}>
@@ -72,12 +59,6 @@ export function SearchMap({ listings, className }: SearchMapProps) {
                     />
                   </div>
                   <p className="text-sm font-semibold leading-tight">{listing.title}</p>
-                  {listing.price != null && (
-                    <p className="mt-1 text-sm text-accent">
-                      NPR {Number(listing.price).toLocaleString()}
-                      {listing.price_period ? ` / ${listing.price_period}` : ""}
-                    </p>
-                  )}
                   <Link
                     href={`/apartments/${listing.slug}`}
                     className="mt-2 inline-block text-xs font-medium text-accent underline"
@@ -90,7 +71,7 @@ export function SearchMap({ listings, className }: SearchMapProps) {
           );
         })}
       </MapView>
-      {withCoords.length === 0 && (
+      {normalizedListings.length === 0 && (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-muted/20 p-4 text-center text-sm text-muted-foreground">
           No listings with map coordinates in this result set.
         </div>

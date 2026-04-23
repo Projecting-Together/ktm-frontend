@@ -12,6 +12,7 @@ export interface FilterState extends ListingFilters {
 interface FilterActions {
   setFilter: <K extends keyof ListingFilters>(key: K, value: ListingFilters[K]) => void;
   setFilters: (filters: Partial<ListingFilters>) => void;
+  setPriceRange: (min?: number, max?: number) => void;
   resetFilters: () => void;
   toggleFilterPanel: () => void;
   setView: (view: FilterState["view"]) => void;
@@ -28,15 +29,76 @@ const DEFAULT_FILTERS: ListingFilters = {
   sort_order: "desc",
 };
 
+const API_FILTER_KEYS = [
+  "skip",
+  "limit",
+  "page",
+  "listing_type",
+  "purpose",
+  "city",
+  "district",
+  "neighborhood",
+  "min_price",
+  "max_price",
+  "bedrooms",
+  "bathrooms",
+  "furnishing",
+  "parking",
+  "pets_allowed",
+  "verified",
+  "available_from",
+  "amenities",
+  "search",
+  "sort_by",
+  "sort_order",
+  "min_lat",
+  "max_lat",
+  "min_lng",
+  "max_lng",
+  "lat",
+  "lng",
+  "radius_km",
+] as const satisfies ReadonlyArray<keyof ListingFilters>;
+
+function normalizePriceRange(min?: number, max?: number): Pick<ListingFilters, "min_price" | "max_price"> {
+  const minPrice = Number.isFinite(min) ? min : undefined;
+  const maxPrice = Number.isFinite(max) ? max : undefined;
+
+  if (minPrice != null && maxPrice != null && minPrice > maxPrice) {
+    return { min_price: maxPrice, max_price: minPrice };
+  }
+
+  return { min_price: minPrice, max_price: maxPrice };
+}
+
 export const useFilterStore = create<FilterState & FilterActions>((set, get) => ({
   ...DEFAULT_FILTERS,
   isFilterPanelOpen: false,
   view: "grid",
 
-  setFilter: (key, value) => set((state) => ({ ...state, [key]: value, page: 1 })),
+  setFilter: (key, value) =>
+    set((state) => ({
+      ...state,
+      [key]: value,
+      page: key === "page" ? (value as ListingFilters["page"]) : 1,
+    })),
 
   setFilters: (filters) =>
-    set((state) => ({ ...state, ...filters, page: 1 })),
+    set((state) => {
+      const hasExplicitPage = Object.prototype.hasOwnProperty.call(filters, "page");
+      return {
+        ...state,
+        ...filters,
+        page: hasExplicitPage ? filters.page : 1,
+      };
+    }),
+
+  setPriceRange: (min, max) =>
+    set((state) => ({
+      ...state,
+      ...normalizePriceRange(min, max),
+      page: 1,
+    })),
 
   resetFilters: () =>
     set((state) => ({
@@ -52,8 +114,11 @@ export const useFilterStore = create<FilterState & FilterActions>((set, get) => 
       max_price: undefined,
       bedrooms: undefined,
       bathrooms: undefined,
-      furnished: undefined,
+      furnishing: undefined,
+      parking: undefined,
+      pets_allowed: undefined,
       verified: undefined,
+      available_from: undefined,
       amenities: undefined,
       keyword: undefined,
       search: undefined,
@@ -99,18 +164,12 @@ export const useFilterStore = create<FilterState & FilterActions>((set, get) => 
 
 // Selector: extract only the API-relevant filters (strip UI state)
 export function selectApiFilters(state: FilterState): ListingFilters {
-  const {
-    isFilterPanelOpen: _panel,
-    view: _view,
-    setFilter: _sf,
-    setFilters: _sfs,
-    resetFilters: _rf,
-    toggleFilterPanel: _tfp,
-    setView: _sv,
-    toggleNeighborhood: _tn,
-    toggleListingType: _tlt,
-    toggleAmenity: _ta,
-    ...filters
-  } = state as FilterState & FilterActions;
+  const filters: ListingFilters = {};
+  for (const key of API_FILTER_KEYS) {
+    const value = state[key];
+    if (value !== undefined) {
+      (filters as Record<string, unknown>)[key] = value;
+    }
+  }
   return filters;
 }

@@ -97,7 +97,7 @@ export function Step6Images({ images, onImagesChange }: Props) {
                 <div className="absolute right-2 top-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   {!img.isCover && (
                     <button type="button" onClick={() => setCover(img.id)}
-                      className="flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-amber-500 hover:bg-white">
+                      className="flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-accent hover:bg-white">
                       <Star className="h-3.5 w-3.5" />
                     </button>
                   )}
@@ -113,7 +113,7 @@ export function Step6Images({ images, onImagesChange }: Props) {
       )}
 
       {images.length < 3 && images.length > 0 && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
+        <div className="rounded-xl border border-accent/30 bg-accent/10 p-3 text-sm text-accent">
           ⚠️ Please upload at least {3 - images.length} more photo{3 - images.length !== 1 ? "s" : ""} to meet the minimum requirement.
         </div>
       )}

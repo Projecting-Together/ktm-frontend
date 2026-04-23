@@ -15,8 +15,11 @@ const resetStoreData = () => {
     max_price: undefined,
     bedrooms: undefined,
     bathrooms: undefined,
-    furnished: undefined,
+    furnishing: undefined,
+    parking: undefined,
+    pets_allowed: undefined,
     verified: undefined,
+    available_from: undefined,
     amenities: undefined,
     keyword: undefined,
     search: undefined,
@@ -77,15 +80,43 @@ describe("filterStore", () => {
     expect(useFilterStore.getState().page).toBe(1);
   });
 
+  it("setFilter preserves pagination when key is page", () => {
+    useFilterStore.getState().setFilter("page", 3);
+    expect(useFilterStore.getState().page).toBe(3);
+  });
+
+  it("setFilters preserves explicit page value", () => {
+    useFilterStore.getState().setFilters({ page: 4, search: "thamel" });
+    const state = useFilterStore.getState();
+    expect(state.page).toBe(4);
+    expect(state.search).toBe("thamel");
+  });
+
+  it("setFilters resets page when no explicit page is provided", () => {
+    useFilterStore.getState().setFilter("page", 5);
+    useFilterStore.getState().setFilters({ search: "baluwatar" });
+    const state = useFilterStore.getState();
+    expect(state.page).toBe(1);
+    expect(state.search).toBe("baluwatar");
+  });
+
   it("resetFilters clears all custom filters", () => {
     useFilterStore.getState().setFilter("listing_type", "apartment");
     useFilterStore.getState().setFilter("neighborhood", "thamel");
     useFilterStore.getState().setFilter("max_price", 30000);
+    useFilterStore.getState().setFilter("parking", true);
+    useFilterStore.getState().setFilter("pets_allowed", true);
+    useFilterStore.getState().setFilter("available_from", "2026-05-01");
+    useFilterStore.getState().setFilter("furnishing", "semi");
     useFilterStore.getState().resetFilters();
     const state = useFilterStore.getState();
     expect(state.listing_type).toBeUndefined();
     expect(state.neighborhood).toBeUndefined();
     expect(state.max_price).toBeUndefined();
+    expect(state.parking).toBeUndefined();
+    expect(state.pets_allowed).toBeUndefined();
+    expect(state.available_from).toBeUndefined();
+    expect(state.furnishing).toBeUndefined();
   });
 
   it("toggleNeighborhood adds a neighborhood as comma-separated string", () => {
@@ -131,6 +162,7 @@ describe("filterStore", () => {
   it("selectApiFilters does not include store action functions", () => {
     const apiFilters = selectApiFilters(useFilterStore.getState());
     expect(apiFilters).not.toHaveProperty("setFilter");
+    expect(apiFilters).not.toHaveProperty("setPriceRange");
     expect(apiFilters).not.toHaveProperty("resetFilters");
     expect(apiFilters).not.toHaveProperty("toggleNeighborhood");
   });

@@ -220,7 +220,7 @@ export default function ListingDetailClient({ listing }: Props) {
                 </Link>
                 {whatsappUrl && (
                   <a href={whatsappUrl} target="_blank" rel="noopener noreferrer"
-                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-emerald-500 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700 transition-colors hover:bg-emerald-100">
+                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-verified/40 bg-verified/10 px-4 py-2.5 text-sm font-semibold text-verified transition-colors hover:bg-verified/20">
                     <MessageCircle className="h-4 w-4" /> WhatsApp
                   </a>
                 )}
@@ -247,13 +247,13 @@ export default function ListingDetailClient({ listing }: Props) {
                     </p>
                     <p className="text-xs text-muted-foreground capitalize">{listing.owner.role}</p>
                   </div>
-                  {listing.owner.is_verified && <ShieldCheck className="ml-auto h-4 w-4 text-emerald-500" />}
+                  {listing.owner.is_verified && <ShieldCheck className="ml-auto h-4 w-4 text-verified" />}
                 </div>
               </div>
             )}
 
             {/* Safety tip */}
-            <div className="rounded-xl bg-amber-50 p-4 text-xs text-amber-800 border border-amber-200">
+            <div className="rounded-xl border border-border bg-muted p-4 text-xs text-foreground">
               <p className="font-semibold mb-1">Safety Tip</p>
               <p>Never pay before visiting the property. Meet in person and verify ownership documents before making any payment.</p>
             </div>

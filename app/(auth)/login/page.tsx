@@ -31,20 +31,20 @@ export default function LoginPage() {
         <div className="rounded-2xl border border-border bg-card p-8 shadow-sm">
           <form onSubmit={handleSubmit((data) => login(data))} className="space-y-5">
             <div>
-              <label className="mb-1.5 block text-sm font-medium">Email address</label>
-              <input {...register("email")} type="email" placeholder="you@example.com" autoComplete="email"
+              <label htmlFor="email" className="mb-1.5 block text-sm font-medium">Email address</label>
+              <input id="email" {...register("email")} type="email" placeholder="you@example.com" autoComplete="email"
                 className="h-11 w-full rounded-lg border border-border bg-background px-3 text-sm placeholder:text-muted-foreground focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent" />
               {errors.email && <p className="mt-1 text-xs text-destructive">{errors.email.message}</p>}
             </div>
             <div>
               <div className="mb-1.5 flex items-center justify-between">
-                <label className="text-sm font-medium">Password</label>
+                <label htmlFor="password" className="text-sm font-medium">Password</label>
                 <Link href="/forgot-password" className="text-xs text-accent hover:underline">Forgot password?</Link>
               </div>
               <div className="relative">
-                <input {...register("password")} type={showPw ? "text" : "password"} placeholder="••••••••" autoComplete="current-password"
+                <input id="password" {...register("password")} type={showPw ? "text" : "password"} placeholder="••••••••" autoComplete="current-password"
                   className="h-11 w-full rounded-lg border border-border bg-background px-3 pr-10 text-sm placeholder:text-muted-foreground focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent" />
-                <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                <button type="button" aria-label={showPw ? "Hide password" : "Show password"} aria-pressed={showPw} onClick={() => setShowPw(!showPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                   {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
@@ -52,6 +52,9 @@ export default function LoginPage() {
             </div>
             <button type="submit" disabled={isPending} className="btn-primary w-full justify-center gap-2 h-11">
               {isPending ? <><Loader2 className="h-4 w-4 animate-spin" /> Signing in...</> : "Sign in"}
+            </button>
+            <button type="button" disabled aria-disabled="true" className="h-11 w-full cursor-not-allowed rounded-lg border border-border bg-background text-sm font-medium text-muted-foreground opacity-70">
+              Sign in with Google (coming soon)
             </button>
           </form>
 

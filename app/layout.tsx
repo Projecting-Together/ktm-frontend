@@ -1,6 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Providers } from "@/lib/providers/Providers";
+import { applyThemeVariables } from "@/lib/theme/applyTheme";
+import { themeTokens } from "@/lib/theme/tokens";
+
+const themeVariables = applyThemeVariables();
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://ktmapartments.com"),
@@ -29,7 +33,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#FAF8F4" },
+    { media: "(prefers-color-scheme: light)", color: themeTokens.color.background },
     { media: "(prefers-color-scheme: dark)", color: "#0A1929" },
   ],
 };
@@ -38,6 +42,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="en" suppressHydrationWarning data-scroll-behavior="smooth">
       <head>
+        <style>{`:root {\n${themeVariables}\n}`}</style>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link

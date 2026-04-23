@@ -9,6 +9,8 @@ import { FilterPanel } from "@/components/search/FilterPanel";
 import { SearchBar } from "@/components/search/SearchBar";
 import { useFilterStore, selectApiFilters } from "@/lib/stores/filterStore";
 import { useListings } from "@/lib/hooks/useListings";
+import { adaptListingsForSearch } from "@/lib/contracts/adapters";
+import type { ListingFilters } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 
 const SearchMapDynamic = dynamic(
@@ -29,6 +31,11 @@ const SORT_OPTIONS = [
   { value: "price:desc", label: "Price: high to low" },
   { value: "area_sqft:desc", label: "Largest first" },
 ];
+
+function parseFiniteNumber(value: string): number | null {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
 
 // Custom sort dropdown using buttons — works reliably with Playwright and React
 function SortDropdown({ value, onChange }: { value: string; onChange: (v: string) => void }) {
@@ -89,40 +96,61 @@ export default function SearchPageClient() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const store = useFilterStore();
+  const handleSearch = useCallback(
+    (query: string, location: string) => {
+      // Keep using neighborhood key for API/query-string compatibility.
+      store.setFilters({ search: query || undefined, neighborhood: location || undefined });
+    },
+    [store],
+  );
 
   // Hydrate store from URL on mount
   useEffect(() => {
-    const params: Record<string, unknown> = {};
+    const params: Partial<ListingFilters> = {};
     searchParams.forEach((value, key) => {
-      if (
-        [
-          "page",
-          "limit",
-          "min_price",
-          "max_price",
-          "bedrooms",
-          "min_lat",
-          "max_lat",
-          "min_lng",
-          "max_lng",
-          "lat",
-          "lng",
-          "radius_km",
-        ].includes(key)
-      )
-        params[key] = Number(value);
-      else if (["verified", "parking", "pets_allowed"].includes(key)) params[key] = value === "true";
-      else if (key === "amenities") {
-        const existing = params[key] as string[] | undefined;
-        params[key] = existing ? [...existing, value] : [value];
-      } else params[key] = value;
+      if (key === "page" || key === "limit" || key === "min_price" || key === "max_price" || key === "bedrooms" || key === "min_lat" || key === "max_lat" || key === "min_lng" || key === "max_lng" || key === "lat" || key === "lng" || key === "radius_km") {
+        const parsed = parseFiniteNumber(value);
+        if (parsed != null) {
+          if (key === "page") params.page = parsed;
+          else if (key === "limit") params.limit = parsed;
+          else if (key === "min_price") params.min_price = parsed;
+          else if (key === "max_price") params.max_price = parsed;
+          else if (key === "bedrooms") params.bedrooms = parsed;
+          else if (key === "min_lat") params.min_lat = parsed;
+          else if (key === "max_lat") params.max_lat = parsed;
+          else if (key === "min_lng") params.min_lng = parsed;
+          else if (key === "max_lng") params.max_lng = parsed;
+          else if (key === "lat") params.lat = parsed;
+          else if (key === "lng") params.lng = parsed;
+          else if (key === "radius_km") params.radius_km = parsed;
+        }
+      } else if (key === "verified" || key === "parking" || key === "pets_allowed") {
+        const boolValue = value === "true";
+        if (key === "verified") params.verified = boolValue;
+        else if (key === "parking") params.parking = boolValue;
+        else params.pets_allowed = boolValue;
+      } else if (key === "amenities") {
+        const existing = params.amenities;
+        params.amenities = existing ? [...existing, value] : [value];
+      } else {
+        if (key === "search") params.search = value;
+        else if (key === "listing_type") params.listing_type = value;
+        else if (key === "purpose") params.purpose = value;
+        else if (key === "city") params.city = value;
+        else if (key === "district") params.district = value;
+        else if (key === "neighborhood") params.neighborhood = value;
+        else if (key === "furnishing") params.furnishing = value;
+        else if (key === "available_from") params.available_from = value;
+        else if (key === "sort_by") params.sort_by = value;
+        else if (key === "sort_order") params.sort_order = value;
+      }
     });
-    store.setFilters(params as never);
+    store.setFilters(params);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const syncUrl = useCallback(() => {
-    const filters = selectApiFilters(store as never);
+    const filters = selectApiFilters(store);
     const params = new URLSearchParams();
     for (const [key, val] of Object.entries(filters)) {
       if (val === undefined || val === null || val === "") continue;
@@ -141,9 +169,9 @@ export default function SearchPageClient() {
     syncUrl,
   ]);
 
-  const filters = selectApiFilters(store as never);
+  const filters = selectApiFilters(store);
   const { data, isPending, isError, error, refetch, isFetching } = useListings(filters);
-  const listings = data?.items ?? [];
+  const listings = adaptListingsForSearch(data?.items);
   const total = data?.total ?? 0;
   const totalPages = data?.total_pages ?? 1;
 
@@ -166,7 +194,7 @@ export default function SearchPageClient() {
     <div className="container py-6">
       <div className="mb-4 md:hidden">
         <SearchBar size="sm" defaultValue={store.search ?? ""} defaultLocation={store.neighborhood ?? ""}
-          onSearch={(q, loc) => store.setFilters({ search: q || undefined, neighborhood: loc || undefined })} />
+          onSearch={handleSearch} />
       </div>
 
       <div className="mb-5 flex items-center justify-between gap-3">
