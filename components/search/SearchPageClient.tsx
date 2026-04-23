@@ -97,9 +97,8 @@ export default function SearchPageClient() {
   const searchParams = useSearchParams();
   const store = useFilterStore();
   const handleSearch = useCallback(
-    (query: string, location: string) => {
-      // Keep using neighborhood key for API/query-string compatibility.
-      store.setFilters({ search: query || undefined, neighborhood: location || undefined });
+    (query: string) => {
+      store.setFilters({ search: query || undefined });
     },
     [store],
   );
@@ -138,7 +137,6 @@ export default function SearchPageClient() {
         else if (key === "purpose") params.purpose = value;
         else if (key === "city") params.city = value;
         else if (key === "district") params.district = value;
-        else if (key === "neighborhood") params.neighborhood = value;
         else if (key === "furnishing") params.furnishing = value;
         else if (key === "available_from") params.available_from = value;
         else if (key === "sort_by") params.sort_by = value;
@@ -162,7 +160,7 @@ export default function SearchPageClient() {
   }, [store, router, pathname]);
 
   useEffect(() => { syncUrl(); }, [
-    store.search, store.neighborhood, store.listing_type, store.min_price, store.max_price,
+    store.search, store.listing_type, store.min_price, store.max_price,
     store.bedrooms, store.furnishing, store.parking, store.pets_allowed, store.verified,
     store.amenities, store.available_from, store.sort_by, store.sort_order, store.page,
     store.min_lat, store.max_lat, store.min_lng, store.max_lng, store.lat, store.lng, store.radius_km,
@@ -193,7 +191,7 @@ export default function SearchPageClient() {
   return (
     <div className="container py-6">
       <div className="mb-4 md:hidden">
-        <SearchBar size="sm" defaultValue={store.search ?? ""} defaultLocation={store.neighborhood ?? ""}
+        <SearchBar size="sm" defaultValue={store.search ?? ""}
           onSearch={handleSearch} />
       </div>
 
@@ -213,9 +211,6 @@ export default function SearchPageClient() {
             <p className="mt-1 text-sm text-muted-foreground">
               Still loading — the API may be slow, or your connection may be unstable. Requests time out after about 25 seconds; then you&apos;ll see an error with a retry option.
             </p>
-          )}
-          {store.neighborhood && (
-            <p className="text-sm text-muted-foreground capitalize">in {store.neighborhood.replace(",", ", ")}</p>
           )}
         </div>
         <div className="flex items-center gap-2">
@@ -298,7 +293,7 @@ export default function SearchPageClient() {
             <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-20 text-center">
               <p className="text-4xl">🏠</p>
               <h3 className="mt-4 text-lg font-semibold">No listings found</h3>
-              <p className="mt-2 text-sm text-muted-foreground">Try adjusting your filters or searching in a different neighborhood.</p>
+              <p className="mt-2 text-sm text-muted-foreground">Try adjusting your filters or refining your keyword search.</p>
               <button type="button" onClick={store.resetFilters} className="btn-primary mt-4">Clear all filters</button>
             </div>
           ) : (

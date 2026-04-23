@@ -37,7 +37,6 @@ const API_FILTER_KEYS = [
   "purpose",
   "city",
   "district",
-  "neighborhood",
   "min_price",
   "max_price",
   "bedrooms",

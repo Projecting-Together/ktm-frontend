@@ -8,11 +8,10 @@ describe("SearchBar", () => {
     expect(container.firstChild).not.toBeNull();
   });
 
-  it("renders a search input field", () => {
+  it("renders a single keyword search input field", () => {
     render(<SearchBar />);
-    // SearchBar may have multiple textboxes (keyword + location)
     const inputs = screen.getAllByRole("textbox");
-    expect(inputs.length).toBeGreaterThan(0);
+    expect(inputs).toHaveLength(1);
   });
 
   it("renders a search button", () => {

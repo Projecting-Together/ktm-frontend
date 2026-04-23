@@ -153,9 +153,11 @@ describe("filterStore", () => {
 
   it("selectApiFilters strips UI-only state (isFilterPanelOpen, view)", () => {
     useFilterStore.getState().setFilter("listing_type", "apartment");
+    useFilterStore.getState().setFilter("neighborhood", "thamel");
     const apiFilters = selectApiFilters(useFilterStore.getState());
     expect(apiFilters).not.toHaveProperty("isFilterPanelOpen");
     expect(apiFilters).not.toHaveProperty("view");
+    expect(apiFilters).not.toHaveProperty("neighborhood");
     expect(apiFilters.listing_type).toBe("apartment");
   });
 
