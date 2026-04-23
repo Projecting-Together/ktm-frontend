@@ -57,9 +57,9 @@ export function Step7Contact() {
         </div>
       </div>
 
-      <div className="rounded-xl bg-blue-50 border border-blue-200 p-4 text-sm text-blue-800">
+      <div className="rounded-xl border border-border bg-muted p-4 text-sm text-foreground">
         <p className="font-semibold mb-1">🔒 Privacy Protection</p>
-        <p className="text-xs text-blue-700">Phone numbers are masked for unauthenticated users. Only verified renters can see your full contact details.</p>
+        <p className="text-xs text-muted-foreground">Phone numbers are masked for unauthenticated users. Only verified renters can see your full contact details.</p>
       </div>
     </div>
   );

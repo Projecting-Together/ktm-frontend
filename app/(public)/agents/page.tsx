@@ -34,7 +34,7 @@ export default function AgentsPage() {
               <div>
                 <div className="flex items-center gap-2">
                   <h3 className="font-semibold group-hover:text-accent">{agent.name}</h3>
-                  {agent.verified && <ShieldCheck className="h-4 w-4 text-emerald-500" />}
+                  {agent.verified && <ShieldCheck className="h-4 w-4 text-verified" />}
                 </div>
                 <p className="text-sm text-muted-foreground capitalize">{agent.role}</p>
               </div>

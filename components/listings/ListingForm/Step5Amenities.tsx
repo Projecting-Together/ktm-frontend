@@ -78,7 +78,7 @@ export function Step5Amenities() {
       ))}
 
       {selected.length > 0 && (
-        <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-3 text-sm text-emerald-700">
+        <div className="rounded-xl border border-verified/40 bg-verified/10 p-3 text-sm text-verified">
           ✓ {selected.length} amenit{selected.length === 1 ? "y" : "ies"} selected
         </div>
       )}

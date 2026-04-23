@@ -63,9 +63,9 @@ export function Step3Pricing() {
         </div>
       </div>
 
-      <div className="rounded-xl bg-blue-50 border border-blue-200 p-4 text-sm text-blue-800">
+      <div className="rounded-xl border border-border bg-muted p-4 text-sm text-foreground">
         <p className="font-semibold mb-1">💡 Pricing Tips for Kathmandu</p>
-        <ul className="space-y-1 text-xs list-disc list-inside text-blue-700">
+        <ul className="space-y-1 text-xs list-disc list-inside text-muted-foreground">
           <li>Thamel 1BR: NPR 15,000–25,000/month</li>
           <li>Lazimpat 2BR: NPR 25,000–45,000/month</li>
           <li>Patan 2BR: NPR 20,000–35,000/month</li>
