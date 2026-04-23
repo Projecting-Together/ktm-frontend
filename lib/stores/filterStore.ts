@@ -84,7 +84,14 @@ export const useFilterStore = create<FilterState & FilterActions>((set, get) => 
     })),
 
   setFilters: (filters) =>
-    set((state) => ({ ...state, ...filters, page: 1 })),
+    set((state) => {
+      const hasExplicitPage = Object.prototype.hasOwnProperty.call(filters, "page");
+      return {
+        ...state,
+        ...filters,
+        page: hasExplicitPage ? filters.page : 1,
+      };
+    }),
 
   setPriceRange: (min, max) =>
     set((state) => ({

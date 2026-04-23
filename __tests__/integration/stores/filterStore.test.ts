@@ -85,6 +85,21 @@ describe("filterStore", () => {
     expect(useFilterStore.getState().page).toBe(3);
   });
 
+  it("setFilters preserves explicit page value", () => {
+    useFilterStore.getState().setFilters({ page: 4, search: "thamel" });
+    const state = useFilterStore.getState();
+    expect(state.page).toBe(4);
+    expect(state.search).toBe("thamel");
+  });
+
+  it("setFilters resets page when no explicit page is provided", () => {
+    useFilterStore.getState().setFilter("page", 5);
+    useFilterStore.getState().setFilters({ search: "baluwatar" });
+    const state = useFilterStore.getState();
+    expect(state.page).toBe(1);
+    expect(state.search).toBe("baluwatar");
+  });
+
   it("resetFilters clears all custom filters", () => {
     useFilterStore.getState().setFilter("listing_type", "apartment");
     useFilterStore.getState().setFilter("neighborhood", "thamel");
