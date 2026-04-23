@@ -47,27 +47,40 @@
 
 :root {
   --radius: 0.625rem;
-  --background: #FAF8F4;
-  --foreground: #0F2744;
-  --card: #FFFFFF;
-  --card-foreground: #0F2744;
+  --color-background: #FAF8F4;
+  --color-surface: #FFFFFF;
+  --color-surfaceMuted: #F0EDE8;
+  --color-textPrimary: #0F2744;
+  --color-textSecondary: #6B7280;
+  --color-border: #E2DDD8;
+  --color-primary: #0F2744;
+  --color-primaryForeground: #FAF8F4;
+  --color-accent: #E85D25;
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-danger: #DC2626;
+  --color-focusRing: #E85D25;
+  --background: var(--color-background);
+  --foreground: var(--color-textPrimary);
+  --card: var(--color-surface);
+  --card-foreground: var(--color-textPrimary);
   --popover: #FFFFFF;
   --popover-foreground: #0F2744;
   --primary: #0F2744;
   --primary-foreground: #FAF8F4;
   --secondary: #E8E4DF;
-  --secondary-foreground: #0F2744;
-  --muted: #F0EDE8;
-  --muted-foreground: #6B7280;
-  --accent: #E85D25;
+  --secondary-foreground: var(--color-textPrimary);
+  --muted: var(--color-surfaceMuted);
+  --muted-foreground: var(--color-textSecondary);
+  --accent: var(--color-accent);
   --accent-foreground: #FFFFFF;
-  --verified: #10B981;
-  --destructive: #DC2626;
+  --verified: var(--color-success);
+  --destructive: var(--color-danger);
   --destructive-foreground: #FFFFFF;
-  --border: #E2DDD8;
+  --border: var(--color-border);
   --input: #FFFFFF;
-  --ring: #E85D25;
-  --chart-1: #E85D25;
+  --ring: var(--color-focusRing);
+  --chart-1: var(--color-accent);
   --chart-2: #0F2744;
   --chart-3: #10B981;
   --chart-4: #F59E0B;
@@ -83,6 +96,19 @@
 }
 
 .dark {
+  --color-background: #0A1929;
+  --color-surface: #0F2744;
+  --color-surfaceMuted: #1A3A5C;
+  --color-textPrimary: #F0EDE8;
+  --color-textSecondary: #9CA3AF;
+  --color-border: #1E4A7A;
+  --color-primary: #E85D25;
+  --color-primaryForeground: #FFFFFF;
+  --color-accent: #E85D25;
+  --color-success: #10B981;
+  --color-warning: #FBBF24;
+  --color-danger: #EF4444;
+  --color-focusRing: #E85D25;
   --background: #0A1929;
   --foreground: #F0EDE8;
   --card: #0F2744;
