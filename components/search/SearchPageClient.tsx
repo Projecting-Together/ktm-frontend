@@ -124,6 +124,7 @@ export default function SearchPageClient() {
           else if (key === "radius_km") params.radius_km = parsed;
         }
       } else if (key === "verified" || key === "parking" || key === "pets_allowed") {
+        if (value !== "true" && value !== "false") return;
         const boolValue = value === "true";
         if (key === "verified") params.verified = boolValue;
         else if (key === "parking") params.parking = boolValue;

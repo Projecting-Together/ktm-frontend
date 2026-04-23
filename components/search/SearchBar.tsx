@@ -21,13 +21,16 @@ export function SearchBar({
   const router = useRouter();
   const [query, setQuery] = useState(defaultValue);
   const inputRef = useRef<HTMLInputElement>(null);
+  const keywordInputId = size === "sm" ? "search-keyword-sm" : "search-keyword-lg";
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const normalizedQuery = query.trim();
+    const activeQuery = normalizedQuery.length >= 2 ? normalizedQuery : "";
     const filters: Record<string, string> = {};
-    if (query.trim().length >= 2) filters.search = query.trim();
+    if (activeQuery) filters.search = activeQuery;
     if (onSearch) {
-      onSearch(query);
+      onSearch(activeQuery);
     } else {
       router.push(buildSearchUrl(filters));
     }
@@ -37,8 +40,13 @@ export function SearchBar({
     return (
       <form onSubmit={handleSubmit} className={cn("flex items-center gap-2", className)}>
         <div className="relative flex-1">
+          <label htmlFor={keywordInputId} className="sr-only">
+            Search
+          </label>
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
+            id={keywordInputId}
+            aria-label="Search"
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -64,10 +72,12 @@ export function SearchBar({
       <div className="flex flex-1 items-center gap-3 px-4 py-3">
         <Search className="h-5 w-5 shrink-0 text-accent" />
         <div className="flex-1">
-          <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <label htmlFor={keywordInputId} className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Search
           </label>
           <input
+            id={keywordInputId}
+            aria-label="Search"
             ref={inputRef}
             type="text"
             value={query}
