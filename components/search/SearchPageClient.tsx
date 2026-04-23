@@ -89,6 +89,13 @@ export default function SearchPageClient() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const store = useFilterStore();
+  const handleSearch = useCallback(
+    (query: string, location: string) => {
+      // Keep using neighborhood key for API/query-string compatibility.
+      store.setFilters({ search: query || undefined, neighborhood: location || undefined });
+    },
+    [store],
+  );
 
   // Hydrate store from URL on mount
   useEffect(() => {
@@ -166,7 +173,7 @@ export default function SearchPageClient() {
     <div className="container py-6">
       <div className="mb-4 md:hidden">
         <SearchBar size="sm" defaultValue={store.search ?? ""} defaultLocation={store.neighborhood ?? ""}
-          onSearch={(q, loc) => store.setFilters({ search: q || undefined, neighborhood: loc || undefined })} />
+          onSearch={handleSearch} />
       </div>
 
       <div className="mb-5 flex items-center justify-between gap-3">

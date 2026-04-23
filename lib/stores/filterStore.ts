@@ -12,6 +12,7 @@ export interface FilterState extends ListingFilters {
 interface FilterActions {
   setFilter: <K extends keyof ListingFilters>(key: K, value: ListingFilters[K]) => void;
   setFilters: (filters: Partial<ListingFilters>) => void;
+  setPriceRange: (min?: number, max?: number) => void;
   resetFilters: () => void;
   toggleFilterPanel: () => void;
   setView: (view: FilterState["view"]) => void;
@@ -28,6 +29,17 @@ const DEFAULT_FILTERS: ListingFilters = {
   sort_order: "desc",
 };
 
+function normalizePriceRange(min?: number, max?: number): Pick<ListingFilters, "min_price" | "max_price"> {
+  const minPrice = Number.isFinite(min) ? min : undefined;
+  const maxPrice = Number.isFinite(max) ? max : undefined;
+
+  if (minPrice != null && maxPrice != null && minPrice > maxPrice) {
+    return { min_price: maxPrice, max_price: minPrice };
+  }
+
+  return { min_price: minPrice, max_price: maxPrice };
+}
+
 export const useFilterStore = create<FilterState & FilterActions>((set, get) => ({
   ...DEFAULT_FILTERS,
   isFilterPanelOpen: false,
@@ -37,6 +49,13 @@ export const useFilterStore = create<FilterState & FilterActions>((set, get) => 
 
   setFilters: (filters) =>
     set((state) => ({ ...state, ...filters, page: 1 })),
+
+  setPriceRange: (min, max) =>
+    set((state) => ({
+      ...state,
+      ...normalizePriceRange(min, max),
+      page: 1,
+    })),
 
   resetFilters: () =>
     set((state) => ({
