@@ -10,7 +10,7 @@ type Props = { params: Promise<{ slug: string }> };
 
 export default async function AgentProfilePage({ params }: Props) {
   const { slug } = await params;
-  const agentDto = MOCK_AGENT_PROFILE_DTOS.find((item) => item.id === slug);
+  const agentDto = MOCK_AGENT_PROFILE_DTOS.find((item) => item.slug === slug || item.id === slug);
   if (!agentDto) {
     notFound();
   }
@@ -55,6 +55,7 @@ export default async function AgentProfilePage({ params }: Props) {
 const MOCK_AGENT_PROFILE_DTOS: ProfileDto[] = [
   {
     id: "1",
+    slug: "ramesh-sharma",
     email: "ramesh.agent@example.com",
     role: "agent",
     profile: {
@@ -69,6 +70,7 @@ const MOCK_AGENT_PROFILE_DTOS: ProfileDto[] = [
   },
   {
     id: "2",
+    slug: "sita-thapa",
     email: "sita.owner@example.com",
     role: "owner",
     profile: {
@@ -83,6 +85,7 @@ const MOCK_AGENT_PROFILE_DTOS: ProfileDto[] = [
   },
   {
     id: "3",
+    slug: "bikash-kc",
     email: "bikash.kc@example.com",
     role: "agent",
     profile: {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { useAuthStore } from "@/lib/stores/authStore";
@@ -37,6 +37,17 @@ export default function SettingsProfilePage() {
     whatsapp: mappedProfile.whatsapp,
     viber: mappedProfile.viber,
   }));
+
+  useEffect(() => {
+    setForm({
+      firstName: mappedProfile.firstName,
+      lastName: mappedProfile.lastName,
+      bio: mappedProfile.bio,
+      phone: mappedProfile.phone,
+      whatsapp: mappedProfile.whatsapp,
+      viber: mappedProfile.viber,
+    });
+  }, [mappedProfile]);
 
   const onSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -117,7 +128,9 @@ export default function SettingsProfilePage() {
         </div>
       </form>
 
-      {savedNotice ? <p className="mt-3 text-sm text-emerald-600">{savedNotice}</p> : null}
+      <p role="status" aria-live="polite" className="mt-3 text-sm text-emerald-600">
+        {savedNotice}
+      </p>
     </div>
   );
 }

@@ -2,6 +2,7 @@ import type { UserRole } from "@/lib/api/types";
 
 export interface ProfileDto {
   id: string;
+  slug?: string;
   email: string;
   role: UserRole;
   profile?: {
@@ -20,6 +21,7 @@ export interface ProfileDto {
 
 export interface ProfileModel {
   id: string;
+  slug: string;
   email: string;
   role: UserRole;
   firstName: string;
@@ -51,6 +53,7 @@ export function mapProfileDto(dto: ProfileDto): ProfileModel {
 
   return {
     id: dto.id,
+    slug: dto.slug ?? dto.id,
     email: dto.email,
     role: dto.role,
     firstName,
