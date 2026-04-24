@@ -109,6 +109,7 @@ export const useFilterStore = create<FilterState & FilterActions>((set, get) => 
       view: state.view,
       // Explicitly clear all optional filters (Zustand merges, so we must set to undefined)
       listing_type: undefined,
+      purpose: undefined,
       min_price: undefined,
       max_price: undefined,
       bedrooms: undefined,

@@ -1,0 +1,92 @@
+import React from "react";
+import { render, screen, fireEvent } from "@/test-utils/renderWithProviders";
+import SearchPageClient from "@/components/search/SearchPageClient";
+import { useFilterStore } from "@/lib/stores/filterStore";
+
+const mockReplace = jest.fn();
+const mockSearchParams = new URLSearchParams();
+
+jest.mock("next/navigation", () => ({
+  useRouter: () => ({ replace: mockReplace }),
+  usePathname: () => "/apartments",
+  useSearchParams: () => mockSearchParams,
+}));
+
+jest.mock("next/dynamic", () => () => {
+  const DynamicStub = () => null;
+  return DynamicStub;
+});
+
+jest.mock("@/lib/hooks/useListings", () => ({
+  useListings: () => ({
+    data: { items: [], total: 0, total_pages: 1 },
+    isPending: false,
+    isError: false,
+    error: null,
+    refetch: jest.fn(),
+    isFetching: false,
+  }),
+}));
+
+jest.mock("@/lib/contracts/adapters", () => ({
+  adaptListingsForSearch: () => [],
+}));
+
+const resetStoreData = () => {
+  useFilterStore.setState({
+    page: 1,
+    limit: 20,
+    sort_by: "created_at",
+    sort_order: "desc",
+    isFilterPanelOpen: false,
+    view: "grid",
+    listing_type: undefined,
+    purpose: undefined,
+    min_price: undefined,
+    max_price: undefined,
+    bedrooms: undefined,
+    bathrooms: undefined,
+    furnishing: undefined,
+    parking: undefined,
+    pets_allowed: undefined,
+    verified: undefined,
+    available_from: undefined,
+    amenities: undefined,
+    keyword: undefined,
+    search: undefined,
+    min_lat: undefined,
+    max_lat: undefined,
+    min_lng: undefined,
+    max_lng: undefined,
+    lat: undefined,
+    lng: undefined,
+    radius_km: undefined,
+  });
+};
+
+describe("SearchPageClient", () => {
+  beforeEach(() => {
+    mockReplace.mockClear();
+    mockSearchParams.forEach((_, key) => mockSearchParams.delete(key));
+    resetStoreData();
+  });
+
+  it("renders Rent and Buy segmented controls", () => {
+    render(<SearchPageClient />);
+    expect(screen.getByRole("button", { name: /^rent$/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^buy$/i })).toBeInTheDocument();
+  });
+
+  it("switching to Buy sets purpose=sale in URL sync", () => {
+    render(<SearchPageClient />);
+    mockReplace.mockClear();
+
+    fireEvent.click(screen.getByRole("button", { name: /^buy$/i }));
+
+    expect(useFilterStore.getState().purpose).toBe("sale");
+    expect(mockReplace).toHaveBeenCalledWith(
+      expect.stringMatching(/purpose=sale/),
+      expect.objectContaining({ scroll: false }),
+    );
+  });
+});

@@ -102,6 +102,7 @@ export default function SearchPageClient() {
     },
     [store],
   );
+  const currentPurpose = store.purpose === "sale" ? "sale" : "rent";
 
   // Hydrate store from URL on mount
   useEffect(() => {
@@ -161,7 +162,7 @@ export default function SearchPageClient() {
   }, [store, router, pathname]);
 
   useEffect(() => { syncUrl(); }, [
-    store.search, store.listing_type, store.min_price, store.max_price,
+    store.search, store.listing_type, store.purpose, store.min_price, store.max_price,
     store.bedrooms, store.furnishing, store.parking, store.pets_allowed, store.verified,
     store.amenities, store.available_from, store.sort_by, store.sort_order, store.page,
     store.min_lat, store.max_lat, store.min_lng, store.max_lng, store.lat, store.lng, store.radius_km,
@@ -198,6 +199,31 @@ export default function SearchPageClient() {
 
       <div className="mb-5 flex items-center justify-between gap-3">
         <div className="min-w-0 flex-1">
+          <div
+            role="group"
+            aria-label="Listing purpose"
+            className="mb-3 inline-flex rounded-lg border border-border bg-card p-0.5"
+          >
+            {([
+              { value: "rent", label: "Rent" },
+              { value: "sale", label: "Buy" },
+            ] as const).map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => store.setFilter("purpose", option.value === "sale" ? "sale" : undefined)}
+                className={cn(
+                  "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                  currentPurpose === option.value
+                    ? "bg-accent text-accent-foreground"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+                aria-pressed={currentPurpose === option.value}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
           <h1 className="flex items-center gap-2 text-xl font-bold">
             {isPending ? (
               <>

@@ -29,6 +29,7 @@ const resetStoreData = () => {
     lat: undefined,
     lng: undefined,
     radius_km: undefined,
+    purpose: undefined,
   });
 };
 
@@ -45,6 +46,10 @@ describe("filterStore", () => {
 
   it("starts with no listing_type filter", () => {
     expect(useFilterStore.getState().listing_type).toBeUndefined();
+  });
+
+  it("starts with purpose unset by default", () => {
+    expect(useFilterStore.getState().purpose).toBeUndefined();
   });
 
   it("setFilter sets listing_type", () => {
@@ -105,6 +110,12 @@ describe("filterStore", () => {
     expect(state.pets_allowed).toBeUndefined();
     expect(state.available_from).toBeUndefined();
     expect(state.furnishing).toBeUndefined();
+  });
+
+  it("resetFilters keeps purpose unset by default", () => {
+    useFilterStore.getState().setFilter("purpose", "sale");
+    useFilterStore.getState().resetFilters();
+    expect(useFilterStore.getState().purpose).toBeUndefined();
   });
 
   it("toggleListingType adds a listing type", () => {
