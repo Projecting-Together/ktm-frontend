@@ -74,6 +74,7 @@ Weighted prioritization (applied to roadmap ordering):
 3. Route-level Client Component scope is broader than recommended (`PERF-01`, `PERF-02`), increasing hydration and bundle risk.
 4. Runtime and middleware intent documentation is incomplete (`DEPLOY-02`, `DEPLOY-03`, `SEC-01`), creating operational ambiguity.
 5. Verification evidence for ISR stale-window and unknown-closure tracking is not yet established (`VERIFY-02`, `VERIFY-03`).
+
 ## 5) Prioritized Roadmap (Now / Next / Later)
 ### Now
 1. **NOW-1 (`CACHE-02`, `CACHE-03`, `VERIFY-01`)**  
@@ -127,7 +128,7 @@ Weighted prioritization (applied to roadmap ordering):
 ### NOW-3 (`PERF-01`, `PERF-02`)
 - Success condition: Route-level Client Components are reduced, with client usage limited to interactive islands and measurable JS/hydration reduction from baseline.
 - Validate command: `npm run build` and record before/after client bundle metrics in this audit file or a linked evidence note.
-- Expected behavior: Build succeeds; once measurement tooling is enabled (for example bundle analyzer or equivalent), targeted route client JS is at least 10% lower than the recorded baseline.
+- Expected behavior: Build succeeds and baseline/post-change metrics are recorded; once measurement tooling is enabled (for example bundle analyzer or equivalent), targeted route client JS is at least 10% lower than the recorded baseline.
 
 ### NEXT-1 (`PERF-03`, `RENDER-04`)
 - Success condition: Suspense/loading boundaries are present on selected routes and each boundary maps to a documented UX objective.
@@ -148,6 +149,7 @@ Weighted prioritization (applied to roadmap ordering):
 - Success condition: All unknowns from this audit are tracked as owner-assigned backlog items with target resolution dates.
 - Validate command: `rg "CACHE-04|VERIFY-03|owner|target date|unknown" docs/superpowers/specs docs/superpowers/plans`
 - Expected behavior: Traceable artifact links unknown matrix items to actionable follow-up work with clear accountability.
+
 ## 7) Risks, Assumptions, and Unknowns
 - Risk: mid-migration repository changes can quickly age some findings.
   - Mitigation: preserve `Unknown` where evidence is incomplete and re-verify before implementation.
