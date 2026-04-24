@@ -3,7 +3,6 @@
 import { SlidersHorizontal, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useFilterStore } from "@/lib/stores/filterStore";
-import { useAmenities } from "@/lib/hooks/useNeighborhoods";
 
 const LISTING_TYPES = [
   { value: "apartment", label: "Apartment" },
@@ -37,9 +36,6 @@ interface FilterPanelProps {
 
 export function FilterPanel({ mode = "sidebar" }: FilterPanelProps) {
   const store = useFilterStore();
-  const { data: amenities = [] } = useAmenities();
-
-  const buildingAmenities = amenities.filter((a) => a.amenity_type === "building");
 
   const activeTypes = (store.listing_type ?? "").split(",").filter(Boolean);
   const activeAmenities = store.amenities ?? [];
@@ -56,6 +52,11 @@ export function FilterPanel({ mode = "sidebar" }: FilterPanelProps) {
     store.verified,
     activeAmenities.length > 0,
   ].filter(Boolean).length;
+
+  const minPrice = store.min_price ?? PRICE_MIN;
+  const maxPrice = store.max_price ?? PRICE_MAX;
+  const minPercent = ((minPrice - PRICE_MIN) / (PRICE_MAX - PRICE_MIN)) * 100;
+  const maxPercent = ((maxPrice - PRICE_MIN) / (PRICE_MAX - PRICE_MIN)) * 100;
 
   return (
     <aside
@@ -113,16 +114,47 @@ export function FilterPanel({ mode = "sidebar" }: FilterPanelProps) {
         <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Price Range (NPR/month)
         </p>
-        <input
-          type="range"
-          aria-label="Price range"
-          min={PRICE_MIN}
-          max={PRICE_MAX}
-          step={PRICE_STEP}
-          value={store.max_price ?? PRICE_MAX}
-          onChange={(e) => store.setPriceRange(store.min_price, Number(e.target.value))}
-          className="mb-3 w-full accent-accent"
-        />
+        <div className="relative mb-3 h-6">
+          <div className="absolute left-0 right-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-muted" />
+          <div
+            className="absolute top-1/2 h-1 -translate-y-1/2 rounded-full bg-accent"
+            style={{ left: `${minPercent}%`, right: `${100 - maxPercent}%` }}
+          />
+          <input
+            type="range"
+            aria-label="Minimum price slider"
+            min={PRICE_MIN}
+            max={PRICE_MAX}
+            step={PRICE_STEP}
+            value={minPrice}
+            onChange={(e) => {
+              const next = Math.min(Number(e.target.value), maxPrice - PRICE_STEP);
+              store.setPriceRange(next, maxPrice);
+            }}
+            className={cn(
+              "pointer-events-none absolute left-0 top-1/2 h-6 w-full -translate-y-1/2 appearance-none bg-transparent",
+              "[&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-accent [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow",
+              "[&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-accent [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:shadow"
+            )}
+          />
+          <input
+            type="range"
+            aria-label="Maximum price slider"
+            min={PRICE_MIN}
+            max={PRICE_MAX}
+            step={PRICE_STEP}
+            value={maxPrice}
+            onChange={(e) => {
+              const next = Math.max(Number(e.target.value), minPrice + PRICE_STEP);
+              store.setPriceRange(minPrice, next);
+            }}
+            className={cn(
+              "pointer-events-none absolute left-0 top-1/2 h-6 w-full -translate-y-1/2 appearance-none bg-transparent",
+              "[&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-accent [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow",
+              "[&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-accent [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:shadow"
+            )}
+          />
+        </div>
         <div className="flex items-center gap-2">
           <input
             type="number"
@@ -244,43 +276,6 @@ export function FilterPanel({ mode = "sidebar" }: FilterPanelProps) {
         </div>
       </div>
 
-      {/* Building Amenities */}
-      {buildingAmenities.length > 0 && (
-        <div>
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Building Amenities
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {buildingAmenities.map((a) => (
-              <button
-                key={a.id}
-                onClick={() => store.toggleAmenity(a.code ?? a.id)}
-                className={cn(
-                  "filter-chip",
-                  activeAmenities.includes(a.code ?? a.id) && "filter-chip-active"
-                )}
-              >
-                {a.icon && <span>{a.icon}</span>}
-                {a.name}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Available From */}
-      <div>
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Available From
-        </p>
-        <input
-          type="date"
-          value={store.available_from ?? ""}
-          min={new Date().toISOString().split("T")[0]}
-          onChange={(e) => store.setFilter("available_from", e.target.value || undefined)}
-          className="h-9 w-full rounded-lg border border-border bg-background px-3 text-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
-        />
-      </div>
     </aside>
   );
 }
