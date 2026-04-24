@@ -1,4 +1,4 @@
-import { mockListingItems, mockListings, mockListingsPage1 } from "@/test-utils/mockData";
+import { mockAdminAnalytics, mockListingItems, mockListings, mockListingsPage1 } from "@/test-utils/mockData";
 
 jest.mock("@/lib/api/client", () => ({
   getListings: jest.fn(),
@@ -88,5 +88,17 @@ describe("Listings API client", () => {
     const result = await apiClient.getListings({});
     expect(result.data).toBeNull();
     expect(result.error).not.toBeNull();
+  });
+
+  it("mock ecosystem exposes at least 8 sale listings for buy mode", () => {
+    const saleListings = mockListings.filter((listing) => listing.purpose === "sale" && listing.status === "active");
+    expect(saleListings.length).toBeGreaterThanOrEqual(8);
+    expect(saleListings.every((listing) => listing.price_period === "monthly")).toBe(false);
+  });
+
+  it("analytics counters reflect sale-heavy activity in mock data", () => {
+    expect(mockAdminAnalytics.total_listings).toBeGreaterThanOrEqual(mockListings.length);
+    expect(mockAdminAnalytics.total_inquiries).toBeGreaterThanOrEqual(10000);
+    expect(mockAdminAnalytics.inquiries_today).toBeGreaterThanOrEqual(60);
   });
 });

@@ -1,4 +1,4 @@
-import { mockInquiries } from "@/test-utils/mockData";
+import { mockInquiries, mockListings } from "@/test-utils/mockData";
 
 jest.mock("@/lib/api/client", () => ({
   getMyInquiries: jest.fn(),
@@ -11,6 +11,7 @@ jest.mock("@/lib/api/client", () => ({
 
 import * as apiClient from "@/lib/api/client";
 const mockGetMyInquiries = apiClient.getMyInquiries as jest.MockedFunction<typeof apiClient.getMyInquiries>;
+const mockGetReceivedInquiries = apiClient.getReceivedInquiries as jest.MockedFunction<typeof apiClient.getReceivedInquiries>;
 const mockCreateInquiry = apiClient.createInquiry as jest.MockedFunction<typeof apiClient.createInquiry>;
 
 describe("Inquiries API client", () => {
@@ -76,5 +77,23 @@ describe("Inquiries API client", () => {
     const result = await apiClient.getMyInquiries();
     expect(result.data).toBeNull();
     expect(result.error?.status).toBe(401);
+  });
+
+  it("mock inquiries include sale-linked leads for seller dashboards", () => {
+    const saleListingIds = new Set(
+      mockListings.filter((listing) => listing.purpose === "sale").map((listing) => listing.id)
+    );
+    const saleInquiries = mockInquiries.filter((inquiry) => saleListingIds.has(inquiry.listing_id));
+    expect(saleInquiries.length).toBeGreaterThanOrEqual(3);
+    expect(saleInquiries.every((inquiry) => inquiry.listing?.purpose === "sale")).toBe(true);
+  });
+
+  it("getReceivedInquiries can return sale-focused lead pipeline", async () => {
+    const saleLeads = mockInquiries.filter((inquiry) => inquiry.listing?.purpose === "sale");
+    mockGetReceivedInquiries.mockResolvedValueOnce({ data: saleLeads, error: null });
+    const result = await apiClient.getReceivedInquiries();
+    expect(result.data).toBeTruthy();
+    expect(result.data?.length).toBeGreaterThanOrEqual(3);
+    expect(result.data?.every((inquiry) => inquiry.listing?.purpose === "sale")).toBe(true);
   });
 });
