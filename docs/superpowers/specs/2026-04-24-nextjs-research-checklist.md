@@ -15,7 +15,7 @@ Source: `nextjs-research.md`
 ## Checklist Entries
 
 - [ARCH] Check ID: ARCH-01
-  - Recommendation: "Use App Router (`app/`) as the default for all new feature routes unless a documented legacy Pages Router dependency exists."
+  - Recommendation: "Default new routes to App Router (`app/`); allow Pages Router only with a documented legacy dependency."
   - Source section: "1. Architecture and project structure"
   - Priority hint: High
 - [ARCH] Check ID: ARCH-02
@@ -40,7 +40,7 @@ Source: `nextjs-research.md`
   - Source section: "2. Rendering strategy: SSG, ISR, SSR, Server & Client Components, streaming"
   - Priority hint: High
 - [RENDER] Check ID: RENDER-04
-  - Recommendation: "Apply streaming with Suspense where early delivery of critical content improves user-perceived performance."
+  - Recommendation: "Decide streaming/Suspense at render-strategy level only when early delivery improves UX; defer implementation details to PERF checks."
   - Source section: "2. Rendering strategy: SSG, ISR, SSR, Server & Client Components, streaming"
   - Priority hint: Medium
 
@@ -70,7 +70,7 @@ Source: `nextjs-research.md`
   - Source section: "4. Performance optimizations (bundle size, images, fonts, hydration, code-splitting, metrics & budgets)"
   - Priority hint: High
 - [PERF] Check ID: PERF-03
-  - Recommendation: "Apply streaming and Suspense for routes where progressive rendering materially improves UX."
+  - Recommendation: "Implement approved streaming/Suspense decisions with route-level loading boundaries and measurable UX targets."
   - Source section: "4. Performance optimizations (bundle size, images, fonts, hydration, code-splitting, metrics & budgets)"
   - Priority hint: Medium
 - [PERF] Check ID: PERF-04
@@ -117,6 +117,6 @@ Source: `nextjs-research.md`
   - Source section: "9. Tooling, measurement, and enforcement (evidence and gaps)"
   - Priority hint: Medium
 - [VERIFY] Check ID: VERIFY-03
-  - Recommendation: "Treat unresolved evidence gaps (CI/CD templates, rollback playbooks, observability thresholds, CSP/session/rate-limit details) as explicit follow-up actions before release hardening."
+  - Recommendation: "Log unresolved evidence gaps as explicit follow-up tickets before release hardening."
   - Source section: "9. Tooling, measurement, and enforcement (evidence and gaps)"
   - Priority hint: Medium
