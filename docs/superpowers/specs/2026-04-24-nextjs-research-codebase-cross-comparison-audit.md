@@ -99,7 +99,7 @@ Weighted prioritization (applied to roadmap ordering):
 ### NOW-3 (`PERF-01`, `PERF-02`)
 - Success condition: Route-level Client Components are reduced, with client usage limited to interactive islands and measurable JS/hydration reduction from baseline.
 - Validate command: `npm run build`
-- Expected behavior: Build succeeds and bundle analysis output indicates reduced client payload on targeted routes versus the pre-change baseline.
+- Expected behavior: Build succeeds and client payload on targeted routes is at least 10% smaller than the baseline snapshot recorded before implementing NOW-3.
 
 ### NEXT-1 (`PERF-03`, `RENDER-04`)
 - Success condition: Suspense/loading boundaries are present on selected routes and each boundary maps to a documented UX objective.
@@ -113,8 +113,8 @@ Weighted prioritization (applied to roadmap ordering):
 
 ### LATER-1 (`VERIFY-02`)
 - Success condition: ISR stale-window tests exist and fail when freshness guarantees regress.
-- Validate command: `npm run test -- tests/performance`
-- Expected behavior: Performance/freshness test suite executes with explicit assertions for stale-window limits.
+- Validate command: `npm run test -- tests/performance/*.spec.ts`
+- Expected behavior: All performance/freshness specs pass and enforce explicit stale-window thresholds without regression.
 
 ### LATER-2 (`VERIFY-03`, `CACHE-04`)
 - Success condition: All unknowns from this audit are tracked as owner-assigned backlog items with target resolution dates.
