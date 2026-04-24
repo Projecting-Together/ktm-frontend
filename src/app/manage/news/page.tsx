@@ -9,7 +9,7 @@ export default function ManageNewsPage() {
   const { user } = useAuthStore();
   const role = user?.role;
   const [newsStatus, setNewsStatus] = useState<"draft" | "pending_review" | "published" | "rejected">("draft");
-  const [feedback, setFeedback] = useState("");
+  const [feedback, setFeedback] = useState<{ kind: "success" | "error"; message: string } | null>(null);
 
   const canSubmit = role === "owner";
   const canPublish = role === "agent" || role === "admin";
@@ -23,14 +23,14 @@ export default function ManageNewsPage() {
 
   const onSubmitForReview = () => {
     const decision = getNewsSubmitTransitionDecision(role, newsStatus);
-    setFeedback(decision.message);
+    setFeedback({ kind: decision.allowed ? "success" : "error", message: decision.message });
     if (!decision.allowed) return;
     setNewsStatus(decision.nextStatus);
   };
 
   const onPublishNow = () => {
     const decision = getNewsPublishTransitionDecision(role, newsStatus);
-    setFeedback(decision.message);
+    setFeedback({ kind: decision.allowed ? "success" : "error", message: decision.message });
     if (!decision.allowed) return;
     setNewsStatus(decision.nextStatus);
   };
@@ -50,8 +50,15 @@ export default function ManageNewsPage() {
       </div>
 
       {feedback ? (
-        <div role="status" className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
-          {feedback}
+        <div
+          role="status"
+          className={`rounded-md px-3 py-2 text-sm ${
+            feedback.kind === "error"
+              ? "border border-rose-200 bg-rose-50 text-rose-700"
+              : "border border-emerald-200 bg-emerald-50 text-emerald-700"
+          }`}
+        >
+          {feedback.message}
         </div>
       ) : null}
 

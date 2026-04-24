@@ -7,8 +7,17 @@ export const MARKET_LISTING_STATUSES = [
   "rejected",
 ] as const;
 
+export const MARKET_LISTING_MODERATION_STATUSES = [
+  "draft",
+  "pending_review",
+  "published",
+  "rejected",
+  "changes_requested",
+  "unpublished",
+] as const;
+
 export type MarketListingStatus = (typeof MARKET_LISTING_STATUSES)[number];
-export type MarketListingModerationStatus = MarketListingStatus | "changes_requested" | "unpublished";
+export type MarketListingModerationStatus = (typeof MARKET_LISTING_MODERATION_STATUSES)[number];
 
 export function nextStatusForSubmit(role: PublishingRole): MarketListingStatus {
   switch (role) {

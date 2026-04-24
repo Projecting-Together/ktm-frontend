@@ -1,10 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import {
+  canModerateMarketListingTransition,
+  type MarketListingModerationStatus,
+} from "@/lib/contracts/marketListing";
 import { useMarketListings } from "@/lib/hooks/useMarketListings";
 import { useAuthStore } from "@/lib/stores/authStore";
-
-type QueueStatus = "pending_review" | "published" | "changes_requested" | "rejected" | "unpublished";
 
 const moderationActions = [
   { label: "Approve", intent: "success", description: "Move reviewed listings into published status.", nextStatus: "published" },
@@ -29,10 +31,10 @@ function getIntentClasses(intent: (typeof moderationActions)[number]["intent"]) 
 export default function AdminMarketListingPage() {
   const { user } = useAuthStore();
   const isAdmin = user?.role === "admin";
-  const [queueStatus, setQueueStatus] = useState<QueueStatus>("pending_review");
+  const [queueStatus, setQueueStatus] = useState<MarketListingModerationStatus>("pending_review");
   const [rejectionReason, setRejectionReason] = useState("");
   const [latestRejectionReason, setLatestRejectionReason] = useState<string | null>(null);
-  const [feedback, setFeedback] = useState("");
+  const [feedback, setFeedback] = useState<{ kind: "success" | "error"; message: string } | null>(null);
 
   const pendingQueue = useMarketListings({ page: 1, limit: 10, status: "pending_review" });
 
@@ -42,51 +44,46 @@ export default function AdminMarketListingPage() {
     return `${pendingQueue.data?.items.length ?? 0} listing(s) pending review`;
   }, [pendingQueue.data, pendingQueue.isError, pendingQueue.isLoading]);
 
-  const canTransitionTo = (nextStatus: QueueStatus) => {
-    if (nextStatus === "published") return queueStatus !== "published";
-    if (nextStatus === "unpublished") return queueStatus === "published";
-    if (nextStatus === "changes_requested") return queueStatus !== "rejected";
-    if (nextStatus === "rejected") return queueStatus !== "rejected";
-    return false;
-  };
-
-  const applyAction = (status: QueueStatus) => {
+  const applyAction = (status: MarketListingModerationStatus) => {
     if (!isAdmin) {
-      setFeedback("Admin access required for moderation actions.");
+      setFeedback({ kind: "error", message: "Admin access required for moderation actions." });
       return;
     }
 
-    if (!canTransitionTo(status)) {
-      setFeedback(`Transition blocked: cannot move from ${queueStatus.replace("_", " ")} to ${status.replace("_", " ")}.`);
+    if (!canModerateMarketListingTransition(queueStatus, status)) {
+      setFeedback({
+        kind: "error",
+        message: `Transition blocked: cannot move from ${queueStatus.replace("_", " ")} to ${status.replace("_", " ")}.`,
+      });
       return;
     }
 
     if (status === "rejected") {
       const trimmedReason = rejectionReason.trim();
       if (!trimmedReason) {
-        setFeedback("Provide a rejection reason before rejecting.");
+        setFeedback({ kind: "error", message: "Provide a rejection reason before rejecting." });
         return;
       }
       setQueueStatus("rejected");
       setLatestRejectionReason(trimmedReason);
-      setFeedback(`Rejected listing with reason: ${trimmedReason}`);
+      setFeedback({ kind: "success", message: `Rejected listing with reason: ${trimmedReason}` });
       return;
     }
 
     if (status === "unpublished") {
       setQueueStatus("unpublished");
-      setFeedback("Unpublished listing from public market pages pending re-review.");
+      setFeedback({ kind: "success", message: "Unpublished listing from public market pages pending re-review." });
       return;
     }
 
     if (status === "published") {
       setQueueStatus("published");
-      setFeedback("Approved listing for publication.");
+      setFeedback({ kind: "success", message: "Approved listing for publication." });
       return;
     }
 
     setQueueStatus("changes_requested");
-    setFeedback("Returned listing to contributor with requested changes.");
+    setFeedback({ kind: "success", message: "Returned listing to contributor with requested changes." });
   };
 
   return (
@@ -106,8 +103,15 @@ export default function AdminMarketListingPage() {
       </div>
 
       {feedback ? (
-        <div role="status" className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
-          {feedback}
+        <div
+          role="status"
+          className={`rounded-md px-3 py-2 text-sm ${
+            feedback.kind === "error"
+              ? "border border-rose-200 bg-rose-50 text-rose-700"
+              : "border border-emerald-200 bg-emerald-50 text-emerald-700"
+          }`}
+        >
+          {feedback.message}
         </div>
       ) : null}
 

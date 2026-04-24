@@ -13,11 +13,11 @@ export default function ManageMarketListingPage() {
   const { user } = useAuthStore();
   const role = user?.role;
   const [listingStatus, setListingStatus] = useState<"draft" | "pending_review" | "published" | "rejected">("draft");
-  const [feedback, setFeedback] = useState("");
+  const [feedback, setFeedback] = useState<{ kind: "success" | "error"; message: string } | null>(null);
 
   const moderationQueue = useMarketListings({ page: 1, limit: 5, status: "pending_review" });
 
-  const canSubmit = role === "owner";
+  const canSubmit = role === "owner" || role === "agent" || role === "admin";
   const canPublish = role === "agent" || role === "admin";
 
   const roleLabel = useMemo(() => {
@@ -31,14 +31,14 @@ export default function ManageMarketListingPage() {
 
   const onSubmitForReview = () => {
     const decision = getMarketListingSubmitTransitionDecision(role, listingStatus);
-    setFeedback(decision.message);
+    setFeedback({ kind: decision.allowed ? "success" : "error", message: decision.message });
     if (!decision.allowed) return;
     setListingStatus(decision.nextStatus);
   };
 
   const onPublishNow = () => {
     const decision = getMarketListingPublishTransitionDecision(role, listingStatus);
-    setFeedback(decision.message);
+    setFeedback({ kind: decision.allowed ? "success" : "error", message: decision.message });
     if (!decision.allowed) return;
     setListingStatus(decision.nextStatus);
   };
@@ -64,15 +64,24 @@ export default function ManageMarketListingPage() {
       </div>
 
       {feedback ? (
-        <div role="status" className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
-          {feedback}
+        <div
+          role="status"
+          className={`rounded-md px-3 py-2 text-sm ${
+            feedback.kind === "error"
+              ? "border border-rose-200 bg-rose-50 text-rose-700"
+              : "border border-emerald-200 bg-emerald-50 text-emerald-700"
+          }`}
+        >
+          {feedback.message}
         </div>
       ) : null}
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <section className="rounded-xl border border-border bg-card p-5">
           <h2 className="font-semibold">Owner Submission</h2>
-          <p className="mt-2 text-sm text-muted-foreground">Owners can prepare market narratives and submit them to moderation.</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Owners submit to moderation while trusted agents and admins can submit directly to publish.
+          </p>
           <button
             type="button"
             onClick={onSubmitForReview}

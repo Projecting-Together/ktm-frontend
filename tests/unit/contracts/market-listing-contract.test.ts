@@ -1,4 +1,5 @@
 import {
+  MARKET_LISTING_MODERATION_STATUSES,
   MARKET_LISTING_STATUSES,
   canModerateMarketListingTransition,
   nextStatusForSubmit,
@@ -11,6 +12,17 @@ describe("market listing contract", () => {
       "pending_review",
       "published",
       "rejected",
+    ]);
+  });
+
+  it("defines expected moderation statuses including review-only states", () => {
+    expect(MARKET_LISTING_MODERATION_STATUSES).toEqual([
+      "draft",
+      "pending_review",
+      "published",
+      "rejected",
+      "changes_requested",
+      "unpublished",
     ]);
   });
 

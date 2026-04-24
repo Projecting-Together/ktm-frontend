@@ -5,6 +5,7 @@ import PublicMarketListingDetailPage from "@/app/(public)/market-listing/[slug]/
 import ManageMarketListingPage from "@/app/manage/market-listing/page";
 import AdminMarketListingPage from "@/app/admin/market-listing/page";
 import { getMarketListingDetail, getMarketListings } from "@/lib/api/client";
+import { canModerateMarketListingTransition } from "@/lib/contracts/marketListing";
 import { useMarketListings } from "@/lib/hooks/useMarketListings";
 import { useAuthStore } from "@/lib/stores/authStore";
 import { notFound } from "next/navigation";
@@ -185,6 +186,19 @@ describe("market listing public and moderation pages", () => {
     );
   });
 
+  it("manage market listing page allows trusted agent submit path per contract", () => {
+    (useAuthStore as jest.Mock).mockReturnValue({ user: { role: "agent" } });
+
+    render(<ManageMarketListingPage />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Submit For Review" }));
+
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Trusted agent published the approved market listing to public market surfaces.",
+    );
+    expect(screen.getByText(/Current listing state:/)).toHaveTextContent("published");
+  });
+
   it("manage market listing page disables moderation actions for unauthenticated users", () => {
     (useAuthStore as jest.Mock).mockReturnValue({ user: null });
 
@@ -236,5 +250,19 @@ describe("market listing public and moderation pages", () => {
     expect(screen.getByText("Admin access required for moderation actions.")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Approve" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Reject" })).not.toBeInTheDocument();
+  });
+
+  it("admin market listing page blocks invalid transitions using contract rules", () => {
+    (useAuthStore as jest.Mock).mockReturnValue({ user: { role: "admin" } });
+    expect(canModerateMarketListingTransition("pending_review", "unpublished")).toBe(false);
+
+    render(<AdminMarketListingPage />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Unpublish" }));
+
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Transition blocked: cannot move from pending review to unpublished.",
+    );
+    expect(screen.getByRole("status")).toHaveClass("bg-rose-50");
   });
 });

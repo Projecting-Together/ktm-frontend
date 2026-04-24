@@ -5,6 +5,7 @@ import PublicNewsDetailPage from "@/app/(public)/news/[slug]/page";
 import ManageNewsPage from "@/app/manage/news/page";
 import AdminNewsPage from "@/app/admin/news/page";
 import { getNews, getNewsDetail } from "@/lib/api/client";
+import { canModerateNewsTransition } from "@/lib/contracts/news";
 import { useAuthStore } from "@/lib/stores/authStore";
 import { notFound } from "next/navigation";
 
@@ -172,5 +173,23 @@ describe("news public and moderation pages", () => {
     expect(screen.getByText("Admin access required for moderation actions.")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Approve" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Reject" })).not.toBeInTheDocument();
+  });
+
+  it("admin news page blocks invalid transitions using contract rules", () => {
+    (useAuthStore as jest.Mock).mockReturnValue({ user: { role: "admin" } });
+    expect(canModerateNewsTransition("rejected", "published")).toBe(false);
+
+    render(<AdminNewsPage />);
+
+    fireEvent.change(screen.getByLabelText("Rejection reason"), {
+      target: { value: "Needs sourcing." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Reject" }));
+    fireEvent.click(screen.getByRole("button", { name: "Approve" }));
+
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Transition blocked: cannot move from rejected to published.",
+    );
+    expect(screen.getByRole("status")).toHaveClass("bg-rose-50");
   });
 });

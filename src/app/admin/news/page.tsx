@@ -1,14 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { canModerateNewsTransition, type ContentStatus } from "@/lib/contracts/news";
 import { useAuthStore } from "@/lib/stores/authStore";
-
-type QueueStatus = "pending_review" | "published" | "changes_requested" | "rejected" | "unpublished";
 
 const moderationActions = [
   { label: "Approve", intent: "success", description: "Move reviewed stories into published state.", nextStatus: "published" },
-  { label: "Unpublish", intent: "warning", description: "Remove a published story from public pages pending re-review.", nextStatus: "unpublished" },
-  { label: "Request Changes", intent: "warning", description: "Return stories to author with editorial feedback.", nextStatus: "changes_requested" },
   { label: "Reject", intent: "danger", description: "Decline content that fails quality or policy checks.", nextStatus: "rejected" },
 ] as const;
 
@@ -16,8 +13,6 @@ function getIntentClasses(intent: (typeof moderationActions)[number]["intent"]) 
   switch (intent) {
     case "success":
       return "bg-emerald-100 text-emerald-700";
-    case "warning":
-      return "bg-amber-100 text-amber-700";
     case "danger":
       return "bg-rose-100 text-rose-700";
     default:
@@ -28,56 +23,39 @@ function getIntentClasses(intent: (typeof moderationActions)[number]["intent"]) 
 export default function AdminNewsPage() {
   const { user } = useAuthStore();
   const isAdmin = user?.role === "admin";
-  const [queueStatus, setQueueStatus] = useState<QueueStatus>("pending_review");
+  const [queueStatus, setQueueStatus] = useState<ContentStatus>("pending_review");
   const [rejectionReason, setRejectionReason] = useState("");
   const [latestRejectionReason, setLatestRejectionReason] = useState<string | null>(null);
-  const [feedback, setFeedback] = useState("");
+  const [feedback, setFeedback] = useState<{ kind: "success" | "error"; message: string } | null>(null);
 
-  const canTransitionTo = (nextStatus: QueueStatus) => {
-    if (nextStatus === "published") return queueStatus !== "published";
-    if (nextStatus === "unpublished") return queueStatus === "published";
-    if (nextStatus === "changes_requested") return queueStatus !== "rejected";
-    if (nextStatus === "rejected") return queueStatus !== "rejected";
-    return false;
-  };
-
-  const applyAction = (status: QueueStatus) => {
+  const applyAction = (status: ContentStatus) => {
     if (!isAdmin) {
-      setFeedback("Admin access required for moderation actions.");
+      setFeedback({ kind: "error", message: "Admin access required for moderation actions." });
       return;
     }
 
-    if (!canTransitionTo(status)) {
-      setFeedback(`Transition blocked: cannot move from ${queueStatus.replace("_", " ")} to ${status.replace("_", " ")}.`);
+    if (!canModerateNewsTransition(queueStatus, status)) {
+      setFeedback({
+        kind: "error",
+        message: `Transition blocked: cannot move from ${queueStatus.replace("_", " ")} to ${status.replace("_", " ")}.`,
+      });
       return;
     }
 
     if (status === "rejected") {
       const trimmedReason = rejectionReason.trim();
       if (!trimmedReason) {
-        setFeedback("Provide a rejection reason before rejecting.");
+        setFeedback({ kind: "error", message: "Provide a rejection reason before rejecting." });
         return;
       }
       setQueueStatus("rejected");
       setLatestRejectionReason(trimmedReason);
-      setFeedback(`Rejected article with reason: ${trimmedReason}`);
+      setFeedback({ kind: "success", message: `Rejected article with reason: ${trimmedReason}` });
       return;
     }
 
-    if (status === "published") {
-      setQueueStatus("published");
-      setFeedback("Approved article for publication.");
-      return;
-    }
-
-    if (status === "unpublished") {
-      setQueueStatus("unpublished");
-      setFeedback("Unpublished article from public news surfaces pending re-review.");
-      return;
-    }
-
-    setQueueStatus("changes_requested");
-    setFeedback("Returned article to author with requested changes.");
+    setQueueStatus(status);
+    setFeedback({ kind: "success", message: "Approved article for publication." });
   };
 
   return (
@@ -94,8 +72,15 @@ export default function AdminNewsPage() {
       </div>
 
       {feedback ? (
-        <div role="status" className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
-          {feedback}
+        <div
+          role="status"
+          className={`rounded-md px-3 py-2 text-sm ${
+            feedback.kind === "error"
+              ? "border border-rose-200 bg-rose-50 text-rose-700"
+              : "border border-emerald-200 bg-emerald-50 text-emerald-700"
+          }`}
+        >
+          {feedback.message}
         </div>
       ) : null}
 
