@@ -4,7 +4,7 @@ import SearchPageClient from "@/components/search/SearchPageClient";
 
 export const metadata: Metadata = {
   title: "Apartments for Rent in Kathmandu | KTM Apartments",
-  description: "Search verified apartments, rooms, and houses for rent across Kathmandu. Filter by neighborhood, price, bedrooms, and amenities.",
+  description: "Search verified apartments, rooms, and houses for rent across Kathmandu. Filter by price, bedrooms, and amenities.",
 };
 
 export default function ApartmentsPage() {

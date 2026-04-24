@@ -252,12 +252,17 @@ export default function SearchPageClient() {
       </div>
 
       <div className="flex gap-6">
-        <div className="hidden w-64 shrink-0 md:block"><FilterPanel mode="sidebar" /></div>
+        <div className="hidden w-64 shrink-0 md:block" data-testid="search-filter-panel-sidebar">
+          <FilterPanel mode="sidebar" />
+        </div>
 
         {store.isFilterPanelOpen && (
           <div className="fixed inset-0 z-[2000] md:hidden">
             <div className="absolute inset-0 bg-black/50" onClick={store.toggleFilterPanel} />
-            <div className="absolute bottom-0 left-0 right-0 max-h-[85vh] overflow-y-auto rounded-t-2xl bg-card">
+            <div
+              className="absolute bottom-0 left-0 right-0 max-h-[85vh] overflow-y-auto rounded-t-2xl bg-card"
+              data-testid="search-filter-panel-drawer"
+            >
               <div className="sticky top-0 flex items-center justify-between border-b border-border bg-card px-5 py-4">
                 <h3 className="font-semibold">Filters</h3>
                 <button onClick={store.toggleFilterPanel} className="text-muted-foreground">✕</button>

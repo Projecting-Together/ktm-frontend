@@ -1,9 +1,19 @@
 import type { NextConfig } from "next";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 /** CSP is set in `middleware.ts` via `@/lib/csp` so every document response gets a fresh policy. */
 
+const appDir = dirname(fileURLToPath(import.meta.url));
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  /**
+   * This repo is sometimes developed from a git worktree while a sibling checkout still has a
+   * `pnpm-lock.yaml` at a higher path. Next may otherwise infer the monorepo root incorrectly,
+   * which can break RSC metadata (manifest / flight JSON) and make dev-mode e2e runs flaky.
+   */
+  outputFileTracingRoot: join(appDir),
 
   images: {
     remotePatterns: [

@@ -4,20 +4,19 @@ import { ArrowRight, ShieldCheck, Zap, TrendingUp } from "lucide-react";
 import { SearchBar } from "@/components/search/SearchBar";
 import { ListingCard, ListingCardSkeleton } from "@/components/listings/ListingCard";
 import { getListings } from "@/lib/api/client";
-import { KTM_NEIGHBORHOODS } from "@/lib/utils";
 
 export const revalidate = 300; // ISR — 5 minutes
 
 export const metadata: Metadata = {
   title: "KTM Apartments — Find Your Home in Kathmandu",
   description:
-    "Discover verified apartments, rooms, and houses for rent across Kathmandu. Thamel, Lazimpat, Patan, Bhaktapur, and more.",
+    "Discover verified apartments, rooms, and houses for rent across Kathmandu. Search by price, layout, and amenities.",
 };
 
 const STATS = [
   { label: "Active Listings", value: "2,400+" },
   { label: "Verified Properties", value: "1,800+" },
-  { label: "Neighborhoods", value: "25+" },
+  { label: "Years Serving Renters", value: "5+" },
   { label: "Happy Renters", value: "5,000+" },
 ];
 
@@ -69,28 +68,13 @@ export default async function HomePage() {
               <span className="text-accent">Kathmandu</span>
             </h1>
             <p className="mt-4 text-lg text-primary-foreground/70 md:text-xl">
-              Discover verified apartments, rooms, and houses across Thamel, Lazimpat, Patan, and beyond.
-              No brokers. No hidden fees.
+              Discover verified apartments, rooms, and houses for rent in Kathmandu — without broker markups or hidden fees.
             </p>
           </div>
 
           {/* Search bar */}
           <div className="mx-auto mt-10 max-w-2xl">
             <SearchBar size="lg" />
-          </div>
-
-          {/* Popular searches */}
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
-            <span className="text-xs text-primary-foreground/50">Popular:</span>
-            {KTM_NEIGHBORHOODS.slice(0, 5).map((n) => (
-              <Link
-                key={n.slug}
-                href={`/apartments?neighborhood=${n.slug}`}
-                className="rounded-full border border-primary-foreground/20 px-3 py-1 text-xs text-primary-foreground/70 transition-colors hover:border-accent hover:text-accent"
-              >
-                {n.name}
-              </Link>
-            ))}
           </div>
         </div>
       </section>
@@ -149,7 +133,7 @@ export default async function HomePage() {
             <h2 className="mt-1">Built for Kathmandu</h2>
           </div>
 
-          <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {FEATURES.map((f) => {
               const Icon = f.icon;
               return (

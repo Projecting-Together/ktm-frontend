@@ -108,5 +108,9 @@ temp/
 # Webdev artifacts (checkpoint zips, migrations, etc.)
 .webdev/
 
+# Playwright
+playwright-report/
+test-results/
+
 # Local git worktrees
 .worktrees/
