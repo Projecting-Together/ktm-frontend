@@ -10,17 +10,47 @@ import {
 import { VerifiedBadge } from "@/components/common/VerifiedBadge";
 import { ListingCoverImage } from "@/components/listings/ListingCoverImage";
 import { useToggleFavorite, useIsFavorite } from "@/lib/hooks/useFavorites";
+import { useListing } from "@/lib/hooks/useListings";
 import { useAuthStore } from "@/lib/stores/authStore";
 import { formatPrice, formatDate, buildWhatsAppUrl, cn, getStatusColor } from "@/lib/utils";
 import type { Listing } from "@/lib/api/types";
 
-interface Props { listing: Listing }
+interface Props {
+  listing?: Listing;
+  slugOrId?: string;
+}
 
-export default function ListingDetailClient({ listing }: Props) {
+export default function ListingDetailClient({ listing: initialListing, slugOrId }: Props) {
+  const { data: fetchedListing, isLoading, isError } = useListing(slugOrId ?? "", {
+    enabled: !initialListing && !!slugOrId,
+  });
+  const listing = initialListing ?? fetchedListing;
   const [activeImg, setActiveImg] = useState(0);
   const { isAuthenticated } = useAuthStore();
-  const isFavorite = useIsFavorite(listing.id);
+  const isFavorite = useIsFavorite(listing?.id ?? "");
   const { mutate: toggleFavorite } = useToggleFavorite();
+
+  if (!listing) {
+    if (isLoading) {
+      return (
+        <div className="container py-10">
+          <p className="text-sm text-muted-foreground">Loading property details...</p>
+        </div>
+      );
+    }
+
+    if (isError) {
+      return (
+        <div className="container py-10">
+          <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-5 text-sm text-destructive">
+            Couldn&apos;t load this property. It may have been removed or is unavailable right now.
+          </div>
+        </div>
+      );
+    }
+  }
+
+  if (!listing) return null;
 
   const images = listing.images ?? [];
   const coverImg =

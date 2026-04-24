@@ -34,7 +34,7 @@ export function useListings(filters: ListingFilters = {}) {
   });
 }
 
-export function useListing(slugOrId: string) {
+export function useListing(slugOrId: string, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: listingKeys.detail(slugOrId),
     queryFn: async () => {
@@ -42,7 +42,7 @@ export function useListing(slugOrId: string) {
       if (res.error) throw new Error(res.error.message);
       return res.data!;
     },
-    enabled: !!slugOrId,
+    enabled: options?.enabled ?? !!slugOrId,
     staleTime: 60 * 1000,
   });
 }
