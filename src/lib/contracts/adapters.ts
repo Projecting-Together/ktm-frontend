@@ -1,5 +1,7 @@
 import type { ListingListItem } from "@/lib/api/types";
 import { mapAuthUserDto, type AuthUserDto } from "@/lib/contracts/auth";
+import { getMarketListingSubmitStatus } from "@/lib/contracts/marketListing";
+import { canPublishNews, type PublisherRole } from "@/lib/contracts/news";
 import { mapProfileDto, type ProfileDto } from "@/lib/contracts/profile";
 import { mapListingDtos, mapListingsToMapMarkers, type ListingDto, type ListingMapMarker } from "@/lib/contracts/listing";
 import type { ProfileModel } from "@/lib/contracts/profile";
@@ -20,4 +22,12 @@ export function adaptAuthUser(dto: AuthUserDto | null | undefined): AuthUserMode
 
 export function adaptProfile(dto: ProfileDto): ProfileModel {
   return mapProfileDto(dto);
+}
+
+export function adaptNewsPublishPermission(role: PublisherRole): boolean {
+  return canPublishNews(role);
+}
+
+export function adaptMarketListingSubmitStatus(role: PublisherRole) {
+  return getMarketListingSubmitStatus(role);
 }
