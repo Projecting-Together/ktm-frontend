@@ -3,6 +3,10 @@
 Date: 2026-04-24
 Source: `nextjs-research.md`
 
+## Coverage and Traceability
+- Coverage check: all seven design pillars are represented by one or more checklist IDs (`ARCH`, `RENDER`, `CACHE`, `PERF`, `SEC`, `DEPLOY`, `VERIFY`).
+- Evidence anchors for audit mapping: `src/`, `tests/`, `next.config.ts`, `tsconfig.json`, `package.json`, `jest.config.ts`, `playwright.config.ts`, `.env.example`.
+
 ## Pillars
 1. Architecture and routing
 2. Rendering strategy

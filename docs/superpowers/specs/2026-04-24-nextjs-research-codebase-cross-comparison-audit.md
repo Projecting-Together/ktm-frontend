@@ -5,7 +5,28 @@ Baseline: `nextjs-research.md`
 Design: `docs/superpowers/specs/2026-04-24-nextjs-research-codebase-cross-comparison-design.md`
 
 ## 1) Objective and Scope
+This audit compares `nextjs-research.md` against the current repository implementation to identify concrete platform gaps and produce a balanced execution roadmap.
+
+Scope coverage aligns with the approved design:
+- Architecture and routing
+- Rendering strategy
+- Caching and revalidation
+- Performance optimization
+- Security hardening
+- Deployment and operations
+- Testing and verification readiness
+
+Out of scope:
+- Implementing code changes from findings
+- External repository benchmarking
+- Security penetration testing
+
 ## 2) Method and Scoring Model
+Baseline summary:
+- Baseline source: `nextjs-research.md`
+- Normalization source: `docs/superpowers/specs/2026-04-24-nextjs-research-checklist.md`
+- Method: convert research guidance into atomic checks, then map each check to repository evidence
+
 Search scope for matrix evidence: this worktree repository root, primarily `src/**`, `tests/**`, and root config files (`next.config.ts`, `tsconfig.json`, `package.json`, `jest.config.ts`, `playwright.config.ts`, `.env.example`) as inspected during this audit pass.
 
 Status rubric:
@@ -44,8 +65,13 @@ Weighted prioritization (applied to roadmap ordering):
 | Deployment and operations | DEPLOY-04 | Validate package scripts for build/start paths as a deployment readiness gate. | `package.json` scripts include `dev`, `build`, `start`, `preview`, `test`, `test:e2e`; test tooling configs exist in `jest.config.ts` and `playwright.config.ts`. | Compliant | High | Low | High | Build/start/test scripts are explicit and deployment-friendly. |
 | Testing and verification readiness | VERIFY-01 | For each critical route, verify expected behavior for `revalidate`, `no-store`, and on-demand invalidation flows before production rollout. | `tests/**` contains unit/integration coverage but no checks for `revalidate`, `no-store`, `revalidatePath`, or `revalidateTag`. | Missing | High | Medium | High | Caching behavior verification coverage is currently absent. |
 | Testing and verification readiness | VERIFY-02 | Track and validate stale-window behavior for ISR pages under representative traffic. | Unknown: no ISR stale-window or cache-age performance tests found in `tests/**`; no `tests/performance/*` files in this worktree. | Unknown | Medium | Medium | Medium | Requires dedicated ISR freshness/perf test harness. |
-| Testing and verification readiness | VERIFY-03 | Log unresolved evidence gaps as explicit follow-up tickets before release hardening. | Unknown: no ticket references (issue IDs, TODO links, backlog tags) found in scanned spec/checklist scope for unresolved gaps. | Unknown | Medium | Low | Low | Follow-up ticketing process evidence is outside current checked sources or not present. |
+| Testing and verification readiness | VERIFY-03 | Log unresolved evidence gaps as explicit follow-up tickets before release hardening. | Unknown: no ticket references (issue IDs, tracked backlog links, or release tags) found in scanned spec/checklist scope for unresolved gaps. | Unknown | Medium | Low | Low | Follow-up ticketing process evidence is outside current checked sources or not present. |
 ## 4) Top Findings
+1. Caching policy and invalidation controls are the largest current gap (`CACHE-02`, `CACHE-03`, `VERIFY-01`) and pose correctness/freshness risk.
+2. Personalized route freshness intent remains implicit (`RENDER-03`, `CACHE-01`) across dashboard/manage/admin surfaces.
+3. Route-level Client Component scope is broader than recommended (`PERF-01`, `PERF-02`), increasing hydration and bundle risk.
+4. Runtime and middleware intent documentation is incomplete (`DEPLOY-02`, `DEPLOY-03`, `SEC-01`), creating operational ambiguity.
+5. Verification evidence for ISR stale-window and unknown-closure tracking is not yet established (`VERIFY-02`, `VERIFY-03`).
 ## 5) Prioritized Roadmap (Now / Next / Later)
 ### Now
 1. **NOW-1 (`CACHE-02`, `CACHE-03`, `VERIFY-01`)**  
@@ -121,3 +147,10 @@ Weighted prioritization (applied to roadmap ordering):
 - Validate command: `rg "CACHE-04|VERIFY-03|owner|target date|unknown" docs/superpowers/specs docs/superpowers/plans`
 - Expected behavior: Traceable artifact links unknown matrix items to actionable follow-up work with clear accountability.
 ## 7) Risks, Assumptions, and Unknowns
+- Risk: mid-migration repository changes can quickly age some findings.
+  - Mitigation: preserve `Unknown` where evidence is incomplete and re-verify before implementation.
+- Risk: roadmap selection may over-favor low-effort items.
+  - Mitigation: keep weighted scoring across risk, user impact, effort-to-value, and maturity.
+- Assumption: scanned scope (`src/**`, `tests/**`, configs, and related docs) represents active behavior for this audit.
+- Unknown: multi-instance invalidation behavior remains unresolved until invalidation APIs and deployment topology are both documented.
+- Open question: where should ownership and target dates for `VERIFY-03` follow-up tickets be enforced (planning docs or issue tracker)?
