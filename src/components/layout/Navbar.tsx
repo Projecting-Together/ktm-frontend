@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { Menu, X, Heart, Plus, Building2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -13,15 +13,47 @@ import { AgentUpgradeModal } from "@/components/listings/AgentUpgradeModal";
 const NAV_LINKS = [
   { href: "/apartments", label: "Apartments" },
   { href: "/agents", label: "Agents" },
+  { href: "/news", label: "News" },
+  { href: "/market-listing", label: "Market Listing" },
 ];
+
+type PostListingButtonProps = {
+  onCreate: (href: string) => Promise<void>;
+  className: string;
+  iconClassName: string;
+  label: string;
+  closeMobileMenu?: () => void;
+};
+
+function PostListingButton({ onCreate, className, iconClassName, label, closeMobileMenu }: PostListingButtonProps) {
+  const searchParams = useSearchParams();
+  const contextPurpose = searchParams.get("purpose");
+  const createListingHref = contextPurpose === "sale"
+    ? "/manage/listings/new?purpose=sale"
+    : "/manage/listings/new";
+
+  return (
+    <button
+      type="button"
+      onClick={async () => {
+        closeMobileMenu?.();
+        await onCreate(createListingHref);
+      }}
+      className={className}
+    >
+      <Plus className={iconClassName} />
+      {label}
+    </button>
+  );
+}
 
 export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [isUpgrading, setIsUpgrading] = useState(false);
+  const [pendingCreateListingHref, setPendingCreateListingHref] = useState("/manage/listings/new");
   const { user, isAuthenticated, upgradeToAgent } = useAuthStore();
   const canPostListing = user?.role === "renter" || user?.role === "owner" || user?.role === "agent" || user?.role === "admin";
   const rawActiveListingCount = (user as { stats?: { active_listings?: number } } | null)?.stats?.active_listings;
@@ -35,12 +67,8 @@ export function Navbar() {
         activeListingCount,
       })
     : null;
-  const contextPurpose = searchParams.get("purpose");
-  const createListingHref = contextPurpose === "sale"
-    ? "/manage/listings/new?purpose=sale"
-    : "/manage/listings/new";
 
-  const handleCreateListingEntry = async () => {
+  const handleCreateListingEntry = async (createListingHref: string) => {
     if (!user) return;
 
     if (isNormalTierUser && !hasKnownActiveListingCount) {
@@ -49,6 +77,7 @@ export function Navbar() {
     }
 
     if (listingCapabilities?.requiresAgentUpgrade) {
+      setPendingCreateListingHref(createListingHref);
       setShowUpgradeModal(true);
       return;
     }
@@ -61,7 +90,7 @@ export function Navbar() {
       setIsUpgrading(true);
       await upgradeToAgent();
       setShowUpgradeModal(false);
-      router.push(createListingHref);
+      router.push(pendingCreateListingHref);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Upgrade failed. Please try again.";
       toast.error(message);
@@ -119,10 +148,27 @@ export function Navbar() {
               </Link>
 
               {canPostListing && (
-                <button type="button" onClick={handleCreateListingEntry} className="btn-primary gap-1.5 py-2 text-xs">
-                  <Plus className="h-3.5 w-3.5" />
-                  Post Listing
-                </button>
+                <Suspense
+                  fallback={
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await handleCreateListingEntry("/manage/listings/new");
+                      }}
+                      className="btn-primary gap-1.5 py-2 text-xs"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      Post Listing
+                    </button>
+                  }
+                >
+                  <PostListingButton
+                    onCreate={handleCreateListingEntry}
+                    className="btn-primary gap-1.5 py-2 text-xs"
+                    iconClassName="h-3.5 w-3.5"
+                    label="Post Listing"
+                  />
+                </Suspense>
               )}
 
               <Link
@@ -190,17 +236,29 @@ export function Navbar() {
                   My Dashboard
                 </Link>
                 {canPostListing && (
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      setMobileOpen(false);
-                      await handleCreateListingEntry();
-                    }}
-                    className="btn-primary mt-2 justify-center gap-1.5"
+                  <Suspense
+                    fallback={
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          setMobileOpen(false);
+                          await handleCreateListingEntry("/manage/listings/new");
+                        }}
+                        className="btn-primary mt-2 justify-center gap-1.5"
+                      >
+                        <Plus className="h-4 w-4" />
+                        Post a Listing
+                      </button>
+                    }
                   >
-                    <Plus className="h-4 w-4" />
-                    Post a Listing
-                  </button>
+                    <PostListingButton
+                      onCreate={handleCreateListingEntry}
+                      className="btn-primary mt-2 justify-center gap-1.5"
+                      iconClassName="h-4 w-4"
+                      label="Post a Listing"
+                      closeMobileMenu={() => setMobileOpen(false)}
+                    />
+                  </Suspense>
                 )}
               </>
             ) : (

@@ -6,7 +6,7 @@ const FOOTER_LINKS = {
     { href: "/apartments", label: "Apartments" },
     { href: "/agents", label: "Agents" },
     { href: "/news", label: "News" },
-    { href: "/market-insights", label: "Market Insights" },
+    { href: "/market-listing", label: "Market Listing" },
   ],
   Account: [
     { href: "/dashboard", label: "My Dashboard" },
@@ -15,10 +15,12 @@ const FOOTER_LINKS = {
     { href: "/manage/listings/new", label: "Post a Listing" },
   ],
   Company: [
-    { href: "/about", label: "About Us" },
+    { href: "/about", label: "About" },
     { href: "/contact", label: "Contact" },
-    { href: "/privacy", label: "Privacy Policy" },
-    { href: "/terms", label: "Terms of Service" },
+  ],
+  Legal: [
+    { href: "/privacy", label: "Privacy" },
+    { href: "/terms", label: "Terms" },
   ],
 };
 
