@@ -11,15 +11,46 @@ const LISTING_TYPES = [
   { value: "commercial", label: "🏪 Commercial", desc: "Office or commercial space" },
 ];
 
+const PURPOSE_OPTIONS = [
+  { value: "rent", label: "For Rent", hint: "Monthly recurring pricing" },
+  { value: "sale", label: "For Sale", hint: "One-time sale price" },
+] as const;
+
 export function Step1BasicInfo() {
   const { register, watch, setValue, formState: { errors } } = useFormContext<ListingFormData>();
   const selectedType = watch("listing_type");
+  const selectedPurpose = watch("purpose");
 
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-bold">What are you listing?</h2>
         <p className="text-muted-foreground mt-1">Choose the type of property you want to list.</p>
+      </div>
+
+      <div>
+        <label className="mb-2 block text-sm font-medium">Listing Purpose *</label>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {PURPOSE_OPTIONS.map((option) => {
+            const isSelected = selectedPurpose === option.value;
+            return (
+              <button
+                key={option.value}
+                type="button"
+                aria-pressed={isSelected}
+                onClick={() => setValue("purpose", option.value, { shouldValidate: true })}
+                className={`rounded-xl border p-4 text-left transition-all ${
+                  isSelected
+                    ? "border-accent bg-accent/10 ring-1 ring-accent"
+                    : "border-border hover:border-accent/50"
+                }`}
+              >
+                <p className="text-sm font-semibold">{option.label}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">{option.hint}</p>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <div>

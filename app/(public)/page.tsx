@@ -153,16 +153,23 @@ export default async function HomePage() {
       {/* ── CTA Banner ────────────────────────────────────────────────────── */}
       <section className="section bg-accent">
         <div className="container text-center">
-          <h2 className="text-white">Have a Property to Rent?</h2>
+          <h2 className="text-white">Have a Property to List?</h2>
           <p className="mt-3 text-white/80">
-            List your apartment or room for free. Reach thousands of verified renters in Kathmandu.
+            Post for rent or sale and reach thousands of verified buyers and renters in Kathmandu.
           </p>
           <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
-              href="/register?role=owner"
+              href="/manage/listings/new?purpose=rent"
               className="inline-flex items-center justify-center gap-2 rounded-lg bg-white px-6 py-3 text-sm font-semibold text-accent shadow-sm transition-all hover:bg-white/90 active:scale-95"
             >
-              Post Your Listing Free
+              Post for Rent
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link
+              href="/manage/listings/new?purpose=sale"
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-sm transition-all hover:bg-primary/90 active:scale-95"
+            >
+              Post for Sale
               <ArrowRight className="h-4 w-4" />
             </Link>
             <Link

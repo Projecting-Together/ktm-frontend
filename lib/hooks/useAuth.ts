@@ -4,6 +4,18 @@ import { useAuthStore } from "@/lib/stores/authStore";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
+function setSessionCookies(accessToken: string, role?: string) {
+  document.cookie = `accessToken=${accessToken}; Path=/; SameSite=Lax`;
+  if (role) {
+    document.cookie = `userRole=${role}; Path=/; SameSite=Lax`;
+  }
+}
+
+function clearSessionCookies() {
+  document.cookie = "accessToken=; Path=/; Max-Age=0; SameSite=Lax";
+  document.cookie = "userRole=; Path=/; Max-Age=0; SameSite=Lax";
+}
+
 export const authKeys = {
   user: ["auth", "user"] as const,
 };
@@ -39,8 +51,10 @@ export function useLogin() {
     },
     onSuccess: async (tokens) => {
       persistTokens(tokens);
+      setSessionCookies(tokens.access_token);
       const userRes = await getCurrentUser();
       if (userRes.data) {
+        setSessionCookies(tokens.access_token, userRes.data.role);
         setUser(userRes.data);
         qc.setQueryData(authKeys.user, userRes.data);
       }
@@ -76,6 +90,7 @@ export function useLogout() {
     mutationFn: async () => {
       await logout();
       storeLogout();
+      clearSessionCookies();
     },
     onSuccess: () => {
       qc.clear();

@@ -47,8 +47,12 @@ const STEP_FIELDS: Record<number, (keyof ListingFormData)[]> = {
   8: [],
 };
 
-interface ListingFormProps { listingId?: string }
-export function ListingForm({ listingId }: ListingFormProps = {}) {
+interface ListingFormProps {
+  listingId?: string;
+  initialPurpose?: "rent" | "sale";
+}
+
+export function ListingForm({ listingId, initialPurpose = "rent" }: ListingFormProps = {}) {
   const [currentStep, setCurrentStep] = useState(1);
   const [images, setImages] = useState<UploadedImage[]>([]);
   const router = useRouter();
@@ -59,6 +63,7 @@ export function ListingForm({ listingId }: ListingFormProps = {}) {
     mode: "onChange",
     defaultValues: {
       listing_type: undefined,
+      purpose: initialPurpose,
       price_period: "monthly",
       bedrooms: 1,
       bathrooms: 1,

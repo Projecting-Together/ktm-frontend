@@ -24,6 +24,13 @@ import {
   mockAmenities,
 } from "@/test-utils/mockData";
 
+const mockAdminAuthTokens = {
+  access_token:
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c3ItYWRtaW4tMDAxIiwiZW1haWwiOiJhZG1pbkBrdG1hcGFydG1lbnRzLmNvbSIsInJvbGUiOiJhZG1pbiIsInN0YXR1cyI6ImFjdGl2ZSIsImlhdCI6MTcxMDAwMDAwMCwiZXhwIjoxNzEwMDAwOTAwfQ.mock_signature",
+  refresh_token: "mock-refresh-admin",
+  token_type: "bearer" as const,
+};
+
 /** Next.js chunks & dev endpoints must not be mocked — prevents 404 / wrong MIME on `/_next/static/*`. */
 const passthroughNextAssets = http.all(
   ({ request }) => {
@@ -75,6 +82,9 @@ export const handlers = [
       if (body.email === "sita.thapa@gmail.com" && body.password === "password123") {
         return HttpResponse.json(mockOwnerAuthTokens);
       }
+      if (body.email === "admin@ktmapartments.com" && body.password === "password123") {
+        return HttpResponse.json(mockAdminAuthTokens);
+      }
       return HttpResponse.json({ detail: "Invalid email or password" }, { status: 401 });
     }
   ),
@@ -114,6 +124,7 @@ export const handlers = [
       }
       const token = auth.slice(7);
       if (token === mockOwnerAuthTokens.access_token) return HttpResponse.json(mockOwner);
+      if (token === mockAdminAuthTokens.access_token) return HttpResponse.json(mockAdmin);
       return HttpResponse.json(mockRenter);
     }
   ),

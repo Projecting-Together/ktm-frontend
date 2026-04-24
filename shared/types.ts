@@ -7,7 +7,6 @@ export interface Property {
   id: string;
   title: string;
   address: string;
-  neighborhood: string;
   price: number;
   pricePerSqft?: number;
   bedrooms: number;
@@ -59,11 +58,4 @@ export interface PropertyListingResponse {
   pageSize: number;
 }
 
-export interface Neighborhood {
-  id: string;
-  name: string;
-  description: string;
-  averagePrice: number;
-  properties: number;
-  image: string;
-}
+

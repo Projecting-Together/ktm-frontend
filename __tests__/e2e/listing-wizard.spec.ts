@@ -6,15 +6,20 @@ test.describe("Listing Creation Wizard (Unauthenticated)", () => {
     await expect(page).toHaveURL(/login/);
     await expect(page).toHaveURL(/next=%2Fmanage%2Flistings%2Fnew/);
   });
+
 });
 
 test.describe("Listing Creation Wizard (Authenticated Owner)", () => {
   // These tests simulate an authenticated owner session via localStorage/cookie
-  test.beforeEach(async ({ page }) => {
-    // Inject a mock auth token so middleware allows access
+  test.beforeEach(async ({ page, baseURL }) => {
+    const appUrl = baseURL ?? "http://localhost:4188";
+    await page.context().addCookies([
+      { name: "accessToken", value: "mock-owner-token", url: appUrl },
+      { name: "userRole", value: "landlord", url: appUrl },
+    ]);
+
     await page.goto("/login");
     await page.evaluate(() => {
-      // Simulate auth store hydration with owner token
       localStorage.setItem("ktm-auth", JSON.stringify({
         state: {
           isAuthenticated: true,
@@ -68,5 +73,12 @@ test.describe("Listing Creation Wizard (Authenticated Owner)", () => {
       await expect(page.getByLabel(/street address/i)).toBeVisible();
       await expect(page.getByText(/neighborhood/i)).toHaveCount(0);
     }
+  });
+
+  test("Step 1 — preselects purpose as sale from query parameter", async ({ page }) => {
+    await page.goto("/manage/listings/new?purpose=sale");
+    if (page.url().includes("login")) { test.skip(); return; }
+    await expect(page.getByRole("button", { name: /for sale/i })).toHaveAttribute("aria-pressed", "true");
+    await expect(page.getByRole("button", { name: /for rent/i })).toHaveAttribute("aria-pressed", "false");
   });
 });
