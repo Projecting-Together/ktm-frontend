@@ -323,6 +323,35 @@ export interface NewsFilters {
   category?: string;
 }
 
+export type MarketListingStatus = "draft" | "pending_review" | "published" | "rejected";
+export type MarketListingPropertyType = "apartment" | "house" | "commercial" | "land";
+export type MarketListingCurrency = "NPR" | "USD";
+
+export interface MarketListing {
+  id: string;
+  title: string;
+  slug: string;
+  description: string;
+  price: number;
+  currency: MarketListingCurrency;
+  location: string;
+  property_type: MarketListingPropertyType;
+  status: MarketListingStatus;
+  published_at?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MarketListingFilters {
+  page?: number;
+  limit?: number;
+  status?: MarketListingStatus;
+  property_type?: MarketListingPropertyType;
+  search?: string;
+  min_price?: number;
+  max_price?: number;
+}
+
 export interface ApiError {
   message: string;
   code?: string;
