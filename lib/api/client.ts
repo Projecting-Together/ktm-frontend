@@ -6,13 +6,13 @@
  */
 import type {
   ApiResponse, TokenPair, User, Listing, ListingListItem,
-  ListingFilters, PaginatedResponse, Amenity, Neighborhood,
+  ListingFilters, PaginatedResponse, Amenity,
   Inquiry, CreateInquiryPayload, VisitRequest, CreateVisitPayload,
   Favorite, PresignedUrlResponse, MediaConfirmPayload, ListingStats,
   AuditLog, AdminAnalyticsOverview,
 } from "./types";
 
-export type { Listing, ListingListItem, ListingFilters, PaginatedResponse, Amenity, Neighborhood, User, Inquiry, VisitRequest, Favorite, AuditLog, AdminAnalyticsOverview };
+export type { Listing, ListingListItem, ListingFilters, PaginatedResponse, Amenity, User, Inquiry, VisitRequest, Favorite, AuditLog, AdminAnalyticsOverview };
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "https://api.ktmapartments.com/api/v1";
 
@@ -158,10 +158,6 @@ export async function reorderMedia(listingId: string, order: string[]) {
 export async function getAmenities(skip = 0, limit = 100) {
   return apiFetch<Amenity[]>(`/amenities/?skip=${skip}&limit=${limit}`, {}, false);
 }
-
-// Neighborhoods
-export async function getNeighborhoods() { return apiFetch<Neighborhood[]>("/neighborhoods/", {}, false); }
-export async function getNeighborhood(slug: string) { return apiFetch<Neighborhood>(`/neighborhoods/${slug}`, {}, false); }
 
 // Inquiries
 export async function createInquiry(payload: CreateInquiryPayload) {
