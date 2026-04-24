@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ArrowRight, ShieldCheck, Zap, TrendingUp } from "lucide-react";
 import { SearchBar } from "@/components/search/SearchBar";
 import { ListingCard, ListingCardSkeleton } from "@/components/listings/ListingCard";
-import { getListings } from "@/lib/api/client";
+import { fetchPublicListings } from "@/lib/api/server-public-listings";
 
 export const revalidate = 300; // ISR — 5 minutes
 
@@ -41,8 +41,14 @@ const FEATURES = [
 export default async function HomePage() {
   // Fetch purpose-aware featured listings (ISR)
   const [featuredRentRes, featuredSaleRes] = await Promise.allSettled([
-    getListings({ limit: 8, sort_by: "created_at", sort_order: "desc", verified: true, purpose: "rent" }),
-    getListings({ limit: 8, sort_by: "created_at", sort_order: "desc", verified: true, purpose: "sale" }),
+    fetchPublicListings(
+      { limit: 8, sort_by: "created_at", sort_order: "desc", verified: true, purpose: "rent" },
+      { revalidate: 300 }
+    ),
+    fetchPublicListings(
+      { limit: 8, sort_by: "created_at", sort_order: "desc", verified: true, purpose: "sale" },
+      { revalidate: 300 }
+    ),
   ]);
 
   const featuredRent =
