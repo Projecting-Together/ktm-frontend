@@ -31,9 +31,9 @@ describe("Listings API client", () => {
 
   it("getListings is called with correct filter params", async () => {
     mockGetListings.mockResolvedValueOnce({ data: mockListingsPage1, error: null });
-    await apiClient.getListings({ neighborhood: "thamel", min_price: 10000, max_price: 30000 });
+    await apiClient.getListings({ listing_type: "apartment", min_price: 10000, max_price: 30000 });
     expect(mockGetListings).toHaveBeenCalledWith(
-      expect.objectContaining({ neighborhood: "thamel", min_price: 10000, max_price: 30000 })
+      expect.objectContaining({ listing_type: "apartment", min_price: 10000, max_price: 30000 })
     );
   });
 
@@ -42,7 +42,7 @@ describe("Listings API client", () => {
       data: { items: [], total: 0, page: 1, page_size: 20, total_pages: 0, has_next: false, has_prev: false },
       error: null,
     });
-    const result = await apiClient.getListings({ neighborhood: "nonexistent" });
+    const result = await apiClient.getListings({ search: "nonexistent-keyword" });
     expect(result.data?.items).toHaveLength(0);
     expect(result.data?.total).toBe(0);
   });
