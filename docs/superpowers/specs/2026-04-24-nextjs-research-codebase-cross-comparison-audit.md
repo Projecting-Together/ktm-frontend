@@ -124,8 +124,8 @@ Weighted prioritization (applied to roadmap ordering):
 
 ### NOW-3 (`PERF-01`, `PERF-02`)
 - Success condition: Route-level Client Components are reduced, with client usage limited to interactive islands and measurable JS/hydration reduction from baseline.
-- Validate command: `npm run build`
-- Expected behavior: Build succeeds and client payload on targeted routes is at least 10% smaller than the baseline snapshot recorded before implementing NOW-3.
+- Validate command: `npm run build && cp .next/analyze/client.html docs/superpowers/evidence/now-3-baseline-client.html` (baseline), then rerun after changes and compare total JS for targeted routes.
+- Expected behavior: Build succeeds; documented post-change client JS total for targeted routes is >=10% lower than the saved baseline artifact in `docs/superpowers/evidence/`.
 
 ### NEXT-1 (`PERF-03`, `RENDER-04`)
 - Success condition: Suspense/loading boundaries are present on selected routes and each boundary maps to a documented UX objective.

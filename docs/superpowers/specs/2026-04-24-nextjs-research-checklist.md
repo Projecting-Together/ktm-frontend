@@ -114,13 +114,13 @@ Source: `nextjs-research.md`
 
 - [VERIFY] Check ID: VERIFY-01
   - Recommendation: "For each critical route, verify expected behavior for `revalidate`, `no-store`, and on-demand invalidation flows before production rollout."
-  - Source section: "9. Tooling, measurement, and enforcement (evidence and gaps)"
+  - Source section: "Testing and verification readiness"
   - Priority hint: High
 - [VERIFY] Check ID: VERIFY-02
   - Recommendation: "Track and validate stale-window behavior for ISR pages under representative traffic."
-  - Source section: "9. Tooling, measurement, and enforcement (evidence and gaps)"
+  - Source section: "Testing and verification readiness"
   - Priority hint: Medium
 - [VERIFY] Check ID: VERIFY-03
   - Recommendation: "Log unresolved evidence gaps as explicit follow-up tickets before release hardening."
-  - Source section: "9. Tooling, measurement, and enforcement (evidence and gaps)"
+  - Source section: "Testing and verification readiness"
   - Priority hint: Medium
