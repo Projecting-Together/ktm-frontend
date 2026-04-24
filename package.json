@@ -16,6 +16,8 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
+    "test:perf": "playwright test -c playwright.perf.config.ts && node tooling/scripts/summarize-perf.mjs",
+    "test:perf:real": "node tooling/scripts/run-perf-real.mjs && node tooling/scripts/summarize-perf.mjs",
     "test:all": "pnpm test:coverage && pnpm test:e2e"
   },
   "dependencies": {
@@ -48,6 +50,7 @@
     "@radix-ui/react-tooltip": "^1.2.8",
     "@tanstack/react-query": "^5.95.2",
     "@tanstack/react-query-devtools": "^5.95.2",
+    "@tavily/core": "^0.7.2",
     "@testing-library/dom": "^10.4.1",
     "axios": "^1.12.0",
     "class-variance-authority": "^0.7.1",

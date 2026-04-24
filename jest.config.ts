@@ -16,6 +16,7 @@ const config: Config = {
   testMatch: [
     "**/tests/unit/**/*.test.{ts,tsx}",
     "**/tests/integration/**/*.test.{ts,tsx}",
+    "**/tests/performance/helpers/**/*.test.{ts,tsx}",
   ],
   collectCoverageFrom: [
     "src/components/**/*.{ts,tsx}",
