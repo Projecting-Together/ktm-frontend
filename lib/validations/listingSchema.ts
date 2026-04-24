@@ -33,7 +33,7 @@ export const step1Schema = z.object({
   listing_type: z.enum(["apartment", "room", "house", "studio", "commercial"]),
   purpose: z.enum(["rent", "sale"]).default("rent"),
   address_line: z.string().min(5, "Enter a valid address"),
-  neighborhood_id: z.string().uuid("Select a neighborhood"),
+  neighborhood_id: z.string().uuid("Select a neighborhood").optional().nullable(),
   floor: z.number().int().min(-5).max(100).optional().nullable(),
   total_floors: z.number().int().min(1).max(100).optional().nullable(),
   area_sqft: z.number().positive("Enter a valid area").max(50000).optional().nullable(),

@@ -65,7 +65,8 @@ test.describe("Listing Creation Wizard (Authenticated Owner)", () => {
       const nextBtn = page.getByRole("button", { name: /next/i });
       await nextBtn.click();
       // Should advance to step 2
-      await expect(page.getByText(/neighborhood/i)).toBeVisible();
+      await expect(page.getByLabel(/street address/i)).toBeVisible();
+      await expect(page.getByText(/neighborhood/i)).toHaveCount(0);
     }
   });
 });
