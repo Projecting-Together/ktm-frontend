@@ -10,6 +10,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const result = await getNewsDetail(slug);
 
+  if (result.error && result.error.status !== 404) {
+    return {
+      title: "News Unavailable | KTM Apartments",
+      description: "News detail is temporarily unavailable.",
+    };
+  }
+
   if (!result.data) {
     return {
       title: "News Not Found | KTM Apartments",
@@ -28,6 +35,20 @@ export const revalidate = 60;
 export default async function PublicNewsDetailPage({ params }: Props) {
   const { slug } = await params;
   const result = await getNewsDetail(slug);
+
+  if (result.error && result.error.status !== 404) {
+    return (
+      <main className="container py-10">
+        <div className="mx-auto max-w-2xl rounded-xl border border-rose-200 bg-rose-50 p-8 text-center">
+          <h1 className="text-2xl font-bold text-rose-700">Article temporarily unavailable</h1>
+          <p className="mt-3 text-sm text-rose-700/90">We could not load this news article right now. Please try again shortly.</p>
+          <Link href="/news" className="mt-4 inline-flex text-sm font-medium text-rose-700 underline">
+            Back to news
+          </Link>
+        </div>
+      </main>
+    );
+  }
 
   if (!result.data) {
     notFound();

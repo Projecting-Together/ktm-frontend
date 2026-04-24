@@ -11,7 +11,8 @@ export const revalidate = 60;
 
 export default async function PublicNewsPage() {
   const result = await getNews({ page: 1, limit: 12 });
-  const items = result.data?.items ?? [];
+  const items = (result.data?.items ?? []).filter((item) => item.is_published);
+  const hasError = Boolean(result.error);
 
   return (
     <main className="container py-10">
@@ -21,7 +22,12 @@ export default async function PublicNewsPage() {
         <p className="mt-3 text-muted-foreground">Published stories and local insights for renters, owners, and agents.</p>
       </div>
 
-      {!items.length ? (
+      {hasError ? (
+        <div className="rounded-xl border border-rose-200 bg-rose-50 p-10 text-center">
+          <h2 className="text-lg font-semibold text-rose-700">News is temporarily unavailable</h2>
+          <p className="mt-2 text-sm text-rose-700/90">We could not load published news right now. Please try again shortly.</p>
+        </div>
+      ) : !items.length ? (
         <div className="rounded-xl border border-dashed border-border p-10 text-center">
           <h2 className="text-lg font-semibold">No published news yet</h2>
           <p className="mt-2 text-sm text-muted-foreground">Please check back soon for fresh Kathmandu market updates.</p>
