@@ -6,10 +6,13 @@ import { useState } from "react";
 import { MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 
+type PurposeFilter = "all" | "sale" | "rent";
+
 export default function ManageInquiriesPage() {
   const qc = useQueryClient();
   const [replyText, setReplyText] = useState<Record<string, string>>({});
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [purposeFilter, setPurposeFilter] = useState<PurposeFilter>("all");
 
   const { data: inquiries, isLoading } = useQuery({
     queryKey: ["inquiries", "received"],
@@ -26,10 +29,56 @@ export default function ManageInquiriesPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const filteredInquiries = (inquiries ?? []).filter((inq) => {
+    if (purposeFilter === "all") return true;
+    return inq.listing?.purpose === purposeFilter;
+  });
+
+  const purposeLabel = (purpose: "sale" | "rent" | undefined | null) => {
+    if (purpose === "sale") return "Sale Lead";
+    if (purpose === "rent") return "Rental Lead";
+    return "Lead";
+  };
+
   return (
     <div>
       <h1 className="text-2xl font-bold mb-1">Inquiries</h1>
       <p className="text-muted-foreground mb-6">Messages from potential renters.</p>
+
+      {!isLoading && inquiries?.length ? (
+        <div className="mb-4 flex flex-wrap gap-2">
+          <button
+            onClick={() => setPurposeFilter("all")}
+            className={`rounded-full px-3 py-1 text-xs font-medium transition ${
+              purposeFilter === "all"
+                ? "bg-accent text-accent-foreground"
+                : "bg-muted text-muted-foreground hover:bg-muted/80"
+            }`}
+          >
+            All Leads
+          </button>
+          <button
+            onClick={() => setPurposeFilter("rent")}
+            className={`rounded-full px-3 py-1 text-xs font-medium transition ${
+              purposeFilter === "rent"
+                ? "bg-accent text-accent-foreground"
+                : "bg-muted text-muted-foreground hover:bg-muted/80"
+            }`}
+          >
+            Rental Leads
+          </button>
+          <button
+            onClick={() => setPurposeFilter("sale")}
+            className={`rounded-full px-3 py-1 text-xs font-medium transition ${
+              purposeFilter === "sale"
+                ? "bg-accent text-accent-foreground"
+                : "bg-muted text-muted-foreground hover:bg-muted/80"
+            }`}
+          >
+            Sale Leads
+          </button>
+        </div>
+      ) : null}
 
       {isLoading ? (
         <div className="space-y-3">{Array.from({length:3}).map((_,i) => <div key={i} className="skeleton h-24 rounded-xl" />)}</div>
@@ -41,12 +90,13 @@ export default function ManageInquiriesPage() {
         </div>
       ) : (
         <div className="space-y-4">
-          {inquiries.map((inq) => (
+          {filteredInquiries.map((inq) => (
             <div key={inq.id} className="rounded-xl border border-border bg-card p-5">
               <div className="flex items-start justify-between gap-4 mb-3">
                 <div>
                   <p className="font-semibold text-sm">{inq.sender?.first_name ?? "Renter"}</p>
                   <p className="text-xs text-muted-foreground">{formatRelativeTime(inq.created_at)}</p>
+                  <p className="mt-1 text-xs font-medium text-muted-foreground">{purposeLabel(inq.listing?.purpose)}</p>
                 </div>
                 <span className={`rounded-full px-2 py-0.5 text-xs font-semibold capitalize ${
                   inq.status === "replied" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
