@@ -7,7 +7,7 @@ import { useAuthStore } from "@/lib/stores/authStore";
 
 export default function ManageMarketListingPage() {
   const { user } = useAuthStore();
-  const role = user?.role ?? "owner";
+  const role = user?.role;
   const [listingStatus, setListingStatus] = useState<"draft" | "pending_review" | "published">("draft");
   const [feedback, setFeedback] = useState("");
 
@@ -17,6 +17,7 @@ export default function ManageMarketListingPage() {
   const canPublish = role === "agent" || role === "admin";
 
   const roleLabel = useMemo(() => {
+    if (!role) return "Unauthenticated";
     if (role === "agent") return "Agent";
     if (role === "admin") return "Admin";
     return "Owner";
@@ -25,11 +26,13 @@ export default function ManageMarketListingPage() {
   const pendingCount = moderationQueue.data?.items.length ?? 0;
 
   const onSubmitForReview = () => {
+    if (!canSubmit) return;
     setListingStatus("pending_review");
     setFeedback("Owner market listing submitted to moderation queue as pending review.");
   };
 
   const onPublishNow = () => {
+    if (!canPublish) return;
     setListingStatus("published");
     setFeedback("Agent published the approved market listing to public market surfaces.");
   };

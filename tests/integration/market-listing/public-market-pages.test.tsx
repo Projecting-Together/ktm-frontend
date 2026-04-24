@@ -6,6 +6,7 @@ import ManageMarketListingPage from "@/app/manage/market-listing/page";
 import AdminMarketListingPage from "@/app/admin/market-listing/page";
 import { getMarketListingDetail, getMarketListings } from "@/lib/api/client";
 import { useMarketListings } from "@/lib/hooks/useMarketListings";
+import { useAuthStore } from "@/lib/stores/authStore";
 import { notFound } from "next/navigation";
 
 jest.mock("@/lib/api/client", () => ({
@@ -15,6 +16,10 @@ jest.mock("@/lib/api/client", () => ({
 
 jest.mock("@/lib/hooks/useMarketListings", () => ({
   useMarketListings: jest.fn(),
+}));
+
+jest.mock("@/lib/stores/authStore", () => ({
+  useAuthStore: jest.fn(),
 }));
 
 jest.mock("next/navigation", () => ({
@@ -28,12 +33,14 @@ describe("market listing public and moderation pages", () => {
     (getMarketListings as jest.Mock).mockReset();
     (getMarketListingDetail as jest.Mock).mockReset();
     (useMarketListings as jest.Mock).mockReset();
+    (useAuthStore as jest.Mock).mockReset();
     (notFound as jest.Mock).mockClear();
     (useMarketListings as jest.Mock).mockReturnValue({
       data: { items: [] },
       isLoading: false,
       isError: false,
     });
+    (useAuthStore as jest.Mock).mockReturnValue({ user: { role: "owner" } });
   });
 
   it("public market index excludes non-published content from render output", async () => {
@@ -75,7 +82,7 @@ describe("market listing public and moderation pages", () => {
 
     const html = renderToStaticMarkup(await PublicMarketListingPage());
 
-    expect(getMarketListings).toHaveBeenCalledWith({ page: 1, limit: 12 });
+    expect(getMarketListings).toHaveBeenCalledWith({ page: 1, limit: 12, status: "published" });
     expect(html).toContain(">Market Listings<");
     expect(html).toContain(">Thamel apartment trend<");
     expect(html).toContain(">Average rents for central apartments increased this month.<");
@@ -124,6 +131,31 @@ describe("market listing public and moderation pages", () => {
     expect(notFound).toHaveBeenCalledTimes(1);
   });
 
+  it("public market detail uses notFound for non-published listing records", async () => {
+    (getMarketListingDetail as jest.Mock).mockResolvedValue({
+      data: {
+        id: "market-2",
+        title: "Pending market post",
+        slug: "pending-market-post",
+        description: "Pending moderation content",
+        price: 64000,
+        currency: "NPR",
+        location: "Lazimpat, Kathmandu",
+        property_type: "apartment",
+        status: "pending_review",
+        published_at: null,
+        created_at: "2026-04-20T08:00:00.000Z",
+        updated_at: "2026-04-24T09:00:00.000Z",
+      },
+      error: null,
+    });
+
+    await expect(PublicMarketListingDetailPage({ params: Promise.resolve({ slug: "pending-market-post" }) })).rejects.toThrow(
+      "NEXT_NOT_FOUND",
+    );
+    expect(notFound).toHaveBeenCalledTimes(1);
+  });
+
   it("public market detail renders explicit error state for non-404 errors", async () => {
     (getMarketListingDetail as jest.Mock).mockResolvedValue({
       data: null,
@@ -149,7 +181,18 @@ describe("market listing public and moderation pages", () => {
     );
   });
 
+  it("manage market listing page disables moderation actions for unauthenticated users", () => {
+    (useAuthStore as jest.Mock).mockReturnValue({ user: null });
+
+    render(<ManageMarketListingPage />);
+
+    expect(screen.getByRole("button", { name: "Submit For Review" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Publish Now" })).toBeDisabled();
+  });
+
   it("admin market listing page supports reject action with reason and feedback", () => {
+    (useAuthStore as jest.Mock).mockReturnValue({ user: { role: "admin" } });
+
     render(<AdminMarketListingPage />);
 
     fireEvent.change(screen.getByLabelText("Rejection reason"), {
@@ -159,5 +202,25 @@ describe("market listing public and moderation pages", () => {
 
     expect(screen.getByRole("status")).toHaveTextContent("Rejected listing with reason: Missing market comps.");
     expect(screen.getByText("Latest rejection reason: Missing market comps.")).toBeInTheDocument();
+  });
+
+  it("admin market listing page validates rejection reason before reject action", () => {
+    (useAuthStore as jest.Mock).mockReturnValue({ user: { role: "admin" } });
+
+    render(<AdminMarketListingPage />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Reject" }));
+
+    expect(screen.getByRole("status")).toHaveTextContent("Provide a rejection reason before rejecting.");
+  });
+
+  it("admin market listing page blocks moderation actions for non-admin users", () => {
+    (useAuthStore as jest.Mock).mockReturnValue({ user: { role: "owner" } });
+
+    render(<AdminMarketListingPage />);
+
+    expect(screen.getByText("Admin access required for moderation actions.")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Approve" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Reject" })).not.toBeInTheDocument();
   });
 });

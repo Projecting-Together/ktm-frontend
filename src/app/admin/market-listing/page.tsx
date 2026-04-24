@@ -2,11 +2,13 @@
 
 import { useMemo, useState } from "react";
 import { useMarketListings } from "@/lib/hooks/useMarketListings";
+import { useAuthStore } from "@/lib/stores/authStore";
 
-type QueueStatus = "pending_review" | "published" | "changes_requested" | "rejected";
+type QueueStatus = "pending_review" | "published" | "changes_requested" | "rejected" | "unpublished";
 
 const moderationActions = [
   { label: "Approve", intent: "success", description: "Move reviewed listings into published status.", nextStatus: "published" },
+  { label: "Unpublish", intent: "warning", description: "Remove a published listing from public surfaces pending review.", nextStatus: "unpublished" },
   { label: "Request Changes", intent: "warning", description: "Return listings with editorial or compliance feedback.", nextStatus: "changes_requested" },
   { label: "Reject", intent: "danger", description: "Decline listing updates that fail quality or policy checks.", nextStatus: "rejected" },
 ] as const;
@@ -25,6 +27,8 @@ function getIntentClasses(intent: (typeof moderationActions)[number]["intent"]) 
 }
 
 export default function AdminMarketListingPage() {
+  const { user } = useAuthStore();
+  const isAdmin = user?.role === "admin";
   const [queueStatus, setQueueStatus] = useState<QueueStatus>("pending_review");
   const [rejectionReason, setRejectionReason] = useState("");
   const [latestRejectionReason, setLatestRejectionReason] = useState<string | null>(null);
@@ -39,6 +43,11 @@ export default function AdminMarketListingPage() {
   }, [pendingQueue.data, pendingQueue.isError, pendingQueue.isLoading]);
 
   const applyAction = (status: QueueStatus) => {
+    if (!isAdmin) {
+      setFeedback("Admin access required for moderation actions.");
+      return;
+    }
+
     if (status === "rejected") {
       const trimmedReason = rejectionReason.trim();
       if (!trimmedReason) {
@@ -48,6 +57,12 @@ export default function AdminMarketListingPage() {
       setQueueStatus("rejected");
       setLatestRejectionReason(trimmedReason);
       setFeedback(`Rejected listing with reason: ${trimmedReason}`);
+      return;
+    }
+
+    if (status === "unpublished") {
+      setQueueStatus("unpublished");
+      setFeedback("Unpublished listing from public market pages pending re-review.");
       return;
     }
 
@@ -83,39 +98,47 @@ export default function AdminMarketListingPage() {
         </div>
       ) : null}
 
-      <section className="rounded-xl border border-border bg-card p-5">
-        <h2 className="font-semibold">Available Actions</h2>
-        <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
-          {moderationActions.map((action) => (
-            <article key={action.label} className="rounded-lg border border-border p-4">
-              <p className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${getIntentClasses(action.intent)}`}>
-                {action.label}
-              </p>
-              <p className="mt-3 text-sm text-muted-foreground">{action.description}</p>
-              <button
-                type="button"
-                onClick={() => applyAction(action.nextStatus)}
-                className="mt-3 rounded border border-border px-2 py-1 text-xs font-medium"
-              >
-                {action.label}
-              </button>
-            </article>
-          ))}
-        </div>
-      </section>
+      {isAdmin ? (
+        <>
+          <section className="rounded-xl border border-border bg-card p-5">
+            <h2 className="font-semibold">Available Actions</h2>
+            <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
+              {moderationActions.map((action) => (
+                <article key={action.label} className="rounded-lg border border-border p-4">
+                  <p className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${getIntentClasses(action.intent)}`}>
+                    {action.label}
+                  </p>
+                  <p className="mt-3 text-sm text-muted-foreground">{action.description}</p>
+                  <button
+                    type="button"
+                    onClick={() => applyAction(action.nextStatus)}
+                    className="mt-3 rounded border border-border px-2 py-1 text-xs font-medium"
+                  >
+                    {action.label}
+                  </button>
+                </article>
+              ))}
+            </div>
+          </section>
 
-      <section className="rounded-xl border border-border bg-card p-5">
-        <label htmlFor="market-listing-rejection-reason" className="text-sm font-medium">
-          Rejection reason
-        </label>
-        <textarea
-          id="market-listing-rejection-reason"
-          value={rejectionReason}
-          onChange={(event) => setRejectionReason(event.target.value)}
-          className="mt-2 min-h-24 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-          placeholder="Explain why this listing update is rejected."
-        />
-      </section>
+          <section className="rounded-xl border border-border bg-card p-5">
+            <label htmlFor="market-listing-rejection-reason" className="text-sm font-medium">
+              Rejection reason
+            </label>
+            <textarea
+              id="market-listing-rejection-reason"
+              value={rejectionReason}
+              onChange={(event) => setRejectionReason(event.target.value)}
+              className="mt-2 min-h-24 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+              placeholder="Explain why this listing update is rejected."
+            />
+          </section>
+        </>
+      ) : (
+        <section className="rounded-xl border border-amber-200 bg-amber-50 p-5">
+          <p className="text-sm font-medium text-amber-800">Admin access required for moderation actions.</p>
+        </section>
+      )}
 
       <section className="rounded-xl border border-border bg-card p-5">
         <h2 className="font-semibold">Auditability</h2>

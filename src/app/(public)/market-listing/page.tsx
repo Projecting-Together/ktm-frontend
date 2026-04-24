@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export const revalidate = 60;
 
 export default async function PublicMarketListingPage() {
-  const result = await getMarketListings({ page: 1, limit: 12 });
+  const result = await getMarketListings({ page: 1, limit: 12, status: "published" });
   const items = (result.data?.items ?? []).filter((item) => item.status === "published");
   const hasError = Boolean(result.error);
 
