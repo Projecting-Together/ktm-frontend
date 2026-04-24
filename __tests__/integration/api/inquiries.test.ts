@@ -11,6 +11,7 @@ jest.mock("@/lib/api/client", () => ({
 
 import * as apiClient from "@/lib/api/client";
 const mockGetMyInquiries = apiClient.getMyInquiries as jest.MockedFunction<typeof apiClient.getMyInquiries>;
+const mockGetReceivedInquiries = apiClient.getReceivedInquiries as jest.MockedFunction<typeof apiClient.getReceivedInquiries>;
 const mockCreateInquiry = apiClient.createInquiry as jest.MockedFunction<typeof apiClient.createInquiry>;
 
 describe("Inquiries API client", () => {
