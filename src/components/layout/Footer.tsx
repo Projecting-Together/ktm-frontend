@@ -34,7 +34,7 @@ export function Footer() {
           <div className="col-span-2 lg:col-span-2">
             <Link href="/" className="flex items-center gap-2 font-bold">
               <Building2 className="h-6 w-6 text-accent" />
-              <span className="text-lg" style={{ fontFamily: "'DM Serif Display', serif" }}>
+              <span className="text-lg" style={{ fontFamily: "var(--font-serif), Georgia, serif" }}>
                 KTM<span className="text-accent">Apartments</span>
               </span>
             </Link>

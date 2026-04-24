@@ -112,7 +112,7 @@ export function Navbar() {
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 font-bold text-primary">
           <Building2 className="h-6 w-6 text-accent" />
-          <span className="text-lg tracking-tight" style={{ fontFamily: "'DM Serif Display', serif" }}>
+          <span className="text-lg tracking-tight" style={{ fontFamily: "var(--font-serif), Georgia, serif" }}>
             KTM<span className="text-accent">Apartments</span>
           </span>
         </Link>

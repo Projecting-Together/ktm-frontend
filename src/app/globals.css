@@ -135,12 +135,12 @@
   html { scroll-behavior: smooth; }
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'DM Sans', 'Inter', system-ui, sans-serif;
+    font-family: var(--font-sans), system-ui, sans-serif;
     font-size: 16px;
     line-height: 1.6;
   }
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'DM Serif Display', 'Georgia', serif;
+    font-family: var(--font-serif), Georgia, serif;
     font-weight: 700;
     line-height: 1.2;
     letter-spacing: -0.02em;
@@ -150,7 +150,7 @@
   h2 { font-size: clamp(1.5rem, 3vw, 2.25rem); }
   h3 { font-size: clamp(1.25rem, 2.5vw, 1.75rem); }
   h4 { font-size: 1.25rem; }
-  .price, code, .mono { font-family: 'JetBrains Mono', 'Fira Code', monospace; }
+  .price, code, .mono { font-family: var(--font-mono), ui-monospace, monospace; }
   button:not(:disabled), [role="button"]:not([aria-disabled="true"]), a[href] { @apply cursor-pointer; }
   :focus-visible { @apply outline-2 outline-offset-2 outline-ring; }
 }
@@ -194,7 +194,7 @@
 }
 
 .ktm-leaflet .leaflet-container {
-  font-family: "DM Sans", system-ui, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
   font-size: 14px;
   line-height: 1.5;
   color: var(--foreground);

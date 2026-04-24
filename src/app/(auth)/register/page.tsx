@@ -22,7 +22,7 @@ export default function RegisterPage() {
         <div className="mb-8 text-center">
           <Link href="/" className="inline-flex items-center gap-2 font-bold text-primary">
             <Building2 className="h-7 w-7 text-accent" />
-            <span className="text-xl" style={{fontFamily:"'DM Serif Display', serif"}}>KTM<span className="text-accent">Apartments</span></span>
+            <span className="text-xl" style={{ fontFamily: "var(--font-serif), Georgia, serif" }}>KTM<span className="text-accent">Apartments</span></span>
           </Link>
           <h1 className="mt-6 text-2xl font-bold">Create your account</h1>
           <p className="mt-1 text-muted-foreground">Join thousands of Kathmandu renters and owners</p>
