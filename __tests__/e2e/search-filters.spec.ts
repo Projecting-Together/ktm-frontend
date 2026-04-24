@@ -103,4 +103,17 @@ test.describe("Search & Filter Interactions", () => {
     await expect(page).toHaveURL(/sort_by=price/);
     await expect(page).toHaveURL(/sort_order=asc/);
   });
+
+  test("purpose URL on load controls Rent/Buy active state", async ({ page }) => {
+    await page.goto("/apartments?purpose=sale", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("load");
+
+    const purposeGroup = page.getByRole("group", { name: /listing purpose/i });
+    const rentButton = purposeGroup.getByRole("button", { name: /^rent$/i });
+    const buyButton = purposeGroup.getByRole("button", { name: /^buy$/i });
+
+    await expect(buyButton).toHaveAttribute("aria-pressed", "true");
+    await expect(rentButton).toHaveAttribute("aria-pressed", "false");
+    await expect(page).toHaveURL(/purpose=sale/);
+  });
 });

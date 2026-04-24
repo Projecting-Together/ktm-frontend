@@ -59,7 +59,7 @@ test.describe("Home / Apartments Search Page", () => {
 
   test("maximum price input updates URL params", async ({ page }) => {
     await openMobileFilterDrawerIfPresent(page);
-    const maxInput = filterPanel(page).getByLabel(/maximum price/i);
+    const maxInput = filterPanel(page).getByRole("spinbutton", { name: /^maximum price$/i });
     await maxInput.scrollIntoViewIfNeeded();
     await maxInput.fill("10000");
     await maxInput.press("Tab");
@@ -77,6 +77,26 @@ test.describe("Home / Apartments Search Page", () => {
     await page.waitForURL(/sort_by=price/, { timeout: 20000 });
     await expect(page).toHaveURL(/sort_by=price/);
     await expect(page).toHaveURL(/sort_order=asc/);
+  });
+
+  test("purpose toggle switches between Rent and Buy in URL", async ({ page }) => {
+    const purposeGroup = page.getByRole("group", { name: /listing purpose/i });
+    const rentButton = purposeGroup.getByRole("button", { name: /^rent$/i });
+    const buyButton = purposeGroup.getByRole("button", { name: /^buy$/i });
+
+    await expect(rentButton).toHaveAttribute("aria-pressed", "true");
+    await expect(page).not.toHaveURL(/purpose=sale/);
+
+    await buyButton.click();
+    await page.waitForURL(/purpose=sale/, { timeout: 20_000 });
+    await expect(buyButton).toHaveAttribute("aria-pressed", "true");
+    await expect(rentButton).toHaveAttribute("aria-pressed", "false");
+
+    await rentButton.click();
+    await page.waitForFunction(() => !window.location.search.includes("purpose=sale"), {
+      timeout: 20_000,
+    });
+    await expect(rentButton).toHaveAttribute("aria-pressed", "true");
   });
 
   test("renders mobile bottom navigation on small screens", async ({ page }) => {

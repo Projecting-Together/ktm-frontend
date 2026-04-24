@@ -80,4 +80,18 @@ test.describe("Listing Creation Wizard (Authenticated Owner)", () => {
     await expect(page.getByRole("button", { name: /for sale/i })).toHaveAttribute("aria-pressed", "true");
     await expect(page.getByRole("button", { name: /for rent/i })).toHaveAttribute("aria-pressed", "false");
   });
+
+  test("Step 1 — defaults purpose to rent when query is missing", async ({ page }) => {
+    await page.goto("/manage/listings/new");
+    if (page.url().includes("login")) { test.skip(); return; }
+    await expect(page.getByRole("button", { name: /for rent/i })).toHaveAttribute("aria-pressed", "true");
+    await expect(page.getByRole("button", { name: /for sale/i })).toHaveAttribute("aria-pressed", "false");
+  });
+
+  test("Step 1 — falls back to rent for invalid purpose query", async ({ page }) => {
+    await page.goto("/manage/listings/new?purpose=invalid-value");
+    if (page.url().includes("login")) { test.skip(); return; }
+    await expect(page.getByRole("button", { name: /for rent/i })).toHaveAttribute("aria-pressed", "true");
+    await expect(page.getByRole("button", { name: /for sale/i })).toHaveAttribute("aria-pressed", "false");
+  });
 });

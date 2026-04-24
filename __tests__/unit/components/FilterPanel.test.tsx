@@ -24,7 +24,8 @@ describe("FilterPanel", () => {
 
   it("renders price range slider and min/max inputs", () => {
     render(<FilterPanel />);
-    expect(screen.getByRole("slider", { name: /price range/i })).toBeInTheDocument();
+    expect(screen.getByRole("slider", { name: /minimum price slider/i })).toBeInTheDocument();
+    expect(screen.getByRole("slider", { name: /maximum price slider/i })).toBeInTheDocument();
     expect(screen.getByRole("spinbutton", { name: /minimum price/i })).toBeInTheDocument();
     expect(screen.getByRole("spinbutton", { name: /maximum price/i })).toBeInTheDocument();
   });
