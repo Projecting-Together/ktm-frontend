@@ -1,4 +1,4 @@
-import { mockInquiries, mockListings } from "@/test-utils/mockData";
+import { mockInquiries, mockListings, mockSaleInquiries, mockSaleListings } from "@/test-utils/mockData";
 
 jest.mock("@/lib/api/client", () => ({
   getMyInquiries: jest.fn(),
@@ -80,12 +80,10 @@ describe("Inquiries API client", () => {
   });
 
   it("mock inquiries include sale-linked leads for seller dashboards", () => {
-    const saleListingIds = new Set(
-      mockListings.filter((listing) => listing.purpose === "sale").map((listing) => listing.id)
-    );
-    const saleInquiries = mockInquiries.filter((inquiry) => saleListingIds.has(inquiry.listing_id));
-    expect(saleInquiries.length).toBeGreaterThanOrEqual(3);
-    expect(saleInquiries.every((inquiry) => inquiry.listing?.purpose === "sale")).toBe(true);
+    const activeSaleListingIds = new Set(mockSaleListings.map((listing) => listing.id));
+    expect(mockSaleInquiries).toHaveLength(8);
+    expect(mockSaleInquiries.every((inquiry) => activeSaleListingIds.has(inquiry.listing_id))).toBe(true);
+    expect(mockSaleInquiries.every((inquiry) => inquiry.listing?.purpose === "sale")).toBe(true);
   });
 
   it("getReceivedInquiries can return sale-focused lead pipeline", async () => {
@@ -93,7 +91,8 @@ describe("Inquiries API client", () => {
     mockGetReceivedInquiries.mockResolvedValueOnce({ data: saleLeads, error: null });
     const result = await apiClient.getReceivedInquiries();
     expect(result.data).toBeTruthy();
-    expect(result.data?.length).toBeGreaterThanOrEqual(3);
+    expect(result.data?.length).toBe(mockSaleInquiries.length);
     expect(result.data?.every((inquiry) => inquiry.listing?.purpose === "sale")).toBe(true);
+    expect(result.data?.every((inquiry) => inquiry.listing_id && mockSaleListings.some((listing) => listing.id === inquiry.listing_id))).toBe(true);
   });
 });

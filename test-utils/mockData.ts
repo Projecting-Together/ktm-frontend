@@ -1002,7 +1002,91 @@ export const mockInquiries: Inquiry[] = [
     listing: mockListingItems.find((listing) => listing.id === "lst-012") ?? null,
     sender: mockRenterProfile,
   },
+  {
+    id: "inq-007",
+    listing_id: "lst-005",
+    sender_id: "usr-renter-001",
+    owner_id: "usr-owner-001",
+    message:
+      "We are evaluating heritage homes for purchase in Bhaktapur. Please confirm structural renovation history and expected closing timeline.",
+    status: "pending",
+    owner_reply: null,
+    move_in_date: null,
+    created_at: "2025-01-23T16:10:00Z",
+    updated_at: "2025-01-23T16:10:00Z",
+    listing: mockListingItems.find((listing) => listing.id === "lst-005") ?? null,
+    sender: mockRenterProfile,
+  },
+  {
+    id: "inq-008",
+    listing_id: "lst-008",
+    sender_id: "usr-renter-001",
+    owner_id: "usr-agent-001",
+    message:
+      "I am a first-time buyer looking for a family apartment in Patan. Can you share final expected closing costs and available site-visit slots?",
+    status: "replied",
+    owner_reply:
+      "Yes, we can share a detailed cost sheet and host a walkthrough this Friday or Sunday afternoon.",
+    move_in_date: null,
+    created_at: "2025-01-24T07:40:00Z",
+    updated_at: "2025-01-24T10:05:00Z",
+    listing: mockListingItems.find((listing) => listing.id === "lst-008") ?? null,
+    sender: mockRenterProfile,
+  },
+  {
+    id: "inq-009",
+    listing_id: "lst-009",
+    sender_id: "usr-renter-001",
+    owner_id: "usr-owner-001",
+    message:
+      "Is the Koteshwor house title transfer clear and can we arrange an inspection focused on utility lines and parking access?",
+    status: "pending",
+    owner_reply: null,
+    move_in_date: null,
+    created_at: "2025-01-24T09:10:00Z",
+    updated_at: "2025-01-24T09:10:00Z",
+    listing: mockListingItems.find((listing) => listing.id === "lst-009") ?? null,
+    sender: mockRenterProfile,
+  },
+  {
+    id: "inq-010",
+    listing_id: "lst-011",
+    sender_id: "usr-renter-001",
+    owner_id: "usr-owner-001",
+    message:
+      "We are relocating to Bhaktapur and considering this flat for purchase. Could you confirm if bank financing documents are prepared?",
+    status: "replied",
+    owner_reply:
+      "Yes, required valuation and ownership documents are ready for bank review.",
+    move_in_date: null,
+    created_at: "2025-01-24T11:25:00Z",
+    updated_at: "2025-01-24T12:15:00Z",
+    listing: mockListingItems.find((listing) => listing.id === "lst-011") ?? null,
+    sender: mockRenterProfile,
+  },
+  {
+    id: "inq-011",
+    listing_id: "lst-013",
+    sender_id: "usr-renter-001",
+    owner_id: "usr-agent-001",
+    message:
+      "Can we compare current rental yield estimates for this Patan investment apartment before making an offer?",
+    status: "pending",
+    owner_reply: null,
+    move_in_date: null,
+    created_at: "2025-01-24T13:05:00Z",
+    updated_at: "2025-01-24T13:05:00Z",
+    listing: mockListingItems.find((listing) => listing.id === "lst-013") ?? null,
+    sender: mockRenterProfile,
+  },
 ];
+
+export const mockSaleListings = mockListings.filter(
+  (listing) => listing.purpose === "sale" && listing.status === "active"
+);
+export const mockSaleInquiries = mockInquiries.filter(
+  (inquiry) => inquiry.listing?.purpose === "sale" && mockSaleListings.some((listing) => listing.id === inquiry.listing_id)
+);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // VISIT REQUESTS

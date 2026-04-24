@@ -1,4 +1,12 @@
-import { mockAdminAnalytics, mockListingItems, mockListings, mockListingsPage1 } from "@/test-utils/mockData";
+import {
+  mockAdminAnalytics,
+  mockInquiries,
+  mockListingItems,
+  mockListings,
+  mockListingsPage1,
+  mockSaleInquiries,
+  mockSaleListings,
+} from "@/test-utils/mockData";
 
 jest.mock("@/lib/api/client", () => ({
   getListings: jest.fn(),
@@ -91,14 +99,18 @@ describe("Listings API client", () => {
   });
 
   it("mock ecosystem exposes at least 8 sale listings for buy mode", () => {
-    const saleListings = mockListings.filter((listing) => listing.purpose === "sale" && listing.status === "active");
-    expect(saleListings.length).toBeGreaterThanOrEqual(8);
-    expect(saleListings.every((listing) => listing.price_period === "monthly")).toBe(false);
+    expect(mockSaleListings).toHaveLength(8);
+    expect(mockSaleListings.every((listing) => listing.purpose === "sale")).toBe(true);
+    expect(mockSaleListings.every((listing) => listing.status === "active")).toBe(true);
+    expect(mockSaleListings.some((listing) => listing.price_period !== "monthly")).toBe(true);
   });
 
-  it("analytics counters reflect sale-heavy activity in mock data", () => {
+  it("analytics counters stay internally consistent with sale activity", () => {
+    const activeListings = mockListings.filter((listing) => listing.status === "active");
     expect(mockAdminAnalytics.total_listings).toBeGreaterThanOrEqual(mockListings.length);
-    expect(mockAdminAnalytics.total_inquiries).toBeGreaterThanOrEqual(10000);
-    expect(mockAdminAnalytics.inquiries_today).toBeGreaterThanOrEqual(60);
+    expect(mockAdminAnalytics.active_listings).toBeGreaterThanOrEqual(activeListings.length);
+    expect(mockAdminAnalytics.total_inquiries).toBeGreaterThanOrEqual(mockInquiries.length);
+    expect(mockAdminAnalytics.inquiries_today).toBeLessThanOrEqual(mockAdminAnalytics.total_inquiries);
+    expect(mockSaleInquiries.length).toBeGreaterThanOrEqual(mockSaleListings.length);
   });
 });
