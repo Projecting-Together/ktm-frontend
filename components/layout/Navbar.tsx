@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { Menu, X, Heart, Plus, Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -17,6 +17,7 @@ const NAV_LINKS = [
 export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [isUpgrading, setIsUpgrading] = useState(false);
@@ -30,6 +31,10 @@ export function Navbar() {
         activeListingCount,
       })
     : null;
+  const contextPurpose = searchParams.get("purpose");
+  const createListingHref = contextPurpose === "sale"
+    ? "/manage/listings/new?purpose=sale"
+    : "/manage/listings/new";
 
   const handleCreateListingEntry = async () => {
     if (!user) return;
@@ -39,7 +44,7 @@ export function Navbar() {
       return;
     }
 
-    router.push("/manage/listings/new");
+    router.push(createListingHref);
   };
 
   const handleUpgradeConfirm = async () => {
@@ -47,7 +52,7 @@ export function Navbar() {
       setIsUpgrading(true);
       await upgradeToAgent();
       setShowUpgradeModal(false);
-      router.push("/manage/listings/new");
+      router.push(createListingHref);
     } finally {
       setIsUpgrading(false);
     }
