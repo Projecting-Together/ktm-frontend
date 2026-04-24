@@ -115,6 +115,9 @@ export async function verifyEmail(token: string) {
   return apiFetch<{ message: string }>("/auth/verify-email", { method: "POST", body: JSON.stringify({ token }) }, false);
 }
 export async function getCurrentUser() { return apiFetch<User>("/auth/me"); }
+export async function upgradeCurrentUserToAgent() {
+  return apiFetch<User>("/auth/upgrade-agent", { method: "POST" });
+}
 
 // Listings
 export function buildListingQueryParams(filters: ListingFilters): URLSearchParams {
