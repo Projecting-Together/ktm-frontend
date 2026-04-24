@@ -6,15 +6,16 @@ export const metadata: Metadata = {
 };
 
 type NewListingPageProps = {
-  searchParams?: {
+  searchParams?: Promise<{
     purpose?: string | string[];
-  };
+  }>;
 };
 
-export default function NewListingPage({ searchParams }: NewListingPageProps) {
-  const rawPurpose = Array.isArray(searchParams?.purpose)
-    ? searchParams?.purpose[0]
-    : searchParams?.purpose;
+export default async function NewListingPage({ searchParams }: NewListingPageProps) {
+  const resolvedSearchParams = await searchParams;
+  const rawPurpose = Array.isArray(resolvedSearchParams?.purpose)
+    ? resolvedSearchParams?.purpose[0]
+    : resolvedSearchParams?.purpose;
   const initialPurpose = rawPurpose === "sale" ? "sale" : "rent";
 
   return (

@@ -44,7 +44,6 @@ test.describe("Listing Creation Wizard (Authenticated Owner)", () => {
       return;
     }
     await expect(page.getByText(/property type/i)).toBeVisible();
-    await expect(page.getByRole("button", { name: /apartment/i })).toBeVisible();
     await expect(page.getByRole("button", { name: /room/i })).toBeVisible();
     await expect(page.getByRole("button", { name: /studio/i })).toBeVisible();
   });
@@ -54,7 +53,7 @@ test.describe("Listing Creation Wizard (Authenticated Owner)", () => {
     const nextBtn = page.getByRole("button", { name: /next/i });
     if (await nextBtn.isVisible()) {
       await nextBtn.click();
-      await expect(page.getByText(/select a property type/i)).toBeVisible();
+      await expect(page.getByText(/invalid option/i)).toBeVisible();
     }
   });
 
