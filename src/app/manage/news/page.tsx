@@ -2,31 +2,37 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { getNewsPublishTransitionDecision, getNewsSubmitTransitionDecision } from "@/lib/hooks/useNews";
 import { useAuthStore } from "@/lib/stores/authStore";
 
 export default function ManageNewsPage() {
   const { user } = useAuthStore();
-  const role = user?.role ?? "owner";
-  const [newsStatus, setNewsStatus] = useState<"draft" | "pending" | "published">("draft");
+  const role = user?.role;
+  const [newsStatus, setNewsStatus] = useState<"draft" | "pending_review" | "published" | "rejected">("draft");
   const [feedback, setFeedback] = useState("");
 
-  const canSubmit = role === "owner" || role === "agent";
+  const canSubmit = role === "owner";
   const canPublish = role === "agent" || role === "admin";
 
   const roleLabel = useMemo(() => {
+    if (!role) return "Unauthenticated";
     if (role === "agent") return "Agent";
     if (role === "admin") return "Admin";
     return "Owner";
   }, [role]);
 
   const onSubmitForReview = () => {
-    setNewsStatus("pending");
-    setFeedback("Owner draft submitted to moderation queue as pending review.");
+    const decision = getNewsSubmitTransitionDecision(role, newsStatus);
+    setFeedback(decision.message);
+    if (!decision.allowed) return;
+    setNewsStatus(decision.nextStatus);
   };
 
   const onPublishNow = () => {
-    setNewsStatus("published");
-    setFeedback("Agent published the approved article to the public news feed.");
+    const decision = getNewsPublishTransitionDecision(role, newsStatus);
+    setFeedback(decision.message);
+    if (!decision.allowed) return;
+    setNewsStatus(decision.nextStatus);
   };
 
   return (

@@ -36,3 +36,65 @@ export function useNewsDetail(slug: string, options?: { enabled?: boolean }) {
     staleTime: 60 * 1000,
   });
 }
+
+export type ManageNewsStatus = "draft" | "pending_review" | "published" | "rejected";
+
+type TransitionDecision<TStatus extends string> = {
+  allowed: boolean;
+  nextStatus: TStatus;
+  message: string;
+};
+
+export function getNewsSubmitTransitionDecision(
+  role: string | null | undefined,
+  currentStatus: ManageNewsStatus,
+): TransitionDecision<ManageNewsStatus> {
+  if (role !== "owner") {
+    return {
+      allowed: false,
+      nextStatus: currentStatus,
+      message: "Only owners can submit drafts for moderation review.",
+    };
+  }
+
+  if (currentStatus !== "draft" && currentStatus !== "rejected") {
+    return {
+      allowed: false,
+      nextStatus: currentStatus,
+      message: "Only draft or rejected articles can be submitted for review.",
+    };
+  }
+
+  return {
+    allowed: true,
+    nextStatus: "pending_review",
+    message: "Owner draft submitted to moderation queue as pending review.",
+  };
+}
+
+export function getNewsPublishTransitionDecision(
+  role: string | null | undefined,
+  currentStatus: ManageNewsStatus,
+): TransitionDecision<ManageNewsStatus> {
+  if (role !== "agent" && role !== "admin") {
+    return {
+      allowed: false,
+      nextStatus: currentStatus,
+      message: "Only trusted agents or admins can publish news.",
+    };
+  }
+
+  if (currentStatus !== "pending_review") {
+    return {
+      allowed: false,
+      nextStatus: currentStatus,
+      message: "News can only be published after it enters pending review.",
+    };
+  }
+
+  return {
+    allowed: true,
+    nextStatus: "published",
+    message: "Trusted agent published the approved article to the public news feed.",
+  };
+}

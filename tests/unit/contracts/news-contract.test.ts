@@ -1,7 +1,9 @@
 import {
   CONTENT_STATUSES,
   PUBLISHER_ROLES,
+  canModerateNewsTransition,
   canPublishNews,
+  nextNewsStatusForSubmit,
 } from "@/lib/contracts/news";
 
 describe("news publishing contract", () => {
@@ -22,5 +24,20 @@ describe("news publishing contract", () => {
     expect(canPublishNews("owner")).toBe(false);
     expect(canPublishNews("agent")).toBe(true);
     expect(canPublishNews("admin")).toBe(true);
+  });
+
+  it("maps owner submit transition to pending_review", () => {
+    expect(nextNewsStatusForSubmit("owner")).toBe("pending_review");
+  });
+
+  it("maps trusted agent and admin submit transitions to published", () => {
+    expect(nextNewsStatusForSubmit("agent")).toBe("published");
+    expect(nextNewsStatusForSubmit("admin")).toBe("published");
+  });
+
+  it("allows admin moderation transitions for approve/reject/unpublish paths", () => {
+    expect(canModerateNewsTransition("pending_review", "published")).toBe(true);
+    expect(canModerateNewsTransition("pending_review", "rejected")).toBe(true);
+    expect(canModerateNewsTransition("published", "pending_review")).toBe(false);
   });
 });

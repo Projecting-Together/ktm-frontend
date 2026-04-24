@@ -5,11 +5,16 @@ import PublicNewsDetailPage from "@/app/(public)/news/[slug]/page";
 import ManageNewsPage from "@/app/manage/news/page";
 import AdminNewsPage from "@/app/admin/news/page";
 import { getNews, getNewsDetail } from "@/lib/api/client";
+import { useAuthStore } from "@/lib/stores/authStore";
 import { notFound } from "next/navigation";
 
 jest.mock("@/lib/api/client", () => ({
   getNews: jest.fn(),
   getNewsDetail: jest.fn(),
+}));
+
+jest.mock("@/lib/stores/authStore", () => ({
+  useAuthStore: jest.fn(),
 }));
 
 jest.mock("next/navigation", () => ({
@@ -22,7 +27,9 @@ describe("news public and moderation pages", () => {
   beforeEach(() => {
     (getNews as jest.Mock).mockReset();
     (getNewsDetail as jest.Mock).mockReset();
+    (useAuthStore as jest.Mock).mockReset();
     (notFound as jest.Mock).mockClear();
+    (useAuthStore as jest.Mock).mockReturnValue({ user: { role: "owner" } });
   });
 
   it("public news index excludes draft content from render output", async () => {
@@ -134,6 +141,8 @@ describe("news public and moderation pages", () => {
   });
 
   it("admin news page supports reject action with reason and feedback", () => {
+    (useAuthStore as jest.Mock).mockReturnValue({ user: { role: "admin" } });
+
     render(<AdminNewsPage />);
 
     fireEvent.change(screen.getByLabelText("Rejection reason"), {
@@ -143,5 +152,25 @@ describe("news public and moderation pages", () => {
 
     expect(screen.getByRole("status")).toHaveTextContent("Rejected article with reason: Needs factual sources.");
     expect(screen.getByText("Latest rejection reason: Needs factual sources.")).toBeInTheDocument();
+  });
+
+  it("manage news page blocks invalid publish transition with explicit feedback", () => {
+    (useAuthStore as jest.Mock).mockReturnValue({ user: { role: "agent" } });
+
+    render(<ManageNewsPage />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Publish Now" }));
+
+    expect(screen.getByRole("status")).toHaveTextContent("News can only be published after it enters pending review.");
+  });
+
+  it("admin news page blocks moderation actions for non-admin users", () => {
+    (useAuthStore as jest.Mock).mockReturnValue({ user: { role: "owner" } });
+
+    render(<AdminNewsPage />);
+
+    expect(screen.getByText("Admin access required for moderation actions.")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Approve" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Reject" })).not.toBeInTheDocument();
   });
 });

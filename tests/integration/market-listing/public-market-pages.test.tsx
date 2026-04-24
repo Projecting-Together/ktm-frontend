@@ -14,9 +14,13 @@ jest.mock("@/lib/api/client", () => ({
   getMarketListingDetail: jest.fn(),
 }));
 
-jest.mock("@/lib/hooks/useMarketListings", () => ({
-  useMarketListings: jest.fn(),
-}));
+jest.mock("@/lib/hooks/useMarketListings", () => {
+  const actual = jest.requireActual("@/lib/hooks/useMarketListings");
+  return {
+    ...actual,
+    useMarketListings: jest.fn(),
+  };
+});
 
 jest.mock("@/lib/stores/authStore", () => ({
   useAuthStore: jest.fn(),
@@ -212,6 +216,16 @@ describe("market listing public and moderation pages", () => {
     fireEvent.click(screen.getByRole("button", { name: "Reject" }));
 
     expect(screen.getByRole("status")).toHaveTextContent("Provide a rejection reason before rejecting.");
+  });
+
+  it("manage market listing page blocks invalid publish transition with explicit feedback", () => {
+    (useAuthStore as jest.Mock).mockReturnValue({ user: { role: "agent" } });
+
+    render(<ManageMarketListingPage />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Publish Now" }));
+
+    expect(screen.getByRole("status")).toHaveTextContent("Market listing must be in pending review before publish.");
   });
 
   it("admin market listing page blocks moderation actions for non-admin users", () => {

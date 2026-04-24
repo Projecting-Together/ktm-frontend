@@ -42,9 +42,22 @@ export default function AdminMarketListingPage() {
     return `${pendingQueue.data?.items.length ?? 0} listing(s) pending review`;
   }, [pendingQueue.data, pendingQueue.isError, pendingQueue.isLoading]);
 
+  const canTransitionTo = (nextStatus: QueueStatus) => {
+    if (nextStatus === "published") return queueStatus !== "published";
+    if (nextStatus === "unpublished") return queueStatus === "published";
+    if (nextStatus === "changes_requested") return queueStatus !== "rejected";
+    if (nextStatus === "rejected") return queueStatus !== "rejected";
+    return false;
+  };
+
   const applyAction = (status: QueueStatus) => {
     if (!isAdmin) {
       setFeedback("Admin access required for moderation actions.");
+      return;
+    }
+
+    if (!canTransitionTo(status)) {
+      setFeedback(`Transition blocked: cannot move from ${queueStatus.replace("_", " ")} to ${status.replace("_", " ")}.`);
       return;
     }
 
