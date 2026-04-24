@@ -30,6 +30,8 @@ Baseline summary:
 Search scope for matrix evidence: repository root, primarily `src/**`, `tests/**`, and root config files (`next.config.ts`, `tsconfig.json`, `package.json`, `jest.config.ts`, `playwright.config.ts`, `.env.example`) as inspected during this audit pass.
 
 Status rubric:
+- `Compliant`: clear implementation evidence exists and aligns with recommendation intent.
+- `Partial`: some implementation exists, but incomplete or inconsistent.
 - `Missing`: expected artifact/control is absent in the scanned scope.
 - `Unknown`: status cannot be inferred from code and docs in the scanned scope alone.
 
