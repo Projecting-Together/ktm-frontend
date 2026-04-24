@@ -55,4 +55,45 @@ describe("resolveListingCapabilities", () => {
     expect(result.canCreateWithoutUpgrade).toBe(true);
     expect(result.requiresAgentUpgrade).toBe(false);
   });
+
+  it("keeps moderator unlimited", () => {
+    const result = resolveListingCapabilities({
+      role: "moderator",
+      activeListingCount: 50,
+    });
+
+    expect(result.activeListingCount).toBe(50);
+    expect(result.canCreateWithoutUpgrade).toBe(true);
+    expect(result.requiresAgentUpgrade).toBe(false);
+  });
+
+  it("sanitizes negative active listing count to zero", () => {
+    const result = resolveListingCapabilities({
+      role: "renter",
+      activeListingCount: -2,
+    });
+
+    expect(result.activeListingCount).toBe(0);
+    expect(result.canCreateWithoutUpgrade).toBe(true);
+    expect(result.requiresAgentUpgrade).toBe(false);
+  });
+
+  it("sanitizes non-finite active listing counts to zero", () => {
+    const infinityResult = resolveListingCapabilities({
+      role: "renter",
+      activeListingCount: Number.POSITIVE_INFINITY,
+    });
+    const nanResult = resolveListingCapabilities({
+      role: "renter",
+      activeListingCount: Number.NaN,
+    });
+
+    expect(infinityResult.activeListingCount).toBe(0);
+    expect(infinityResult.canCreateWithoutUpgrade).toBe(true);
+    expect(infinityResult.requiresAgentUpgrade).toBe(false);
+
+    expect(nanResult.activeListingCount).toBe(0);
+    expect(nanResult.canCreateWithoutUpgrade).toBe(true);
+    expect(nanResult.requiresAgentUpgrade).toBe(false);
+  });
 });

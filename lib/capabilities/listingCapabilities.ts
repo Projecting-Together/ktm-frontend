@@ -14,12 +14,16 @@ export interface ListingCapabilities {
 }
 
 export function resolveListingCapabilities(input: ListingCapabilitiesInput): ListingCapabilities {
-  const hasFreeCap = input.activeListingCount < FREE_LISTING_CAP;
+  const activeListingCount =
+    Number.isFinite(input.activeListingCount) && input.activeListingCount >= 0
+      ? input.activeListingCount
+      : 0;
+  const hasFreeCap = activeListingCount < FREE_LISTING_CAP;
   const isLimitedRole = input.role === "renter" || input.role === "owner";
   const canCreateWithoutUpgrade = isLimitedRole ? hasFreeCap : true;
 
   return {
-    activeListingCount: input.activeListingCount,
+    activeListingCount,
     canCreateWithoutUpgrade,
     requiresAgentUpgrade: isLimitedRole && !hasFreeCap,
   };
