@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ListingForm } from "@/components/listings/ListingForm";
+import { NewListingRouteGate } from "@/components/listings/NewListingRouteGate";
 
 export const metadata: Metadata = {
   title: "Create New Listing | KTM Apartments",
@@ -28,7 +28,7 @@ export default async function NewListingPage({ searchParams }: NewListingPagePro
         <h1 className="text-2xl font-bold">Create a New Listing</h1>
         <p className="text-muted-foreground mt-1">Fill in the details to list your property on KTM Apartments.</p>
       </div>
-      <ListingForm initialPurpose={initialPurpose} />
+      <NewListingRouteGate initialPurpose={initialPurpose} />
     </div>
   );
 }

@@ -7,50 +7,6 @@ async function assertAuthenticatedPrecondition(page: Page): Promise<void> {
   ).not.toHaveURL(/\/login(?:\?|$)/);
 }
 
-async function clickPostListingEntry(page: Page): Promise<void> {
-  const postListingName = /post(?:\s+a)?\s+listing/i;
-  const clickVisibleEntry = async (): Promise<boolean> => {
-    const postListingButtons = page.getByRole("button", { name: postListingName });
-    const buttonCount = await postListingButtons.count();
-    for (let i = 0; i < buttonCount; i += 1) {
-      const entry = postListingButtons.nth(i);
-      if (await entry.isVisible()) {
-        await entry.click();
-        return true;
-      }
-    }
-
-    const postListingLinks = page.getByRole("link", { name: postListingName });
-    const linkCount = await postListingLinks.count();
-    for (let i = 0; i < linkCount; i += 1) {
-      const entry = postListingLinks.nth(i);
-      if (await entry.isVisible()) {
-        await entry.click();
-        return true;
-      }
-    }
-
-    return false;
-  };
-
-  if (await clickVisibleEntry()) {
-    return;
-  }
-
-  const mobileMenuToggle = page.getByRole("button", { name: /toggle menu/i });
-  if (await mobileMenuToggle.isVisible()) {
-    await mobileMenuToggle.click();
-    await expect(
-      page.getByRole("navigation").filter({ hasText: postListingName }).first()
-    ).toBeVisible();
-    if (await clickVisibleEntry()) {
-      return;
-    }
-  }
-
-  await page.getByRole("link", { name: postListingName }).first().click();
-}
-
 test.describe("Listing Creation Wizard (Unauthenticated)", () => {
   test("redirects to login when accessing /manage/listings/new unauthenticated", async ({ page }) => {
     await page.goto("/manage/listings/new");
@@ -137,7 +93,7 @@ test.describe("Listing Creation Wizard (Authenticated Owner)", () => {
     await expect(page.getByRole("button", { name: /for sale/i })).toHaveAttribute("aria-pressed", "false");
   });
 
-  test("capped owner sees upgrade modal from navbar entry", async ({ page, baseURL }) => {
+  test("capped owner requires upgrade modal on direct listing route", async ({ page, baseURL }) => {
     const appUrl = baseURL ?? "http://localhost:4188";
     await page.context().addCookies([
       { name: "accessToken", value: "mock-owner-token", url: appUrl },
@@ -163,7 +119,7 @@ test.describe("Listing Creation Wizard (Authenticated Owner)", () => {
         }),
       });
     });
-    await page.goto("/");
+    await page.goto("/manage/listings/new");
     await page.evaluate(() => {
       localStorage.setItem("ktm-auth", JSON.stringify({
         state: {
@@ -181,18 +137,11 @@ test.describe("Listing Creation Wizard (Authenticated Owner)", () => {
       }));
     });
     await page.reload();
-    await assertAuthenticatedPrecondition(page);
-
-    await clickPostListingEntry(page);
-    const upgradeModalTitle = page.getByRole("heading", { name: /upgrade to agent/i });
-    if (await upgradeModalTitle.isVisible()) {
-      await expect(upgradeModalTitle).toBeVisible();
-      await page.getByRole("button", { name: /cancel/i }).click();
-      await expect(upgradeModalTitle).toHaveCount(0);
-      return;
-    }
-
     await expect(page).toHaveURL(/\/manage\/listings\/new/);
+    const upgradeModalTitle = page.getByRole("heading", { name: /upgrade to agent/i });
+    await expect(upgradeModalTitle).toBeVisible();
+    await page.getByRole("button", { name: /cancel/i }).click();
+    await expect(page).toHaveURL(/\/manage$/);
   });
 });
 
