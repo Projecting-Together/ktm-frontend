@@ -1,16 +1,15 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Building2, Users, Flag, ClipboardList, BarChart2, ShieldCheck } from "lucide-react";
+import { LayoutDashboard, Building2, Users, ClipboardList, BarChart2, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Navbar } from "@/components/layout/Navbar";
 
 const NAV = [
-  { href: "/admin", icon: LayoutDashboard, label: "Overview", exact: true },
-  { href: "/admin/listings", icon: Building2, label: "Listings" },
-  { href: "/admin/users", icon: Users, label: "Users" },
-  { href: "/admin/reports", icon: Flag, label: "Reports" },
-  { href: "/admin/audit-log", icon: ClipboardList, label: "Audit Log" },
+  { href: "/admin", icon: LayoutDashboard, label: "Dashboard", exact: true },
+  { href: "/admin/listings", icon: Building2, label: "Listing Management" },
+  { href: "/admin/transactions", icon: ClipboardList, label: "Transactions" },
+  { href: "/admin/users", icon: Users, label: "User Management" },
   { href: "/admin/analytics", icon: BarChart2, label: "Analytics" },
 ];
 

@@ -1,67 +1,295 @@
 "use client";
-import { useState } from "react";
-import { useAdminPendingListings, useAdminApproveListing, useAdminRejectListing } from "@/lib/hooks/useListings";
-import { formatRelativeTime } from "@/lib/utils";
-import { CheckCircle, XCircle, Eye } from "lucide-react";
+
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { BulkActionBar } from "@/components/admin/BulkActionBar";
+import { DataTable, type DataTableColumn } from "@/components/admin/DataTable";
+import { FilterToolbar } from "@/components/admin/FilterToolbar";
+import { StatusBadge } from "@/components/admin/StatusBadge";
+import { adminService } from "@/lib/admin/service";
+import type { AdminListing, AdminListingStatus, AdminListingType } from "@/lib/admin/types";
+
+const LISTING_STATUSES: Array<AdminListingStatus | ""> = ["", "pending", "active", "sold", "rejected"];
+const LISTING_TYPES: Array<AdminListingType | ""> = ["", "apartment", "room", "house", "studio", "commercial"];
+
+function toBadgeStatus(status: AdminListingStatus): "pending" | "active" | "rejected" | "inactive" {
+  if (status === "sold") {
+    return "inactive";
+  }
+
+  return status;
+}
 
 export default function AdminListingsPage() {
-  const [page, setPage] = useState(1);
-  const [rejectReason, setRejectReason] = useState<Record<string, string>>({});
-  const { data, isLoading } = useAdminPendingListings(page);
-  const { mutate: approve } = useAdminApproveListing();
-  const { mutate: reject } = useAdminRejectListing();
+  const queryClient = useQueryClient();
+  const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<AdminListingStatus | "">("");
+  const [typeFilter, setTypeFilter] = useState<AdminListingType | "">("");
+  const [cityFilter, setCityFilter] = useState("");
+  const [createdAfter, setCreatedAfter] = useState("");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [feedback, setFeedback] = useState<string>("");
+
+  const listingsQuery = useQuery({
+    queryKey: ["admin", "listings", query, statusFilter],
+    queryFn: () => adminService.getListings({ query, status: statusFilter || undefined }),
+  });
+
+  const refreshListings = async () => {
+    setSelectedIds([]);
+    await queryClient.invalidateQueries({ queryKey: ["admin", "listings"] });
+  };
+
+  const approveMutation = useMutation({
+    mutationFn: async (ids: string[]) => adminService.bulkUpdateListingStatus(ids, "active"),
+    onSuccess: async (result) => {
+      setFeedback(`Bulk approved ${result.updatedCount} listing(s).`);
+      await refreshListings();
+    },
+  });
+
+  const rejectMutation = useMutation({
+    mutationFn: async (id: string) => adminService.bulkUpdateListingStatus([id], "rejected"),
+    onSuccess: async () => {
+      setFeedback("Listing rejected.");
+      await refreshListings();
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => adminService.bulkDeleteListings(ids),
+    onSuccess: async (result) => {
+      setFeedback(`Deleted ${result.deletedCount} listing(s).`);
+      await refreshListings();
+    },
+  });
+
+  const rows = useMemo(() => {
+    const cityQuery = cityFilter.trim().toLowerCase();
+    const minCreatedAt = createdAfter ? new Date(createdAfter).getTime() : Number.NEGATIVE_INFINITY;
+
+    return (listingsQuery.data?.items ?? []).filter((item) => {
+      if (typeFilter && item.type !== typeFilter) {
+        return false;
+      }
+
+      if (cityQuery && !item.city.toLowerCase().includes(cityQuery)) {
+        return false;
+      }
+
+      if (Number.isFinite(minCreatedAt) && new Date(item.createdAt).getTime() < minCreatedAt) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [cityFilter, createdAfter, listingsQuery.data?.items, typeFilter]);
+
+  const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
+  const allVisibleSelected = rows.length > 0 && rows.every((row) => selectedSet.has(row.id));
+
+  useEffect(() => {
+    const visibleRowIds = new Set(rows.map((row) => row.id));
+    setSelectedIds((current) => current.filter((id) => visibleRowIds.has(id)));
+  }, [rows]);
+
+  const toggleRowSelection = (id: string) => {
+    setSelectedIds((current) => (current.includes(id) ? current.filter((item) => item !== id) : [...current, id]));
+  };
+
+  const toggleSelectAllVisible = () => {
+    setSelectedIds((current) => {
+      if (allVisibleSelected) {
+        return current.filter((id) => !rows.some((row) => row.id === id));
+      }
+
+      const next = new Set(current);
+      rows.forEach((row) => next.add(row.id));
+      return Array.from(next);
+    });
+  };
+
+  const columns: DataTableColumn<AdminListing>[] = [
+    {
+      key: "select",
+      header: (
+        <input
+          type="checkbox"
+          aria-label="Select all listings"
+          checked={allVisibleSelected}
+          onChange={toggleSelectAllVisible}
+        />
+      ),
+      className: "w-12",
+      cell: (row) => (
+        <input
+          type="checkbox"
+          aria-label={`Select listing ${row.id}`}
+          checked={selectedSet.has(row.id)}
+          onChange={() => toggleRowSelection(row.id)}
+        />
+      ),
+    },
+    {
+      key: "title",
+      header: "Listing",
+      cell: (row) => (
+        <div>
+          <p className="font-medium">{row.title}</p>
+          <p className="text-xs text-muted-foreground">{row.city}</p>
+        </div>
+      ),
+    },
+    {
+      key: "type",
+      header: "Type",
+      cell: (row) => <span className="capitalize">{row.type}</span>,
+    },
+    {
+      key: "status",
+      header: "Status",
+      cell: (row) => <StatusBadge status={toBadgeStatus(row.status)} label={row.status === "sold" ? "Sold" : undefined} />,
+    },
+    {
+      key: "createdAt",
+      header: "Created",
+      cell: (row) => new Date(row.createdAt).toLocaleDateString("en-US"),
+    },
+    {
+      key: "actions",
+      header: "Actions",
+      cell: (row) => (
+        <div className="flex flex-wrap items-center gap-2">
+          <Link href={`/apartments/${row.id}`} className="rounded border border-border px-2 py-1 text-xs">
+            View
+          </Link>
+          <button type="button" className="rounded border border-border px-2 py-1 text-xs">
+            Edit
+          </button>
+          <button
+            type="button"
+            className="rounded border border-border px-2 py-1 text-xs"
+            onClick={() => deleteMutation.mutate([row.id])}
+          >
+            Delete
+          </button>
+          <button
+            type="button"
+            className="rounded bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-700"
+            onClick={() => approveMutation.mutate([row.id])}
+          >
+            Approve
+          </button>
+          <button
+            type="button"
+            className="rounded bg-rose-100 px-2 py-1 text-xs font-medium text-rose-700"
+            onClick={() => rejectMutation.mutate(row.id)}
+          >
+            Reject
+          </button>
+        </div>
+      ),
+    },
+  ];
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-1">Listing Moderation</h1>
-      <p className="text-muted-foreground mb-6">Review and approve or reject submitted listings.</p>
+    <div className="space-y-4">
+      <div>
+        <h1 className="text-2xl font-bold mb-1">Listing Management</h1>
+        <p className="text-muted-foreground">Search, review, and moderate listings from one place.</p>
+      </div>
 
-      {isLoading ? (
-        <div className="space-y-3">{Array.from({length:4}).map((_,i) => <div key={i} className="skeleton h-24 rounded-xl" />)}</div>
-      ) : !data?.items?.length ? (
-        <div className="rounded-xl border border-dashed border-border p-10 text-center">
-          <CheckCircle className="h-10 w-10 text-emerald-500 mx-auto mb-3" />
-          <h3 className="font-semibold">All caught up!</h3>
-          <p className="text-sm text-muted-foreground">No listings pending review.</p>
+      <FilterToolbar
+        search={
+          <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search by title, id, or city"
+            className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+          />
+        }
+        filters={
+          <>
+            <select
+              aria-label="Filter by type"
+              value={typeFilter}
+              onChange={(event) => setTypeFilter(event.target.value as AdminListingType | "")}
+              className="h-10 rounded-md border border-border bg-background px-3 text-sm capitalize"
+            >
+              <option value="">All Types</option>
+              {LISTING_TYPES.filter(Boolean).map((type) => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
+              ))}
+            </select>
+            <select
+              aria-label="Filter by status"
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value as AdminListingStatus | "")}
+              className="h-10 rounded-md border border-border bg-background px-3 text-sm capitalize"
+            >
+              <option value="">All Statuses</option>
+              {LISTING_STATUSES.filter(Boolean).map((status) => (
+                <option key={status} value={status}>
+                  {status}
+                </option>
+              ))}
+            </select>
+            <input
+              aria-label="Filter by city"
+              value={cityFilter}
+              onChange={(event) => setCityFilter(event.target.value)}
+              placeholder="City"
+              className="h-10 rounded-md border border-border bg-background px-3 text-sm"
+            />
+            <input
+              aria-label="Filter by date"
+              type="date"
+              value={createdAfter}
+              onChange={(event) => setCreatedAfter(event.target.value)}
+              className="h-10 rounded-md border border-border bg-background px-3 text-sm"
+            />
+          </>
+        }
+      />
+
+      <BulkActionBar
+        selectedCount={selectedIds.length}
+        onClear={() => setSelectedIds([])}
+        actions={
+          <>
+            <button
+              type="button"
+              onClick={() => approveMutation.mutate(selectedIds)}
+              className="rounded-md bg-emerald-100 px-3 py-1.5 text-sm font-medium text-emerald-700"
+            >
+              Bulk Approve
+            </button>
+            <button
+              type="button"
+              onClick={() => deleteMutation.mutate(selectedIds)}
+              className="rounded-md bg-rose-100 px-3 py-1.5 text-sm font-medium text-rose-700"
+            >
+              Bulk Delete
+            </button>
+          </>
+        }
+      />
+
+      {feedback ? (
+        <div role="status" className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+          {feedback}
         </div>
-      ) : (
-        <div className="space-y-4">
-          {data.items.map((listing) => (
-            <div key={listing.id} className="rounded-xl border border-border bg-card p-5">
-              <div className="flex items-start justify-between gap-4 mb-3">
-                <div>
-                  <h3 className="font-semibold">{listing.title}</h3>
-                  <p className="text-sm text-muted-foreground mt-0.5">Submitted {formatRelativeTime(listing.created_at)}</p>
-                </div>
-                <Link href={`/apartments/${listing.slug}`} target="_blank"
-                  className="flex items-center gap-1 text-xs text-accent hover:underline shrink-0">
-                  <Eye className="h-3.5 w-3.5" /> Preview
-                </Link>
-              </div>
-              <div className="flex items-center gap-3">
-                <button onClick={() => approve(listing.id)}
-                  className="flex items-center gap-1.5 rounded-lg bg-emerald-100 px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-200">
-                  <CheckCircle className="h-3.5 w-3.5" /> Approve
-                </button>
-                <button onClick={() => reject({ id: listing.id, reason: rejectReason[listing.id] ?? "Does not meet listing standards" })}
-                  className="flex items-center gap-1.5 rounded-lg bg-red-100 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-200">
-                  <XCircle className="h-3.5 w-3.5" /> Reject
-                </button>
-                <input value={rejectReason[listing.id] ?? ""} onChange={(e) => setRejectReason(p => ({...p, [listing.id]: e.target.value}))}
-                  placeholder="Rejection reason..." className="flex-1 h-8 rounded-lg border border-border bg-background px-2 text-xs focus:border-accent focus:outline-none" />
-              </div>
-            </div>
-          ))}
-          {data.total_pages > 1 && (
-            <div className="flex items-center justify-center gap-2 mt-4">
-              <button disabled={page === 1} onClick={() => setPage(p => p - 1)} className="btn-secondary text-xs px-3 py-1.5 disabled:opacity-40">Previous</button>
-              <span className="text-sm text-muted-foreground">Page {page} of {data.total_pages}</span>
-              <button disabled={page >= data.total_pages} onClick={() => setPage(p => p + 1)} className="btn-secondary text-xs px-3 py-1.5 disabled:opacity-40">Next</button>
-            </div>
-          )}
-        </div>
-      )}
+      ) : null}
+
+      <DataTable
+        columns={columns}
+        rows={rows}
+        rowKey={(row) => row.id}
+        emptyState={listingsQuery.isLoading ? "Loading listings..." : "No listings found for current filters."}
+      />
     </div>
   );
 }
