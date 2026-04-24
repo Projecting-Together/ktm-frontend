@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { ListingForm } from "@/components/listings/ListingForm";
 import { AgentUpgradeModal } from "@/components/listings/AgentUpgradeModal";
@@ -32,10 +31,10 @@ function readPersistedUser(): (User & { stats?: { active_listings?: number } }) 
 }
 
 export function NewListingRouteGate({ initialPurpose }: NewListingRouteGateProps) {
-  const router = useRouter();
   const { user: storeUser, upgradeToAgent } = useAuthStore();
   const [persistedUser, setPersistedUser] = useState<(User & { stats?: { active_listings?: number } }) | null>(null);
   const [isUpgrading, setIsUpgrading] = useState(false);
+  const [didDeclineUpgrade, setDidDeclineUpgrade] = useState(false);
 
   useEffect(() => {
     setPersistedUser(readPersistedUser());
@@ -92,12 +91,19 @@ export function NewListingRouteGate({ initialPurpose }: NewListingRouteGateProps
         <div className="rounded-lg border border-border bg-card p-6 text-sm text-muted-foreground">
           You have reached your free listing limit. Upgrade to an agent account to continue creating listings.
         </div>
-        <AgentUpgradeModal
-          open
-          isLoading={isUpgrading}
-          onCancel={() => router.push("/manage")}
-          onConfirm={handleUpgradeConfirm}
-        />
+        {didDeclineUpgrade ? (
+          <div className="mt-3 rounded-lg border border-border bg-card p-4 text-sm text-muted-foreground">
+            Upgrade canceled. You can stay on this page and review your listing details, then upgrade from your account
+            settings when you are ready to publish another listing.
+          </div>
+        ) : (
+          <AgentUpgradeModal
+            open
+            isLoading={isUpgrading}
+            onCancel={() => setDidDeclineUpgrade(true)}
+            onConfirm={handleUpgradeConfirm}
+          />
+        )}
       </>
     );
   }
