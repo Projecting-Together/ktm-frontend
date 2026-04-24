@@ -14,7 +14,7 @@ const NAV_LINKS = [
   { href: "/apartments", label: "Apartments" },
   { href: "/agents", label: "Agents" },
   { href: "/news", label: "News" },
-  { href: "/market-listing", label: "MarketListing" },
+  { href: "/market-listing", label: "Market Listing" },
 ];
 
 export function Navbar() {

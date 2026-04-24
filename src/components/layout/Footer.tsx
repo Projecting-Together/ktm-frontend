@@ -6,7 +6,7 @@ const FOOTER_LINKS = {
     { href: "/apartments", label: "Apartments" },
     { href: "/agents", label: "Agents" },
     { href: "/news", label: "News" },
-    { href: "/market-insights", label: "Market Insights" },
+    { href: "/market-listing", label: "Market Listing" },
   ],
   Account: [
     { href: "/dashboard", label: "My Dashboard" },

@@ -4,8 +4,10 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { useAuthStore } from "@/lib/stores/authStore";
 
+let mockPathname = "/";
+
 jest.mock("next/navigation", () => ({
-  usePathname: () => "/",
+  usePathname: () => mockPathname,
   useRouter: () => ({ push: jest.fn() }),
   useSearchParams: () => ({ get: () => null }),
 }));
@@ -18,6 +20,7 @@ const mockUseAuthStore = useAuthStore as unknown as jest.Mock;
 
 describe("Public navigation links", () => {
   beforeEach(() => {
+    mockPathname = "/";
     mockUseAuthStore.mockReturnValue({
       isAuthenticated: false,
       user: null,
@@ -25,16 +28,24 @@ describe("Public navigation links", () => {
     });
   });
 
-  it("shows News and MarketListing links in the top navigation", () => {
+  it("shows News and Market Listing links in the top navigation", () => {
     render(<Navbar />);
 
     expect(screen.getByRole("link", { name: "News" })).toHaveAttribute("href", "/news");
-    expect(screen.getByRole("link", { name: "MarketListing" })).toHaveAttribute("href", "/market-listing");
+    expect(screen.getByRole("link", { name: "Market Listing" })).toHaveAttribute("href", "/market-listing");
+  });
+
+  it("highlights the active top navigation link for current route", () => {
+    mockPathname = "/news/latest";
+    render(<Navbar />);
+
+    expect(screen.getByRole("link", { name: "News" })).toHaveClass("text-accent");
   });
 
   it("shows aligned legal and company links in footer", () => {
     render(<Footer />);
 
+    expect(screen.getByRole("link", { name: "Market Listing" })).toHaveAttribute("href", "/market-listing");
     expect(screen.getByRole("link", { name: "About" })).toHaveAttribute("href", "/about");
     expect(screen.getByRole("link", { name: "Contact" })).toHaveAttribute("href", "/contact");
     expect(screen.getByRole("link", { name: "Privacy" })).toHaveAttribute("href", "/privacy");
