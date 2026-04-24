@@ -11,12 +11,16 @@ type NewListingPageProps = {
   }>;
 };
 
+function resolveInitialPurpose(rawPurpose: string | undefined) {
+  return rawPurpose?.trim().toLowerCase() === "sale" ? "sale" : "rent";
+}
+
 export default async function NewListingPage({ searchParams }: NewListingPageProps) {
   const resolvedSearchParams = await searchParams;
   const rawPurpose = Array.isArray(resolvedSearchParams?.purpose)
     ? resolvedSearchParams?.purpose[0]
     : resolvedSearchParams?.purpose;
-  const initialPurpose = rawPurpose === "sale" ? "sale" : "rent";
+  const initialPurpose = resolveInitialPurpose(rawPurpose);
 
   return (
     <div>
