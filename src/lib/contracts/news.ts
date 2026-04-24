@@ -1,3 +1,5 @@
+import { PUBLISHING_ROLES, type PublishingRole } from "@/lib/contracts/publishing";
+
 export const CONTENT_STATUSES = [
   "draft",
   "pending_review",
@@ -7,10 +9,8 @@ export const CONTENT_STATUSES = [
 
 export type ContentStatus = (typeof CONTENT_STATUSES)[number];
 
-export const PUBLISHER_ROLES = ["owner", "agent", "admin"] as const;
+export const PUBLISHER_ROLES = PUBLISHING_ROLES;
 
-export type PublisherRole = (typeof PUBLISHER_ROLES)[number];
-
-export function canPublishNews(role: PublisherRole): boolean {
+export function canPublishNews(role: PublishingRole): boolean {
   return role === "agent" || role === "admin";
 }

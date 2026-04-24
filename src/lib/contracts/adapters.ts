@@ -1,7 +1,8 @@
 import type { ListingListItem } from "@/lib/api/types";
 import { mapAuthUserDto, type AuthUserDto } from "@/lib/contracts/auth";
-import { getMarketListingSubmitStatus } from "@/lib/contracts/marketListing";
-import { canPublishNews, type PublisherRole } from "@/lib/contracts/news";
+import { nextStatusForSubmit, type MarketListingStatus } from "@/lib/contracts/marketListing";
+import { canPublishNews } from "@/lib/contracts/news";
+import type { PublishingRole } from "@/lib/contracts/publishing";
 import { mapProfileDto, type ProfileDto } from "@/lib/contracts/profile";
 import { mapListingDtos, mapListingsToMapMarkers, type ListingDto, type ListingMapMarker } from "@/lib/contracts/listing";
 import type { ProfileModel } from "@/lib/contracts/profile";
@@ -24,10 +25,10 @@ export function adaptProfile(dto: ProfileDto): ProfileModel {
   return mapProfileDto(dto);
 }
 
-export function adaptNewsPublishPermission(role: PublisherRole): boolean {
+export function adaptNewsPublishPermission(role: PublishingRole): boolean {
   return canPublishNews(role);
 }
 
-export function adaptMarketListingSubmitStatus(role: PublisherRole) {
-  return getMarketListingSubmitStatus(role);
+export function adaptMarketListingSubmitStatus(role: PublishingRole): MarketListingStatus {
+  return nextStatusForSubmit(role);
 }
