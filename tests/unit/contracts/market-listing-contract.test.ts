@@ -21,4 +21,10 @@ describe("market listing contract", () => {
     expect(nextStatusForSubmit("agent")).toBe("published");
     expect(nextStatusForSubmit("admin")).toBe("published");
   });
+
+  it("throws deterministic error for invalid runtime role input", () => {
+    expect(() => nextStatusForSubmit("super-admin" as unknown as "owner")).toThrow(
+      'Invalid publishing role for market listing submit transition: "super-admin"',
+    );
+  });
 });

@@ -188,4 +188,10 @@ describe("contract adapters", () => {
     expect(adaptMarketListingSubmitStatus("agent")).toBe("published");
     expect(adaptMarketListingSubmitStatus("admin")).toBe("published");
   });
+
+  it("surfaces deterministic error for invalid runtime market listing role", () => {
+    expect(() => adaptMarketListingSubmitStatus("invalid-role" as never)).toThrow(
+      'Invalid publishing role for market listing submit transition: "invalid-role"',
+    );
+  });
 });

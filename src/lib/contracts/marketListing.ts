@@ -9,12 +9,18 @@ export const MARKET_LISTING_STATUSES = [
 
 export type MarketListingStatus = (typeof MARKET_LISTING_STATUSES)[number];
 
-const SUBMIT_TRANSITION_STATUS_BY_ROLE: Record<PublishingRole, MarketListingStatus> = {
-  owner: "pending_review",
-  agent: "published",
-  admin: "published",
-};
-
 export function nextStatusForSubmit(role: PublishingRole): MarketListingStatus {
-  return SUBMIT_TRANSITION_STATUS_BY_ROLE[role];
+  switch (role) {
+    case "owner":
+      return "pending_review";
+    case "agent":
+    case "admin":
+      return "published";
+    default: {
+      const impossibleRole: never = role;
+      throw new Error(
+        `Invalid publishing role for market listing submit transition: "${String(impossibleRole)}"`,
+      );
+    }
+  }
 }
