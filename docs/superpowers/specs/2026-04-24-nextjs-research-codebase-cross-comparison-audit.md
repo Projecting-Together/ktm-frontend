@@ -27,7 +27,7 @@ Baseline summary:
 - Normalization source: `docs/superpowers/specs/2026-04-24-nextjs-research-checklist.md`
 - Method: convert research guidance into atomic checks, then map each check to repository evidence
 
-Search scope for matrix evidence: this worktree repository root, primarily `src/**`, `tests/**`, and root config files (`next.config.ts`, `tsconfig.json`, `package.json`, `jest.config.ts`, `playwright.config.ts`, `.env.example`) as inspected during this audit pass.
+Search scope for matrix evidence: repository root, primarily `src/**`, `tests/**`, and root config files (`next.config.ts`, `tsconfig.json`, `package.json`, `jest.config.ts`, `playwright.config.ts`, `.env.example`) as inspected during this audit pass.
 
 Status rubric:
 - `Missing`: expected artifact/control is absent in the scanned scope.
@@ -65,7 +65,7 @@ Weighted prioritization (applied to roadmap ordering):
 | Deployment and operations | DEPLOY-03 | Document middleware runtime selection (`edge` vs `node`) per use case to avoid hidden behavior shifts. | Unknown: `src/middleware.ts` has no runtime selection comment/export and no dedicated ops doc reference in this spec yet. | Unknown | Medium | Low | Medium | Runtime selection documentation gap remains. |
 | Deployment and operations | DEPLOY-04 | Validate package scripts for build/start paths as a deployment readiness gate. | `package.json` scripts include `dev`, `build`, `start`, `preview`, `test`, `test:e2e`; test tooling configs exist in `jest.config.ts` and `playwright.config.ts`. | Compliant | High | Low | High | Build/start/test scripts are explicit and deployment-friendly. |
 | Testing and verification readiness | VERIFY-01 | For each critical route, verify expected behavior for `revalidate`, `no-store`, and on-demand invalidation flows before production rollout. | `tests/**` contains unit/integration coverage but no checks for `revalidate`, `no-store`, `revalidatePath`, or `revalidateTag`. | Missing | High | Medium | High | Caching behavior verification coverage is currently absent. |
-| Testing and verification readiness | VERIFY-02 | Track and validate stale-window behavior for ISR pages under representative traffic. | Unknown: no ISR stale-window or cache-age performance tests found in `tests/**`; no `tests/performance/*` files in this worktree. | Unknown | Medium | Medium | Medium | Requires dedicated ISR freshness/perf test harness. |
+| Testing and verification readiness | VERIFY-02 | Track and validate stale-window behavior for ISR pages under representative traffic. | Partial: `tests/performance/*.spec.ts` exists (Playwright timing/reporting) but does not assert ISR stale-window or HTTP cache-age behavior. | Partial | Medium | Medium | Medium | Requires extending perf suite or adding targeted ISR/cache-age checks. |
 | Testing and verification readiness | VERIFY-03 | Log unresolved evidence gaps as explicit follow-up tickets before release hardening. | Unknown: no ticket references (issue IDs, tracked backlog links, or release tags) found in scanned spec/checklist scope for unresolved gaps. | Unknown | Medium | Low | Low | Follow-up ticketing process evidence is outside current checked sources or not present. |
 
 ## 4) Top Findings
