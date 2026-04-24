@@ -11,6 +11,12 @@ Search scope for matrix evidence: this worktree repository root, primarily `src/
 Status rubric:
 - `Missing`: expected artifact/control is absent in the scanned scope.
 - `Unknown`: status cannot be inferred from code and docs in the scanned scope alone.
+
+Weighted prioritization (applied to roadmap ordering):
+- 30% risk reduction
+- 30% performance/user impact
+- 20% effort-to-value
+- 20% platform maturity gain
 ## 3) Gap Matrix by Pillar
 | Pillar | Check ID | Recommendation | Evidence (files/symbols) | Status | Impact | Effort | Confidence | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -41,5 +47,77 @@ Status rubric:
 | Testing and verification readiness | VERIFY-03 | Log unresolved evidence gaps as explicit follow-up tickets before release hardening. | Unknown: no ticket references (issue IDs, TODO links, backlog tags) found in scanned spec/checklist scope for unresolved gaps. | Unknown | Medium | Low | Low | Follow-up ticketing process evidence is outside current checked sources or not present. |
 ## 4) Top Findings
 ## 5) Prioritized Roadmap (Now / Next / Later)
+### Now
+1. **NOW-1 (`CACHE-02`, `CACHE-03`, `VERIFY-01`)**  
+   Add explicit fetch cache modes (`force-cache`/`no-store`) and targeted invalidation (`revalidatePath`/`revalidateTag`) for critical listing/detail data paths.  
+   - Rationale: Highest combined risk-reduction and user-impact score because stale or incorrect cache behavior affects correctness and freshness platform-wide.
+   - Dependencies: Needs route/data inventory from `RENDER-01` evidence and owner mapping for invalidation triggers.
+
+2. **NOW-2 (`RENDER-03`, `CACHE-01`)**  
+   Define explicit dynamic freshness strategy for personalized routes (for example dashboard/manage/admin surfaces) and document route-level render/cache intent.  
+   - Rationale: Prevents hidden SSR/CSR drift and production regressions where personalized data can be stale or inconsistently rendered.
+   - Dependencies: Should follow NOW-1 cache policy conventions so render decisions and cache controls are aligned.
+
+3. **NOW-3 (`PERF-01`, `PERF-02`)**  
+   Reduce route-level `"use client"` scope and move non-interactive data/layout shells to Server Components with small client islands only where interactivity is required.  
+   - Rationale: Directly improves bundle size and hydration cost on high-traffic paths with strong user-perceived performance upside.
+   - Dependencies: Requires baseline measurement targets and guardrails in `VERIFY-01`.
+
+### Next
+4. **NEXT-1 (`PERF-03`, `RENDER-04`)**  
+   Standardize route-level loading boundaries (`loading.tsx` where applicable) and tie Suspense usage to explicit UX targets (TTFB/LCP perception goals).  
+   - Rationale: Medium effort with meaningful UX consistency gains once cache/render foundations are stabilized.
+   - Dependencies: Depends on NOW-2 render strategy map and NOW-3 component boundary cleanup.
+
+5. **NEXT-2 (`DEPLOY-02`, `DEPLOY-03`, `SEC-01`)**  
+   Document runtime decisions (`edge` vs `nodejs`) for middleware and selected routes, with guardrails on middleware complexity.  
+   - Rationale: Reduces operational ambiguity and hard-to-debug runtime drift before broader deployment scaling.
+   - Dependencies: Requires confirmed hosting/runtime constraints from deployment owners.
+
+### Later
+6. **LATER-1 (`VERIFY-02`)**  
+   Add ISR stale-window behavior tests under representative traffic and cache-age scenarios.  
+   - Rationale: High maturity value but lower immediate payoff than correctness/performance baseline gaps.
+   - Dependencies: Depends on NOW-1/NOW-2 being complete so behavior under test is stable.
+
+7. **LATER-2 (`VERIFY-03`, `CACHE-04`)**  
+   Create explicit backlog tickets for unresolved unknowns and multi-instance invalidation assumptions; link each unknown to an owner and closure date.  
+   - Rationale: Improves governance and release readiness after core engineering controls are implemented.
+   - Dependencies: Requires outputs from NEXT-2 runtime documentation and initial invalidation rollout results.
+
 ## 6) Verification Criteria
+### NOW-1 (`CACHE-02`, `CACHE-03`, `VERIFY-01`)
+- Success condition: Critical data fetches have explicit cache policies, and invalidation APIs are implemented where mutation flows require freshness.
+- Validate command: `rg "cache:\s*'(force-cache|no-store)'|revalidate(Path|Tag)\(" src`
+- Expected behavior: Command returns matches in route/data modules tied to listing/detail read paths and mutation handlers.
+
+### NOW-2 (`RENDER-03`, `CACHE-01`)
+- Success condition: Personalized routes declare/implement documented freshness intent (dynamic/no-store or equivalent route-level decision) with no implicit defaults for critical paths.
+- Validate command: `rg "dashboard|manage|admin|revalidate|dynamic|no-store" src/app`
+- Expected behavior: Output shows explicit render/cache intent on personalized route entry points, not only in downstream utilities.
+
+### NOW-3 (`PERF-01`, `PERF-02`)
+- Success condition: Route-level Client Components are reduced, with client usage limited to interactive islands and measurable JS/hydration reduction from baseline.
+- Validate command: `npm run build`
+- Expected behavior: Build succeeds and bundle analysis output indicates reduced client payload on targeted routes versus the pre-change baseline.
+
+### NEXT-1 (`PERF-03`, `RENDER-04`)
+- Success condition: Suspense/loading boundaries are present on selected routes and each boundary maps to a documented UX objective.
+- Validate command: `rg "Suspense|loading\.tsx" src/app`
+- Expected behavior: Matches include both boundary implementation and route coverage beyond a single page.
+
+### NEXT-2 (`DEPLOY-02`, `DEPLOY-03`, `SEC-01`)
+- Success condition: Runtime choices and middleware scope constraints are documented and reflected in code where required.
+- Validate command: `rg "runtime\s*=|middleware" src docs/superpowers/specs`
+- Expected behavior: Results show explicit runtime declarations or rationale docs and middleware guidance aligned to deployment constraints.
+
+### LATER-1 (`VERIFY-02`)
+- Success condition: ISR stale-window tests exist and fail when freshness guarantees regress.
+- Validate command: `npm run test -- tests/performance`
+- Expected behavior: Performance/freshness test suite executes with explicit assertions for stale-window limits.
+
+### LATER-2 (`VERIFY-03`, `CACHE-04`)
+- Success condition: All unknowns from this audit are tracked as owner-assigned backlog items with target resolution dates.
+- Validate command: `rg "CACHE-04|VERIFY-03|owner|target date|unknown" docs/superpowers/specs docs/superpowers/plans`
+- Expected behavior: Traceable artifact links unknown matrix items to actionable follow-up work with clear accountability.
 ## 7) Risks, Assumptions, and Unknowns
