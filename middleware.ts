@@ -12,6 +12,7 @@ function withCsp(response: NextResponse) {
 export function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const requiresAuth = PROTECTED_PREFIXES.some((prefix) => path.startsWith(prefix));
+  const isListingCreationPath = path === "/manage/listings/new";
 
   if (!requiresAuth) {
     return withCsp(NextResponse.next());
@@ -28,7 +29,11 @@ export function middleware(request: NextRequest) {
 
     if (path.startsWith("/manage")) {
       const role = request.cookies.get("userRole")?.value;
-      if (role !== "admin" && role !== "landlord") {
+      const canAccessManage = isListingCreationPath
+        ? role === "admin" || role === "agent" || role === "owner" || role === "renter" || role === "landlord"
+        : role === "admin" || role === "agent" || role === "owner" || role === "landlord";
+
+      if (!canAccessManage) {
         return withCsp(NextResponse.redirect(new URL("/dashboard", request.url)));
       }
     }

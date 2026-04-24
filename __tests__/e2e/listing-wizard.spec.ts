@@ -65,7 +65,7 @@ test.describe("Listing Creation Wizard (Authenticated Owner)", () => {
     const appUrl = baseURL ?? "http://localhost:4188";
     await page.context().addCookies([
       { name: "accessToken", value: "mock-owner-token", url: appUrl },
-      { name: "userRole", value: "landlord", url: appUrl },
+      { name: "userRole", value: "owner", url: appUrl },
     ]);
     await page.goto("/login");
     await page.evaluate(() => {
@@ -141,7 +141,7 @@ test.describe("Listing Creation Wizard (Authenticated Owner)", () => {
     const appUrl = baseURL ?? "http://localhost:4188";
     await page.context().addCookies([
       { name: "accessToken", value: "mock-owner-token", url: appUrl },
-      { name: "userRole", value: "landlord", url: appUrl },
+      { name: "userRole", value: "owner", url: appUrl },
     ]);
     await page.route("**/api/v1/auth/me", async (route) => {
       await route.fulfill({
@@ -193,5 +193,36 @@ test.describe("Listing Creation Wizard (Authenticated Owner)", () => {
     }
 
     await expect(page).toHaveURL(/\/manage\/listings\/new/);
+  });
+});
+
+test.describe("Listing Creation Wizard (Authenticated Renter)", () => {
+  test("allows renter to access /manage/listings/new", async ({ page, baseURL }) => {
+    const appUrl = baseURL ?? "http://localhost:4188";
+    await page.context().addCookies([
+      { name: "accessToken", value: "mock-renter-token", url: appUrl },
+      { name: "userRole", value: "renter", url: appUrl },
+    ]);
+    await page.goto("/login");
+    await page.evaluate(() => {
+      localStorage.setItem("ktm-auth", JSON.stringify({
+        state: {
+          isAuthenticated: true,
+          user: {
+            id: "usr-renter-001",
+            email: "renter@ktmapartments.com",
+            role: "renter",
+            status: "active",
+            stats: { active_listings: 1 },
+          },
+          accessToken: "mock-renter-token",
+        },
+        version: 0,
+      }));
+    });
+
+    await page.goto("/manage/listings/new");
+    await assertAuthenticatedPrecondition(page);
+    await expect(page.getByText(/create a new listing/i)).toBeVisible();
   });
 });

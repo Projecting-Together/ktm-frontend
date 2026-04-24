@@ -11,6 +11,11 @@ jest.mock("@/lib/hooks/useListings", () => ({
     isLoading: false,
     isError: false,
   }),
+  useListings: () => ({
+    data: {
+      items: mockListings,
+    },
+  }),
 }));
 
 jest.mock("@/lib/hooks/useFavorites", () => ({
@@ -56,5 +61,17 @@ describe("ListingDetailClient", () => {
       purpose: "sale",
       source: "listing_detail_cta",
     });
+  });
+
+  it("renders purpose-consistent related listings", () => {
+    const saleListing = mockListings.find((listing) => listing.purpose === "sale");
+    if (!saleListing) {
+      throw new Error("Test data missing sale listing");
+    }
+
+    render(<ListingDetailClient listing={saleListing} />);
+
+    expect(screen.getByRole("heading", { name: /related sale listings/i })).toBeInTheDocument();
+    expect(screen.queryByText(/related rent listings/i)).not.toBeInTheDocument();
   });
 });

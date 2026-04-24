@@ -64,7 +64,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   canCreateListing: () => {
     const user = get().user;
     if (!user) return false;
-    return ["owner", "agent", "admin"].includes(user.role);
+    return ["renter", "owner", "agent", "admin"].includes(user.role);
   },
 
   canModerate: () => {

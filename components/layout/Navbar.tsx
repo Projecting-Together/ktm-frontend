@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { Menu, X, Heart, Plus, Building2 } from "lucide-react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/lib/stores/authStore";
 import { resolveListingCapabilities } from "@/lib/capabilities/listingCapabilities";
@@ -22,8 +23,11 @@ export function Navbar() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [isUpgrading, setIsUpgrading] = useState(false);
   const { user, isAuthenticated, upgradeToAgent } = useAuthStore();
-  const canPostListing = user?.role === "owner" || user?.role === "agent" || user?.role === "admin";
-  const activeListingCount = Number((user as { stats?: { active_listings?: number } } | null)?.stats?.active_listings ?? 0);
+  const canPostListing = user?.role === "renter" || user?.role === "owner" || user?.role === "agent" || user?.role === "admin";
+  const rawActiveListingCount = (user as { stats?: { active_listings?: number } } | null)?.stats?.active_listings;
+  const hasKnownActiveListingCount = Number.isFinite(rawActiveListingCount);
+  const activeListingCount = hasKnownActiveListingCount ? Number(rawActiveListingCount) : 0;
+  const isNormalTierUser = user?.role === "renter" || user?.role === "owner";
 
   const listingCapabilities = user
     ? resolveListingCapabilities({
@@ -39,6 +43,11 @@ export function Navbar() {
   const handleCreateListingEntry = async () => {
     if (!user) return;
 
+    if (isNormalTierUser && !hasKnownActiveListingCount) {
+      toast.error("Couldn't verify your active listings. Please retry in a moment.");
+      return;
+    }
+
     if (listingCapabilities?.requiresAgentUpgrade) {
       setShowUpgradeModal(true);
       return;
@@ -53,6 +62,9 @@ export function Navbar() {
       await upgradeToAgent();
       setShowUpgradeModal(false);
       router.push(createListingHref);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Upgrade failed. Please try again.";
+      toast.error(message);
     } finally {
       setIsUpgrading(false);
     }

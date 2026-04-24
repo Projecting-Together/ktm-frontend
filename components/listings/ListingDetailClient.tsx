@@ -10,7 +10,8 @@ import {
 import { VerifiedBadge } from "@/components/common/VerifiedBadge";
 import { ListingCoverImage } from "@/components/listings/ListingCoverImage";
 import { useToggleFavorite, useIsFavorite } from "@/lib/hooks/useFavorites";
-import { useListing } from "@/lib/hooks/useListings";
+import { ListingCard } from "@/components/listings/ListingCard";
+import { useListing, useListings } from "@/lib/hooks/useListings";
 import { useAuthStore } from "@/lib/stores/authStore";
 import { trackInquiryCtaClick } from "@/lib/analytics/events";
 import { formatPrice, formatDate, buildWhatsAppUrl, cn, getStatusColor } from "@/lib/utils";
@@ -26,6 +27,8 @@ export default function ListingDetailClient({ listing: initialListing, slugOrId 
     enabled: !initialListing && !!slugOrId,
   });
   const listing = initialListing ?? fetchedListing;
+  const listingPurpose = listing?.purpose === "sale" ? "sale" : "rent";
+  const relatedListingsQuery = useListings({ purpose: listingPurpose, limit: 4 });
   const [activeImg, setActiveImg] = useState(0);
   const { isAuthenticated } = useAuthStore();
   const isFavorite = useIsFavorite(listing?.id ?? "");
@@ -64,6 +67,9 @@ export default function ListingDetailClient({ listing: initialListing, slugOrId 
     : null;
   const inquiryCtaText = listing.purpose === "sale" ? "Send Inquiry to Seller" : "Send Inquiry";
   const apartmentsHref = listing.purpose === "sale" ? "/apartments?purpose=sale" : "/apartments";
+  const relatedListings =
+    relatedListingsQuery.data?.items?.filter((candidate) => candidate.id !== listing.id).slice(0, 3) ?? [];
+  const relatedSectionTitle = listingPurpose === "sale" ? "Related Sale Listings" : "Related Rent Listings";
 
   return (
     <div className="container py-6 lg:py-10">
@@ -305,6 +311,17 @@ export default function ListingDetailClient({ listing: initialListing, slugOrId 
           </div>
         </div>
       </div>
+
+      {relatedListings.length > 0 && (
+        <section className="mt-10 border-t border-border pt-8">
+          <h2 className="text-xl font-semibold">{relatedSectionTitle}</h2>
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {relatedListings.map((relatedListing) => (
+              <ListingCard key={relatedListing.id} listing={relatedListing} />
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }
