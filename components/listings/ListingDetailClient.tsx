@@ -63,6 +63,7 @@ export default function ListingDetailClient({ listing: initialListing, slugOrId 
     ? buildWhatsAppUrl(listing.owner.whatsapp_number, `Hi, I am interested in: ${listing.title} - ktmapartments.com/apartments/${listing.slug}`)
     : null;
   const inquiryCtaText = listing.purpose === "sale" ? "Send Inquiry to Seller" : "Send Inquiry";
+  const apartmentsHref = listing.purpose === "sale" ? "/apartments?purpose=sale" : "/apartments";
 
   return (
     <div className="container py-6 lg:py-10">
@@ -70,7 +71,7 @@ export default function ListingDetailClient({ listing: initialListing, slugOrId 
       <nav className="mb-4 flex items-center gap-1 text-sm text-muted-foreground">
         <Link href="/" className="hover:text-accent">Home</Link>
         <span>/</span>
-        <Link href="/apartments" className="hover:text-accent">Apartments</Link>
+        <Link href={apartmentsHref} className="hover:text-accent">Apartments</Link>
         <span>/</span>
         <span className="text-foreground line-clamp-1">{listing.title}</span>
       </nav>

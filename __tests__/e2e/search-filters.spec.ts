@@ -116,4 +116,22 @@ test.describe("Search & Filter Interactions", () => {
     await expect(rentButton).toHaveAttribute("aria-pressed", "false");
     await expect(page).toHaveURL(/purpose=sale/);
   });
+
+  test("buy mode stays active after applying listing-type filters", async ({ page }) => {
+    await page.goto("/apartments?purpose=sale", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("load");
+    await openMobileFilterDrawerIfPresent(page);
+    await filterPanel(page).getByRole("button", { name: /^apartment$/i }).first().click();
+
+    await page.waitForURL((url) => {
+      return (
+        url.pathname === "/apartments" &&
+        url.searchParams.get("purpose") === "sale" &&
+        url.searchParams.get("listing_type") === "apartment"
+      );
+    }, { timeout: 20_000 });
+
+    const purposeGroup = page.getByRole("group", { name: /listing purpose/i });
+    await expect(purposeGroup.getByRole("button", { name: /^buy$/i })).toHaveAttribute("aria-pressed", "true");
+  });
 });

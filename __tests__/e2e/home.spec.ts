@@ -106,4 +106,13 @@ test.describe("Home / Apartments Search Page", () => {
     const mobileNav = page.locator("nav").last();
     await expect(mobileNav).toBeVisible();
   });
+
+  test("root route redirects to apartments with buy toggle available", async ({ page }) => {
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("load");
+    await expect(page).toHaveURL(/\/apartments(?:\?|$)/);
+
+    const purposeGroup = page.getByRole("group", { name: /listing purpose/i });
+    await expect(purposeGroup.getByRole("button", { name: /^buy$/i })).toBeVisible();
+  });
 });

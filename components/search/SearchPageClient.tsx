@@ -176,7 +176,11 @@ export default function SearchPageClient() {
   ]);
 
   const filters = selectApiFilters(store);
-  const { data, isPending, isError, error, refetch, isFetching } = useListings(filters);
+  const listingFilters = {
+    ...filters,
+    purpose: currentPurpose,
+  };
+  const { data, isPending, isError, error, refetch, isFetching } = useListings(listingFilters);
   const listings = adaptListingsForSearch(data?.items);
   const total = data?.total ?? 0;
   const totalPages = data?.total_pages ?? 1;

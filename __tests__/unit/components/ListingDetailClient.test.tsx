@@ -25,11 +25,16 @@ describe("ListingDetailClient", () => {
     const saleListing = mockListings[4];
     render(<ListingDetailClient listing={saleListing} />);
     expect(screen.getByRole("link", { name: /send inquiry to seller/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /^apartments$/i })).toHaveAttribute(
+      "href",
+      "/apartments?purpose=sale",
+    );
   });
 
   it("keeps default inquiry CTA for rent listings", () => {
     const rentListing = mockListings[0];
     render(<ListingDetailClient listing={rentListing} />);
     expect(screen.getByRole("link", { name: /send inquiry$/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /^apartments$/i })).toHaveAttribute("href", "/apartments");
   });
 });
