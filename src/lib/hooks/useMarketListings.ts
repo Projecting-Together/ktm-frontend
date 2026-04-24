@@ -2,19 +2,29 @@ import { useQuery } from "@tanstack/react-query";
 import { getMarketListingDetail, getMarketListings } from "@/lib/api/client";
 import type { MarketListingFilters } from "@/lib/api/types";
 
+function normalizeMarketListingFilters(filters: MarketListingFilters = {}): MarketListingFilters {
+  const normalizedEntries = Object.entries(filters)
+    .filter(([, value]) => value !== undefined && value !== null && value !== "")
+    .sort(([a], [b]) => a.localeCompare(b));
+
+  return Object.fromEntries(normalizedEntries) as MarketListingFilters;
+}
+
 export const marketListingKeys = {
   all: ["market-listings"] as const,
   lists: () => [...marketListingKeys.all, "list"] as const,
-  list: (filters: MarketListingFilters) => [...marketListingKeys.all, "list", filters] as const,
+  list: (filters: MarketListingFilters = {}) =>
+    [...marketListingKeys.lists(), normalizeMarketListingFilters(filters)] as const,
   details: () => [...marketListingKeys.all, "detail"] as const,
-  detail: (slug: string) => [...marketListingKeys.all, "detail", slug] as const,
+  detail: (slug: string) => [...marketListingKeys.details(), slug] as const,
 };
 
 export function useMarketListings(filters: MarketListingFilters = {}) {
+  const normalizedFilters = normalizeMarketListingFilters(filters);
   return useQuery({
-    queryKey: marketListingKeys.list(filters),
+    queryKey: marketListingKeys.list(normalizedFilters),
     queryFn: async () => {
-      const res = await getMarketListings(filters);
+      const res = await getMarketListings(normalizedFilters);
       if (res.error) throw new Error(res.error.message);
       if (!res.data) throw new Error("Market listing response is empty");
       return res.data;

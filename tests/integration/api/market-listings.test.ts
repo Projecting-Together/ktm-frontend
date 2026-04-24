@@ -3,7 +3,13 @@ import {
   getMarketListingDetail,
   getMarketListings,
 } from "@/lib/api/client";
-import { marketListingKeys } from "@/lib/hooks/useMarketListings";
+import { marketListingKeys, useMarketListingDetail } from "@/lib/hooks/useMarketListings";
+
+const mockUseQuery = jest.fn();
+
+jest.mock("@tanstack/react-query", () => ({
+  useQuery: (...args: unknown[]) => mockUseQuery(...args),
+}));
 
 describe("Market listings API query behavior", () => {
   const originalFetch = global.fetch;
@@ -145,5 +151,68 @@ describe("Market listings API query behavior", () => {
       "detail",
       "baluwatar-apartment-block",
     ]);
+  });
+
+  it("normalizes query keys for equivalent empty filters", () => {
+    expect(marketListingKeys.list({})).toEqual(marketListingKeys.list({ search: "" }));
+    expect(marketListingKeys.list({ status: undefined })).toEqual(marketListingKeys.list({}));
+    expect(marketListingKeys.list({ status: null as unknown as "published" })).toEqual(
+      marketListingKeys.list({})
+    );
+  });
+
+  it("normalizes query keys for equivalent populated filters regardless of input order", () => {
+    const a = marketListingKeys.list({
+      limit: 12,
+      status: "published",
+      property_type: "apartment",
+      search: "baluwatar",
+    });
+    const b = marketListingKeys.list({
+      search: "baluwatar",
+      property_type: "apartment",
+      status: "published",
+      limit: 12,
+    });
+
+    expect(a).toEqual(b);
+  });
+});
+
+describe("useMarketListingDetail hook behavior", () => {
+  beforeEach(() => {
+    mockUseQuery.mockReset();
+  });
+
+  it("passes enabled=false through to useQuery", () => {
+    mockUseQuery.mockReturnValue({ data: undefined, isLoading: false, isError: false });
+
+    useMarketListingDetail("baluwatar-apartment-block", { enabled: false });
+
+    expect(mockUseQuery).toHaveBeenCalledTimes(1);
+    const config = mockUseQuery.mock.calls[0][0] as {
+      enabled: boolean;
+      queryKey: readonly unknown[];
+    };
+    expect(config.queryKey).toEqual(
+      marketListingKeys.detail("baluwatar-apartment-block")
+    );
+    expect(config.enabled).toBe(false);
+  });
+
+  it("query function throws when API returns error", async () => {
+    mockUseQuery.mockImplementation((config: unknown) => config);
+    global.fetch = jest.fn().mockResolvedValueOnce(
+      new Response(JSON.stringify({ detail: "Listing fetch failed" }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      })
+    ) as jest.MockedFunction<typeof fetch>;
+
+    const config = useMarketListingDetail("baluwatar-apartment-block") as {
+      queryFn: () => Promise<unknown>;
+    };
+
+    await expect(config.queryFn()).rejects.toThrow("Listing fetch failed");
   });
 });
