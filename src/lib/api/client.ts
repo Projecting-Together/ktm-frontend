@@ -142,11 +142,11 @@ export function buildNewsQueryParams(filters: NewsFilters): URLSearchParams {
   }
   return params;
 }
-export async function getPublishedNews(filters: NewsFilters = {}) {
+export async function getNews(filters: NewsFilters = {}) {
   const q = buildNewsQueryParams(filters).toString();
   return apiFetch<PaginatedResponse<NewsListItem>>(q ? `/news/published?${q}` : "/news/published", {}, false);
 }
-export async function getNewsBySlug(slug: string) {
+export async function getNewsDetail(slug: string) {
   return apiFetch<NewsArticle>(`/news/published/${slug}`, {}, false);
 }
 export async function createListing(payload: Partial<Listing>) {
