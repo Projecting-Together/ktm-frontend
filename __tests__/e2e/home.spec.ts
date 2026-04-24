@@ -106,4 +106,17 @@ test.describe("Home / Apartments Search Page", () => {
     const mobileNav = page.locator("nav").last();
     await expect(mobileNav).toBeVisible();
   });
+
+  test("root route renders homepage and purpose modules are reachable", async ({ page }) => {
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("load");
+    await expect(page).toHaveURL(/\/$/);
+    await expect(page.getByRole("heading", { name: /find your perfect home in/i })).toBeVisible();
+
+    const buyListingsLink = page.getByRole("link", { name: /view buy listings/i });
+    await expect(buyListingsLink).toBeVisible();
+    await buyListingsLink.click();
+    await page.waitForURL(/\/apartments\?purpose=sale/, { timeout: 20_000 });
+    await expect(page).toHaveURL(/purpose=sale/);
+  });
 });

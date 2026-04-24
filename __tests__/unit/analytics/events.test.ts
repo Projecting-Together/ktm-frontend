@@ -1,6 +1,7 @@
 import {
   buildPurposeModeChangeEvent,
   buildInquirySentEvent,
+  buildInquiryCtaClickEvent,
   buildListingPostCompletedEvent,
 } from "@/lib/analytics/events";
 
@@ -33,6 +34,24 @@ describe("analytics events helpers", () => {
       }),
     ).toEqual({
       event: "inquiry_sent",
+      payload: {
+        listing_id: "listing-123",
+        purpose: "sale",
+        mode: "buy",
+        source: "listing_detail_cta",
+      },
+    });
+  });
+
+  it("builds inquiry-cta-click payload with listing context", () => {
+    expect(
+      buildInquiryCtaClickEvent({
+        listingId: "listing-123",
+        purpose: "sale",
+        source: "listing_detail_cta",
+      }),
+    ).toEqual({
+      event: "inquiry_cta_click",
       payload: {
         listing_id: "listing-123",
         purpose: "sale",

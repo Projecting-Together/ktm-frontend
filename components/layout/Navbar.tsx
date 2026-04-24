@@ -1,11 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { Menu, X, Heart, Plus, Building2 } from "lucide-react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/lib/stores/authStore";
+import { resolveListingCapabilities } from "@/lib/capabilities/listingCapabilities";
+import { AgentUpgradeModal } from "@/components/listings/AgentUpgradeModal";
 
 const NAV_LINKS = [
   { href: "/apartments", label: "Apartments" },
@@ -14,9 +17,58 @@ const NAV_LINKS = [
 
 export function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { user, isAuthenticated } = useAuthStore();
-  const canPostListing = user?.role === "owner" || user?.role === "agent" || user?.role === "admin";
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [isUpgrading, setIsUpgrading] = useState(false);
+  const { user, isAuthenticated, upgradeToAgent } = useAuthStore();
+  const canPostListing = user?.role === "renter" || user?.role === "owner" || user?.role === "agent" || user?.role === "admin";
+  const rawActiveListingCount = (user as { stats?: { active_listings?: number } } | null)?.stats?.active_listings;
+  const hasKnownActiveListingCount = Number.isFinite(rawActiveListingCount);
+  const activeListingCount = hasKnownActiveListingCount ? Number(rawActiveListingCount) : 0;
+  const isNormalTierUser = user?.role === "renter" || user?.role === "owner";
+
+  const listingCapabilities = user
+    ? resolveListingCapabilities({
+        role: user.role,
+        activeListingCount,
+      })
+    : null;
+  const contextPurpose = searchParams.get("purpose");
+  const createListingHref = contextPurpose === "sale"
+    ? "/manage/listings/new?purpose=sale"
+    : "/manage/listings/new";
+
+  const handleCreateListingEntry = async () => {
+    if (!user) return;
+
+    if (isNormalTierUser && !hasKnownActiveListingCount) {
+      toast.error("Couldn't verify your active listings. Please retry in a moment.");
+      return;
+    }
+
+    if (listingCapabilities?.requiresAgentUpgrade) {
+      setShowUpgradeModal(true);
+      return;
+    }
+
+    router.push(createListingHref);
+  };
+
+  const handleUpgradeConfirm = async () => {
+    try {
+      setIsUpgrading(true);
+      await upgradeToAgent();
+      setShowUpgradeModal(false);
+      router.push(createListingHref);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Upgrade failed. Please try again.";
+      toast.error(message);
+    } finally {
+      setIsUpgrading(false);
+    }
+  };
 
   const dashboardHref =
     user?.role === "admin"
@@ -67,10 +119,10 @@ export function Navbar() {
               </Link>
 
               {canPostListing && (
-                <Link href="/manage/listings/new" className="btn-primary gap-1.5 py-2 text-xs">
+                <button type="button" onClick={handleCreateListingEntry} className="btn-primary gap-1.5 py-2 text-xs">
                   <Plus className="h-3.5 w-3.5" />
                   Post Listing
-                </Link>
+                </button>
               )}
 
               <Link
@@ -138,14 +190,17 @@ export function Navbar() {
                   My Dashboard
                 </Link>
                 {canPostListing && (
-                  <Link
-                    href="/manage/listings/new"
-                    onClick={() => setMobileOpen(false)}
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setMobileOpen(false);
+                      await handleCreateListingEntry();
+                    }}
                     className="btn-primary mt-2 justify-center gap-1.5"
                   >
                     <Plus className="h-4 w-4" />
                     Post a Listing
-                  </Link>
+                  </button>
                 )}
               </>
             ) : (
@@ -161,6 +216,12 @@ export function Navbar() {
           </div>
         </div>
       )}
+      <AgentUpgradeModal
+        open={showUpgradeModal}
+        isLoading={isUpgrading}
+        onCancel={() => setShowUpgradeModal(false)}
+        onConfirm={handleUpgradeConfirm}
+      />
     </header>
   );
 }

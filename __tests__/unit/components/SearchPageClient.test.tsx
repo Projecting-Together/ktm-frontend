@@ -17,15 +17,17 @@ jest.mock("next/dynamic", () => () => {
   return DynamicStub;
 });
 
+const mockUseListings = jest.fn(() => ({
+  data: { items: [], total: 0, total_pages: 1 },
+  isPending: false,
+  isError: false,
+  error: null,
+  refetch: jest.fn(),
+  isFetching: false,
+}));
+
 jest.mock("@/lib/hooks/useListings", () => ({
-  useListings: () => ({
-    data: { items: [], total: 0, total_pages: 1 },
-    isPending: false,
-    isError: false,
-    error: null,
-    refetch: jest.fn(),
-    isFetching: false,
-  }),
+  useListings: (...args: unknown[]) => mockUseListings(...args),
 }));
 
 jest.mock("@/lib/contracts/adapters", () => ({
@@ -33,6 +35,15 @@ jest.mock("@/lib/contracts/adapters", () => ({
 }));
 
 const resetStoreData = () => {
+  mockUseListings.mockClear();
+  mockUseListings.mockImplementation(() => ({
+    data: { items: [], total: 0, total_pages: 1 },
+    isPending: false,
+    isError: false,
+    error: null,
+    refetch: jest.fn(),
+    isFetching: false,
+  }));
   useFilterStore.setState({
     page: 1,
     limit: 20,
@@ -88,5 +99,13 @@ describe("SearchPageClient", () => {
       expect.stringMatching(/purpose=sale/),
       expect.objectContaining({ scroll: false }),
     );
+  });
+
+  it("requests rent listings by default when purpose is absent", () => {
+    render(<SearchPageClient />);
+
+    expect(mockUseListings).toHaveBeenCalled();
+    const [firstCallFilters] = mockUseListings.mock.calls[0] as [Record<string, unknown>];
+    expect(firstCallFilters.purpose).toBe("rent");
   });
 });

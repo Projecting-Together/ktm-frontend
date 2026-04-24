@@ -39,13 +39,16 @@ const FEATURES = [
 ];
 
 export default async function HomePage() {
-  // Fetch featured listings (ISR)
-  const [featuredRes] = await Promise.allSettled([
-    getListings({ limit: 8, sort_by: "created_at", sort_order: "desc", verified: true }),
+  // Fetch purpose-aware featured listings (ISR)
+  const [featuredRentRes, featuredSaleRes] = await Promise.allSettled([
+    getListings({ limit: 8, sort_by: "created_at", sort_order: "desc", verified: true, purpose: "rent" }),
+    getListings({ limit: 8, sort_by: "created_at", sort_order: "desc", verified: true, purpose: "sale" }),
   ]);
 
-  const featured =
-    featuredRes.status === "fulfilled" ? (featuredRes.value.data?.items ?? []) : [];
+  const featuredRent =
+    featuredRentRes.status === "fulfilled" ? (featuredRentRes.value.data?.items ?? []) : [];
+  const featuredSale =
+    featuredSaleRes.status === "fulfilled" ? (featuredSaleRes.value.data?.items ?? []) : [];
 
   return (
     <>
@@ -104,7 +107,7 @@ export default async function HomePage() {
               <h2 className="mt-1">Latest Verified Properties</h2>
             </div>
             <Link
-              href="/apartments"
+              href="/apartments?purpose=rent"
               className="flex items-center gap-1 text-sm font-medium text-accent hover:underline"
             >
               View all <ArrowRight className="h-4 w-4" />
@@ -112,12 +115,37 @@ export default async function HomePage() {
           </div>
 
           <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {featured.length > 0
-              ? featured.map((listing) => (
+            {featuredRent.length > 0
+              ? featuredRent.map((listing) => (
                   <ListingCard key={listing.id} listing={listing} />
                 ))
               : Array.from({ length: 8 }).map((_, i) => (
                   <ListingCardSkeleton key={i} />
+                ))}
+          </div>
+
+          <div className="mt-10 flex items-end justify-between">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-wider text-accent">
+                Buy Mode
+              </p>
+              <h2 className="mt-1">Latest Verified Sale Listings</h2>
+            </div>
+            <Link
+              href="/apartments?purpose=sale"
+              className="flex items-center gap-1 text-sm font-medium text-accent hover:underline"
+            >
+              View buy listings <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+
+          <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {featuredSale.length > 0
+              ? featuredSale.map((listing) => (
+                  <ListingCard key={listing.id} listing={listing} />
+                ))
+              : Array.from({ length: 8 }).map((_, i) => (
+                  <ListingCardSkeleton key={`sale-${i}`} />
                 ))}
           </div>
         </div>

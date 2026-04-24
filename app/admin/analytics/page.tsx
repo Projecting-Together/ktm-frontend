@@ -7,7 +7,7 @@ import { StatCard } from "@/components/admin/StatCard";
 import { adminService } from "@/lib/admin/service";
 
 export default function AdminAnalyticsPage() {
-  const [dateRange, setDateRange] = useState("last-30-days");
+  const [dateRange, setDateRange] = useState<"last-7-days" | "last-30-days" | "last-90-days">("last-30-days");
   const [city, setCity] = useState("all-cities");
   const [listingType, setListingType] = useState("all-types");
 
@@ -50,7 +50,9 @@ export default function AdminAnalyticsPage() {
             <select
               aria-label="Filter analytics by date range"
               value={dateRange}
-              onChange={(event) => setDateRange(event.target.value)}
+              onChange={(event) =>
+                setDateRange(event.target.value as "last-7-days" | "last-30-days" | "last-90-days")
+              }
               className="h-10 rounded-md border border-border bg-background px-3 text-sm"
             >
               <option value="last-7-days">Last 7 days</option>
