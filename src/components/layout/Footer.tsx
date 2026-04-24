@@ -15,10 +15,12 @@ const FOOTER_LINKS = {
     { href: "/manage/listings/new", label: "Post a Listing" },
   ],
   Company: [
-    { href: "/about", label: "About Us" },
+    { href: "/about", label: "About" },
     { href: "/contact", label: "Contact" },
-    { href: "/privacy", label: "Privacy Policy" },
-    { href: "/terms", label: "Terms of Service" },
+  ],
+  Legal: [
+    { href: "/privacy", label: "Privacy" },
+    { href: "/terms", label: "Terms" },
   ],
 };
 

@@ -13,6 +13,8 @@ import { AgentUpgradeModal } from "@/components/listings/AgentUpgradeModal";
 const NAV_LINKS = [
   { href: "/apartments", label: "Apartments" },
   { href: "/agents", label: "Agents" },
+  { href: "/news", label: "News" },
+  { href: "/market-listing", label: "MarketListing" },
 ];
 
 export function Navbar() {
