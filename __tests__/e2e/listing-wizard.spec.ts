@@ -1,4 +1,11 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
+
+async function assertAuthenticatedPrecondition(page: Page): Promise<void> {
+  await expect(
+    page,
+    "Auth precondition failed: expected authenticated owner setup to stay on listing pages, but request was redirected to /login."
+  ).not.toHaveURL(/\/login(?:\?|$)/);
+}
 
 test.describe("Listing Creation Wizard (Unauthenticated)", () => {
   test("redirects to login when accessing /manage/listings/new unauthenticated", async ({ page }) => {
@@ -35,21 +42,16 @@ test.describe("Listing Creation Wizard (Authenticated Owner)", () => {
       }));
     });
     await page.goto("/manage/listings/new");
+    await assertAuthenticatedPrecondition(page);
   });
 
   test("Step 1 — renders property type selection", async ({ page }) => {
-    // If redirected to login, skip (middleware blocks without real JWT)
-    if (page.url().includes("login")) {
-      test.skip();
-      return;
-    }
     await expect(page.getByText(/property type/i)).toBeVisible();
     await expect(page.getByRole("button", { name: /room/i })).toBeVisible();
     await expect(page.getByRole("button", { name: /studio/i })).toBeVisible();
   });
 
   test("Step 1 — shows validation error when Next is clicked without selecting type", async ({ page }) => {
-    if (page.url().includes("login")) { test.skip(); return; }
     const nextBtn = page.getByRole("button", { name: /next/i });
     if (await nextBtn.isVisible()) {
       await nextBtn.click();
@@ -58,7 +60,6 @@ test.describe("Listing Creation Wizard (Authenticated Owner)", () => {
   });
 
   test("Step 1 — can select apartment type and proceed", async ({ page }) => {
-    if (page.url().includes("login")) { test.skip(); return; }
     const apartmentBtn = page.getByRole("button", { name: /^apartment$/i }).first();
     if (await apartmentBtn.isVisible()) {
       await apartmentBtn.click();
@@ -76,21 +77,21 @@ test.describe("Listing Creation Wizard (Authenticated Owner)", () => {
 
   test("Step 1 — preselects purpose as sale from query parameter", async ({ page }) => {
     await page.goto("/manage/listings/new?purpose=sale");
-    if (page.url().includes("login")) { test.skip(); return; }
+    await assertAuthenticatedPrecondition(page);
     await expect(page.getByRole("button", { name: /for sale/i })).toHaveAttribute("aria-pressed", "true");
     await expect(page.getByRole("button", { name: /for rent/i })).toHaveAttribute("aria-pressed", "false");
   });
 
   test("Step 1 — defaults purpose to rent when query is missing", async ({ page }) => {
     await page.goto("/manage/listings/new");
-    if (page.url().includes("login")) { test.skip(); return; }
+    await assertAuthenticatedPrecondition(page);
     await expect(page.getByRole("button", { name: /for rent/i })).toHaveAttribute("aria-pressed", "true");
     await expect(page.getByRole("button", { name: /for sale/i })).toHaveAttribute("aria-pressed", "false");
   });
 
   test("Step 1 — falls back to rent for invalid purpose query", async ({ page }) => {
     await page.goto("/manage/listings/new?purpose=invalid-value");
-    if (page.url().includes("login")) { test.skip(); return; }
+    await assertAuthenticatedPrecondition(page);
     await expect(page.getByRole("button", { name: /for rent/i })).toHaveAttribute("aria-pressed", "true");
     await expect(page.getByRole("button", { name: /for sale/i })).toHaveAttribute("aria-pressed", "false");
   });
@@ -114,7 +115,7 @@ test.describe("Listing Creation Wizard (Authenticated Owner)", () => {
       }));
     });
     await page.reload();
-    if (page.url().includes("login")) { test.skip(); return; }
+    await assertAuthenticatedPrecondition(page);
 
     await page.getByRole("button", { name: /post listing/i }).first().click();
     await expect(page.getByText(/upgrade to agent/i)).toBeVisible();
