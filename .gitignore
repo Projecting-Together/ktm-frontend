@@ -85,6 +85,7 @@ jspm_packages/
 
 # Next.js build output
 .next
+.swc/
 
 # Nuxt.js build / generate output
 .nuxt
@@ -109,8 +110,8 @@ temp/
 .webdev/
 
 # Playwright
-playwright-report/
-test-results/
+build/playwright-report/
+build/test-results/
 
 # Local git worktrees
 .worktrees/

@@ -6,20 +6,21 @@ const createJestConfig = nextJest({ dir: "./" });
 const config: Config = {
   coverageProvider: "v8",
   testEnvironment: "jsdom",
-  setupFilesAfterEnv: ["<rootDir>/test-utils/jest.setup.ts"],
+  setupFilesAfterEnv: ["<rootDir>/tests/test-utils/jest.setup.ts"],
   moduleNameMapper: {
-    "^@/(.*)$": "<rootDir>/$1",
+    "^@/(.*)$": "<rootDir>/src/$1",
     // Force MSW to use CJS builds (avoids ESM import errors in Jest)
     "^msw/node$": "<rootDir>/node_modules/msw/lib/node/index.js",
     "^msw$": "<rootDir>/node_modules/msw/lib/core/index.js",
   },
   testMatch: [
-    "**/__tests__/unit/**/*.test.{ts,tsx}",
-    "**/__tests__/integration/**/*.test.{ts,tsx}",
+    "**/tests/unit/**/*.test.{ts,tsx}",
+    "**/tests/integration/**/*.test.{ts,tsx}",
   ],
   collectCoverageFrom: [
-    "components/**/*.{ts,tsx}",
-    "lib/**/*.{ts,tsx}",
+    "src/components/**/*.{ts,tsx}",
+    "src/lib/**/*.{ts,tsx}",
+    "src/hooks/**/*.{ts,tsx}",
     "!**/*.d.ts",
     "!**/node_modules/**",
     "!**/.next/**",

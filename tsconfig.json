@@ -1,11 +1,6 @@
 {
   "include": [
-    "app/**/*",
-    "components/**/*",
-    "hooks/**/*",
-    "lib/**/*",
-    "shared/**/*",
-    "middleware.ts",
+    "src/**/*",
     ".next/types/**/*.ts"
   ],
   "exclude": [
@@ -43,10 +38,10 @@
     "target": "ES2022",
     "paths": {
       "@/*": [
-        "./*"
+        "./src/*"
       ],
       "@shared/*": [
-        "./shared/*"
+        "./src/shared/*"
       ]
     },
     "resolveJsonModule": true,

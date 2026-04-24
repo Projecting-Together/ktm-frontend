@@ -7,20 +7,21 @@ const useNextDev = process.env.PLAYWRIGHT_USE_NEXT_DEV === "1";
 const webServerCommand = useNextDev
   ? `npx next dev -p ${e2ePort}`
   : `npx next build && npx next start -p ${e2ePort}`;
-/** Browser MSW for deterministic listings data (see `MswGate` + `msw/handlers.ts`). */
+/** Browser MSW for deterministic listings data (see `MswGate` + `src/msw/handlers.ts`). */
 // Keep the mock API origin same-site with the Next app so if MSW fails to start, the browser
 // won’t fall into a cross-origin CORS failure mode that masks the real issue.
 const mswApiUrl = process.env.PLAYWRIGHT_MSW_API_URL ?? `${e2eOrigin}/api/v1`;
 const enableMsw = process.env.PLAYWRIGHT_MSW !== "0";
 
 export default defineConfig({
-  testDir: "./__tests__/e2e",
+  testDir: "./tests/e2e",
+  outputDir: "build/test-results",
   fullyParallel: false, // sequential in sandbox to avoid resource contention
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 1, // 1 retry locally to handle flakiness
   workers: 1, // single worker — sandbox has limited resources
   reporter: [
-    ["html", { outputFolder: "playwright-report", open: "never" }],
+    ["html", { outputFolder: "build/playwright-report", open: "never" }],
     ["list"],
   ],
   use: {

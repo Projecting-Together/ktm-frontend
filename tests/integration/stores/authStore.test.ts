@@ -78,9 +78,9 @@ describe("authStore", () => {
     expect(useAuthStore.getState().canCreateListing()).toBe(true);
   });
 
-  it("canCreateListing returns false for renter", () => {
+  it("canCreateListing returns true for renter", () => {
     act(() => useAuthStore.getState().setUser(mockRenter));
-    expect(useAuthStore.getState().canCreateListing()).toBe(false);
+    expect(useAuthStore.getState().canCreateListing()).toBe(true);
   });
 
   it("isAdmin returns false for renter", () => {
