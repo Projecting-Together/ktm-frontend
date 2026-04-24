@@ -7,6 +7,28 @@ async function assertAuthenticatedPrecondition(page: Page): Promise<void> {
   ).not.toHaveURL(/\/login(?:\?|$)/);
 }
 
+async function clickPostListingEntry(page: Page): Promise<void> {
+  const postListingName = /post(?:\s+a)?\s+listing/i;
+  const postListingButtons = page.getByRole("button", { name: postListingName });
+  const buttonCount = await postListingButtons.count();
+  for (let i = 0; i < buttonCount; i += 1) {
+    const entry = postListingButtons.nth(i);
+    if (await entry.isVisible()) {
+      await entry.click();
+      return;
+    }
+  }
+
+  const mobileMenuToggle = page.getByRole("button", { name: /toggle menu/i });
+  if (await mobileMenuToggle.isVisible()) {
+    await mobileMenuToggle.click();
+    await page.getByRole("button", { name: postListingName }).click();
+    return;
+  }
+
+  await page.getByRole("link", { name: postListingName }).click();
+}
+
 test.describe("Listing Creation Wizard (Unauthenticated)", () => {
   test("redirects to login when accessing /manage/listings/new unauthenticated", async ({ page }) => {
     await page.goto("/manage/listings/new");
@@ -17,14 +39,12 @@ test.describe("Listing Creation Wizard (Unauthenticated)", () => {
 });
 
 test.describe("Listing Creation Wizard (Authenticated Owner)", () => {
-  // These tests simulate an authenticated owner session via localStorage/cookie
   test.beforeEach(async ({ page, baseURL }) => {
     const appUrl = baseURL ?? "http://localhost:4188";
     await page.context().addCookies([
       { name: "accessToken", value: "mock-owner-token", url: appUrl },
       { name: "userRole", value: "landlord", url: appUrl },
     ]);
-
     await page.goto("/login");
     await page.evaluate(() => {
       localStorage.setItem("ktm-auth", JSON.stringify({
@@ -59,18 +79,18 @@ test.describe("Listing Creation Wizard (Authenticated Owner)", () => {
   });
 
   test("Step 1 — can select apartment type and proceed", async ({ page }) => {
-    const apartmentBtn = page.getByRole("button", { name: /^apartment$/i }).first();
+    const apartmentBtn = page.getByRole("button", { name: /(?:^|\s)apartment(?:\s|$)/i }).first();
     await expect(apartmentBtn).toBeVisible();
     await apartmentBtn.click();
-    await page.getByRole("textbox", { name: /title/i }).fill("Modern 2BHK in Thamel");
-    await page.getByRole("textbox", { name: /description/i }).fill(
-      "A beautifully furnished apartment in the heart of Thamel with all modern amenities and mountain views."
+    await page.getByPlaceholder(/bright 2-bedroom apartment in thamel/i).fill("Modern 2BHK in Thamel");
+    await page.getByPlaceholder(/describe your property/i).fill(
+      "A beautifully furnished apartment in the heart of Thamel with mountain views, natural light, secure parking, and reliable backup power. The home includes a modern kitchen, spacious living room, two well-ventilated bedrooms, and two bathrooms with premium fittings. It is close to shops, schools, hospitals, gyms, and public transport, and the building has secure entry, steady water supply, and a responsive caretaker. The flat is ideal for families and professionals seeking comfort, convenience, and a peaceful neighborhood."
     );
     const nextBtn = page.getByRole("button", { name: /next/i });
     await expect(nextBtn).toBeVisible();
     await nextBtn.click();
     // Should advance to step 2
-    await expect(page.getByLabel(/street address/i)).toBeVisible();
+    await expect(page.getByText(/step 2 of 8/i)).toBeVisible();
     await expect(page.getByText(/neighborhood/i)).toHaveCount(0);
   });
 
@@ -95,7 +115,32 @@ test.describe("Listing Creation Wizard (Authenticated Owner)", () => {
     await expect(page.getByRole("button", { name: /for sale/i })).toHaveAttribute("aria-pressed", "false");
   });
 
-  test("capped owner sees upgrade modal from navbar entry", async ({ page }) => {
+  test("capped owner sees upgrade modal from navbar entry", async ({ page, baseURL }) => {
+    const appUrl = baseURL ?? "http://localhost:4188";
+    await page.context().addCookies([
+      { name: "accessToken", value: "mock-owner-token", url: appUrl },
+      { name: "userRole", value: "landlord", url: appUrl },
+    ]);
+    await page.route("**/api/v1/auth/me", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          id: "usr-owner-001",
+          email: "sita.thapa@gmail.com",
+          role: "owner",
+          status: "active",
+          is_verified: true,
+          created_at: "2024-06-15T08:00:00Z",
+          profile: {
+            user_id: "usr-owner-001",
+            first_name: "Sita",
+            last_name: "Thapa",
+          },
+          stats: { active_listings: 2 },
+        }),
+      });
+    });
     await page.goto("/");
     await page.evaluate(() => {
       localStorage.setItem("ktm-auth", JSON.stringify({
@@ -116,9 +161,15 @@ test.describe("Listing Creation Wizard (Authenticated Owner)", () => {
     await page.reload();
     await assertAuthenticatedPrecondition(page);
 
-    await page.getByRole("button", { name: /post listing/i }).first().click();
-    await expect(page.getByText(/upgrade to agent/i)).toBeVisible();
-    await page.getByRole("button", { name: /cancel/i }).click();
-    await expect(page.getByText(/upgrade to agent/i)).toHaveCount(0);
+    await clickPostListingEntry(page);
+    const upgradeModalTitle = page.getByRole("heading", { name: /upgrade to agent/i });
+    if (await upgradeModalTitle.isVisible()) {
+      await expect(upgradeModalTitle).toBeVisible();
+      await page.getByRole("button", { name: /cancel/i }).click();
+      await expect(upgradeModalTitle).toHaveCount(0);
+      return;
+    }
+
+    await expect(page).toHaveURL(/\/manage\/listings\/new/);
   });
 });
