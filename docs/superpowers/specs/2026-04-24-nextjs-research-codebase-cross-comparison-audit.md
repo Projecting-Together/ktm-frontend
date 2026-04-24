@@ -38,6 +38,7 @@ Weighted prioritization (applied to roadmap ordering):
 - 30% performance/user impact
 - 20% effort-to-value
 - 20% platform maturity gain
+
 ## 3) Gap Matrix by Pillar
 | Pillar | Check ID | Recommendation | Evidence (files/symbols) | Status | Impact | Effort | Confidence | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -66,6 +67,7 @@ Weighted prioritization (applied to roadmap ordering):
 | Testing and verification readiness | VERIFY-01 | For each critical route, verify expected behavior for `revalidate`, `no-store`, and on-demand invalidation flows before production rollout. | `tests/**` contains unit/integration coverage but no checks for `revalidate`, `no-store`, `revalidatePath`, or `revalidateTag`. | Missing | High | Medium | High | Caching behavior verification coverage is currently absent. |
 | Testing and verification readiness | VERIFY-02 | Track and validate stale-window behavior for ISR pages under representative traffic. | Unknown: no ISR stale-window or cache-age performance tests found in `tests/**`; no `tests/performance/*` files in this worktree. | Unknown | Medium | Medium | Medium | Requires dedicated ISR freshness/perf test harness. |
 | Testing and verification readiness | VERIFY-03 | Log unresolved evidence gaps as explicit follow-up tickets before release hardening. | Unknown: no ticket references (issue IDs, tracked backlog links, or release tags) found in scanned spec/checklist scope for unresolved gaps. | Unknown | Medium | Low | Low | Follow-up ticketing process evidence is outside current checked sources or not present. |
+
 ## 4) Top Findings
 1. Caching policy and invalidation controls are the largest current gap (`CACHE-02`, `CACHE-03`, `VERIFY-01`) and pose correctness/freshness risk.
 2. Personalized route freshness intent remains implicit (`RENDER-03`, `CACHE-01`) across dashboard/manage/admin surfaces.
@@ -87,7 +89,7 @@ Weighted prioritization (applied to roadmap ordering):
 3. **NOW-3 (`PERF-01`, `PERF-02`)**  
    Reduce route-level `"use client"` scope and move non-interactive data/layout shells to Server Components with small client islands only where interactivity is required.  
    - Rationale: Directly improves bundle size and hydration cost on high-traffic paths with strong user-perceived performance upside.
-   - Dependencies: Requires baseline measurement targets and guardrails in `VERIFY-01`.
+   - Dependencies: Record before/after bundle and hydration baselines per NOW-3 criteria in Section 6; `VERIFY-01` is for cache/invalidation flows.
 
 ### Next
 4. **NEXT-1 (`PERF-03`, `RENDER-04`)**  
