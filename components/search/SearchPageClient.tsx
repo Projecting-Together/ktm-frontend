@@ -10,6 +10,7 @@ import { SearchBar } from "@/components/search/SearchBar";
 import { useFilterStore, selectApiFilters } from "@/lib/stores/filterStore";
 import { useListings } from "@/lib/hooks/useListings";
 import { adaptListingsForSearch } from "@/lib/contracts/adapters";
+import { trackPurposeModeChange } from "@/lib/analytics/events";
 import type { ListingFilters } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 
@@ -103,6 +104,7 @@ export default function SearchPageClient() {
     [store],
   );
   const currentPurpose = store.purpose === "sale" ? "sale" : "rent";
+  const hasHydratedFromUrl = useRef(false);
 
   // Hydrate store from URL on mount
   useEffect(() => {
@@ -146,6 +148,7 @@ export default function SearchPageClient() {
       }
     });
     store.setFilters(params);
+    hasHydratedFromUrl.current = true;
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -161,7 +164,10 @@ export default function SearchPageClient() {
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
   }, [store, router, pathname]);
 
-  useEffect(() => { syncUrl(); }, [
+  useEffect(() => {
+    if (!hasHydratedFromUrl.current) return;
+    syncUrl();
+  }, [
     store.search, store.listing_type, store.purpose, store.min_price, store.max_price,
     store.bedrooms, store.furnishing, store.parking, store.pets_allowed, store.verified,
     store.amenities, store.available_from, store.sort_by, store.sort_order, store.page,
@@ -211,7 +217,17 @@ export default function SearchPageClient() {
               <button
                 key={option.value}
                 type="button"
-                onClick={() => store.setFilter("purpose", option.value === "sale" ? "sale" : undefined)}
+                onClick={() => {
+                  const nextPurpose = option.value === "sale" ? "sale" : "rent";
+                  if (currentPurpose !== nextPurpose) {
+                    trackPurposeModeChange({
+                      nextPurpose,
+                      previousPurpose: currentPurpose,
+                      source: "search_page_toggle",
+                    });
+                  }
+                  store.setFilter("purpose", option.value === "sale" ? "sale" : undefined);
+                }}
                 className={cn(
                   "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
                   currentPurpose === option.value

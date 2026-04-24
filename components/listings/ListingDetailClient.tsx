@@ -12,6 +12,7 @@ import { ListingCoverImage } from "@/components/listings/ListingCoverImage";
 import { useToggleFavorite, useIsFavorite } from "@/lib/hooks/useFavorites";
 import { useListing } from "@/lib/hooks/useListings";
 import { useAuthStore } from "@/lib/stores/authStore";
+import { trackInquirySent } from "@/lib/analytics/events";
 import { formatPrice, formatDate, buildWhatsAppUrl, cn, getStatusColor } from "@/lib/utils";
 import type { Listing } from "@/lib/api/types";
 
@@ -246,6 +247,14 @@ export default function ListingDetailClient({ listing: initialListing, slugOrId 
 
               <div className="mt-5 flex flex-col gap-2">
                 <Link href={isAuthenticated ? `#inquiry` : "/login"}
+                  onClick={() => {
+                    if (!isAuthenticated) return;
+                    trackInquirySent({
+                      listingId: listing.id,
+                      purpose: listing.purpose === "sale" ? "sale" : "rent",
+                      source: "listing_detail_cta",
+                    });
+                  }}
                   className="btn-primary w-full justify-center gap-2">
                   <MessageCircle className="h-4 w-4" /> {inquiryCtaText}
                 </Link>

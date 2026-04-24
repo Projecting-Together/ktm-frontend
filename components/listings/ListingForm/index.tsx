@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, Loader2, Check } from "lucide-react";
 import { listingFormSchema, type ListingFormData } from "@/lib/validations/listingSchema";
+import { trackListingPostCompleted } from "@/lib/analytics/events";
 import { useCreateListing } from "@/lib/hooks/useListings";
 import { cn } from "@/lib/utils";
 import { Step1BasicInfo } from "./Step1BasicInfo";
@@ -92,6 +93,11 @@ export function ListingForm({ listingId, initialPurpose = "rent" }: ListingFormP
   const onSubmit = async (data: ListingFormData) => {
     try {
       const result = await createListing({ ...data, images: images as never });
+      trackListingPostCompleted({
+        listingId: result?.id,
+        purpose: data.purpose === "sale" ? "sale" : "rent",
+        source: "listing_form_submit",
+      });
       router.push(`/manage/listings`);
     } catch (err) {
       console.error(err);
