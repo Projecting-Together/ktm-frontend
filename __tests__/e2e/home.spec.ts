@@ -107,12 +107,16 @@ test.describe("Home / Apartments Search Page", () => {
     await expect(mobileNav).toBeVisible();
   });
 
-  test("root route redirects to apartments with buy toggle available", async ({ page }) => {
+  test("root route renders homepage and purpose modules are reachable", async ({ page }) => {
     await page.goto("/", { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("load");
-    await expect(page).toHaveURL(/\/apartments(?:\?|$)/);
+    await expect(page).toHaveURL(/\/$/);
+    await expect(page.getByRole("heading", { name: /find your perfect home in/i })).toBeVisible();
 
-    const purposeGroup = page.getByRole("group", { name: /listing purpose/i });
-    await expect(purposeGroup.getByRole("button", { name: /^buy$/i })).toBeVisible();
+    const buyListingsLink = page.getByRole("link", { name: /view buy listings/i });
+    await expect(buyListingsLink).toBeVisible();
+    await buyListingsLink.click();
+    await page.waitForURL(/\/apartments\?purpose=sale/, { timeout: 20_000 });
+    await expect(page).toHaveURL(/purpose=sale/);
   });
 });

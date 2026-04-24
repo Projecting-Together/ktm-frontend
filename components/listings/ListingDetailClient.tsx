@@ -12,7 +12,7 @@ import { ListingCoverImage } from "@/components/listings/ListingCoverImage";
 import { useToggleFavorite, useIsFavorite } from "@/lib/hooks/useFavorites";
 import { useListing } from "@/lib/hooks/useListings";
 import { useAuthStore } from "@/lib/stores/authStore";
-import { trackInquirySent } from "@/lib/analytics/events";
+import { trackInquiryCtaClick } from "@/lib/analytics/events";
 import { formatPrice, formatDate, buildWhatsAppUrl, cn, getStatusColor } from "@/lib/utils";
 import type { Listing } from "@/lib/api/types";
 
@@ -250,7 +250,7 @@ export default function ListingDetailClient({ listing: initialListing, slugOrId 
                 <Link href={isAuthenticated ? `#inquiry` : "/login"}
                   onClick={() => {
                     if (!isAuthenticated) return;
-                    trackInquirySent({
+                    trackInquiryCtaClick({
                       listingId: listing.id,
                       purpose: listing.purpose === "sale" ? "sale" : "rent",
                       source: "listing_detail_cta",

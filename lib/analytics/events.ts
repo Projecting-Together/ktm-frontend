@@ -4,7 +4,7 @@ type PurposeMode = "rent" | "buy";
 type TelemetryPayload = Record<string, string | number | boolean | null | undefined>;
 
 interface TelemetryEvent<TPayload extends TelemetryPayload> {
-  event: "purpose_mode_change" | "inquiry_sent" | "listing_post_completed";
+  event: "purpose_mode_change" | "inquiry_sent" | "inquiry_cta_click" | "listing_post_completed";
   payload: TPayload;
 }
 
@@ -15,6 +15,12 @@ interface PurposeModeChangeInput {
 }
 
 interface InquirySentInput {
+  listingId: string;
+  purpose: ListingPurpose;
+  source?: string;
+}
+
+interface InquiryCtaClickInput {
   listingId: string;
   purpose: ListingPurpose;
   source?: string;
@@ -90,6 +96,25 @@ export function buildInquirySentEvent(
   };
 }
 
+export function buildInquiryCtaClickEvent(
+  input: InquiryCtaClickInput,
+): TelemetryEvent<{
+  listing_id: string;
+  purpose: ListingPurpose;
+  mode: PurposeMode;
+  source?: string;
+}> {
+  return {
+    event: "inquiry_cta_click",
+    payload: {
+      listing_id: input.listingId,
+      purpose: input.purpose,
+      mode: toPurposeMode(input.purpose),
+      source: input.source,
+    },
+  };
+}
+
 export function buildListingPostCompletedEvent(
   input: ListingPostCompletedInput,
 ): TelemetryEvent<{
@@ -116,6 +141,11 @@ export function trackPurposeModeChange(input: PurposeModeChangeInput): void {
 
 export function trackInquirySent(input: InquirySentInput): void {
   const { event, payload } = buildInquirySentEvent(input);
+  emitTelemetry(event, payload);
+}
+
+export function trackInquiryCtaClick(input: InquiryCtaClickInput): void {
+  const { event, payload } = buildInquiryCtaClickEvent(input);
   emitTelemetry(event, payload);
 }
 

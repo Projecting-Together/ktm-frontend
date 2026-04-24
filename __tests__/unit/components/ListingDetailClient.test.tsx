@@ -1,7 +1,9 @@
 import React from "react";
 import { render, screen } from "@/test-utils/renderWithProviders";
+import userEvent from "@testing-library/user-event";
 import ListingDetailClient from "@/components/listings/ListingDetailClient";
 import { mockListings } from "@/test-utils/mockData";
+import { trackInquiryCtaClick } from "@/lib/analytics/events";
 
 jest.mock("@/lib/hooks/useListings", () => ({
   useListing: () => ({
@@ -20,6 +22,10 @@ jest.mock("@/lib/stores/authStore", () => ({
   useAuthStore: () => ({ isAuthenticated: true }),
 }));
 
+jest.mock("@/lib/analytics/events", () => ({
+  trackInquiryCtaClick: jest.fn(),
+}));
+
 describe("ListingDetailClient", () => {
   it("shows seller-specific inquiry CTA for sale listings", () => {
     const saleListing = mockListings[4];
@@ -36,5 +42,19 @@ describe("ListingDetailClient", () => {
     render(<ListingDetailClient listing={rentListing} />);
     expect(screen.getByRole("link", { name: /send inquiry$/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /^apartments$/i })).toHaveAttribute("href", "/apartments");
+  });
+
+  it("tracks inquiry CTA click with click semantics", async () => {
+    const saleListing = mockListings[4];
+    const user = userEvent.setup();
+    render(<ListingDetailClient listing={saleListing} />);
+
+    await user.click(screen.getByRole("link", { name: /send inquiry to seller/i }));
+
+    expect(trackInquiryCtaClick).toHaveBeenCalledWith({
+      listingId: saleListing.id,
+      purpose: "sale",
+      source: "listing_detail_cta",
+    });
   });
 });

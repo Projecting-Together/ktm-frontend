@@ -117,6 +117,19 @@ test.describe("Search & Filter Interactions", () => {
     await expect(page).toHaveURL(/purpose=sale/);
   });
 
+  test("purpose defaults to Rent when URL purpose is absent", async ({ page }) => {
+    await page.goto("/apartments", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("load");
+
+    const purposeGroup = page.getByRole("group", { name: /listing purpose/i });
+    const rentButton = purposeGroup.getByRole("button", { name: /^rent$/i });
+    const buyButton = purposeGroup.getByRole("button", { name: /^buy$/i });
+
+    await expect(rentButton).toHaveAttribute("aria-pressed", "true");
+    await expect(buyButton).toHaveAttribute("aria-pressed", "false");
+    await expect(page).not.toHaveURL(/purpose=sale/);
+  });
+
   test("buy mode stays active after applying listing-type filters", async ({ page }) => {
     await page.goto("/apartments?purpose=sale", { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("load");
