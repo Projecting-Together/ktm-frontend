@@ -9,24 +9,46 @@ async function assertAuthenticatedPrecondition(page: Page): Promise<void> {
 
 async function clickPostListingEntry(page: Page): Promise<void> {
   const postListingName = /post(?:\s+a)?\s+listing/i;
-  const postListingButtons = page.getByRole("button", { name: postListingName });
-  const buttonCount = await postListingButtons.count();
-  for (let i = 0; i < buttonCount; i += 1) {
-    const entry = postListingButtons.nth(i);
-    if (await entry.isVisible()) {
-      await entry.click();
-      return;
+  const clickVisibleEntry = async (): Promise<boolean> => {
+    const postListingButtons = page.getByRole("button", { name: postListingName });
+    const buttonCount = await postListingButtons.count();
+    for (let i = 0; i < buttonCount; i += 1) {
+      const entry = postListingButtons.nth(i);
+      if (await entry.isVisible()) {
+        await entry.click();
+        return true;
+      }
     }
+
+    const postListingLinks = page.getByRole("link", { name: postListingName });
+    const linkCount = await postListingLinks.count();
+    for (let i = 0; i < linkCount; i += 1) {
+      const entry = postListingLinks.nth(i);
+      if (await entry.isVisible()) {
+        await entry.click();
+        return true;
+      }
+    }
+
+    return false;
+  };
+
+  if (await clickVisibleEntry()) {
+    return;
   }
 
   const mobileMenuToggle = page.getByRole("button", { name: /toggle menu/i });
   if (await mobileMenuToggle.isVisible()) {
     await mobileMenuToggle.click();
-    await page.getByRole("button", { name: postListingName }).click();
-    return;
+    await expect(
+      page.getByRole("navigation").filter({ hasText: postListingName }).first()
+    ).toBeVisible();
+    if (await clickVisibleEntry()) {
+      return;
+    }
   }
 
-  await page.getByRole("link", { name: postListingName }).click();
+  await page.getByRole("link", { name: postListingName }).first().click();
 }
 
 test.describe("Listing Creation Wizard (Unauthenticated)", () => {
