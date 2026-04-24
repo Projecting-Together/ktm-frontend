@@ -302,6 +302,27 @@ export interface AdminAnalyticsOverview {
   top_neighborhoods: Array<{ neighborhood: string; count: number }>;
 }
 
+export interface NewsListItem {
+  id: string;
+  slug: string;
+  title: string;
+  summary?: string | null;
+  cover_image_url?: string | null;
+  published_at?: string | null;
+  is_published: boolean;
+}
+
+export interface NewsArticle extends NewsListItem {
+  content?: string | null;
+}
+
+export interface NewsFilters {
+  page?: number;
+  limit?: number;
+  search?: string;
+  category?: string;
+}
+
 export interface ApiError {
   message: string;
   code?: string;

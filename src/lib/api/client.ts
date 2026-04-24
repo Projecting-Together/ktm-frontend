@@ -9,10 +9,10 @@ import type {
   ListingFilters, PaginatedResponse, Amenity,
   Inquiry, CreateInquiryPayload, VisitRequest, CreateVisitPayload,
   Favorite, PresignedUrlResponse, MediaConfirmPayload, ListingStats,
-  AuditLog, AdminAnalyticsOverview,
+  AuditLog, AdminAnalyticsOverview, NewsArticle, NewsFilters, NewsListItem,
 } from "./types";
 
-export type { Listing, ListingListItem, ListingFilters, PaginatedResponse, Amenity, User, Inquiry, VisitRequest, Favorite, AuditLog, AdminAnalyticsOverview };
+export type { Listing, ListingListItem, ListingFilters, PaginatedResponse, Amenity, User, Inquiry, VisitRequest, Favorite, AuditLog, AdminAnalyticsOverview, NewsListItem, NewsArticle, NewsFilters };
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "https://api.ktmapartments.com/api/v1";
 
@@ -134,6 +134,21 @@ export async function getListings(filters: ListingFilters = {}) {
   return apiFetch<PaginatedResponse<ListingListItem>>(q ? `/listings/?${q}` : "/listings/", {}, false);
 }
 export async function getListing(slugOrId: string) { return apiFetch<Listing>(`/listings/${slugOrId}`, {}, false); }
+export function buildNewsQueryParams(filters: NewsFilters): URLSearchParams {
+  const params = new URLSearchParams();
+  for (const [key, val] of Object.entries(filters)) {
+    if (val === undefined || val === null || val === "") continue;
+    params.set(key, String(val));
+  }
+  return params;
+}
+export async function getPublishedNews(filters: NewsFilters = {}) {
+  const q = buildNewsQueryParams(filters).toString();
+  return apiFetch<PaginatedResponse<NewsListItem>>(q ? `/news/published?${q}` : "/news/published", {}, false);
+}
+export async function getNewsBySlug(slug: string) {
+  return apiFetch<NewsArticle>(`/news/published/${slug}`, {}, false);
+}
 export async function createListing(payload: Partial<Listing>) {
   return apiFetch<Listing>("/listings", { method: "POST", body: JSON.stringify(payload) });
 }
