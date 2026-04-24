@@ -14,7 +14,6 @@ const AUTO_CHECKS = [
   { key: "phone", label: "Phone number valid", check: (d: ListingFormData) => /^9[678]\d{8}$/.test(d.phone ?? "") },
   { key: "price", label: "Price within range", check: (d: ListingFormData) => (d.price ?? 0) >= 1000 && (d.price ?? 0) <= 500000 },
   { key: "images", label: "Minimum 3 images", check: (_: ListingFormData, imgs: number) => imgs >= 3 },
-  { key: "neighborhood", label: "Neighborhood selected", check: (d: ListingFormData) => !!d.neighborhood_id },
   { key: "listing_type", label: "Property type selected", check: (d: ListingFormData) => !!d.listing_type },
 ];
 
@@ -75,7 +74,6 @@ export function Step8Review({ images }: Props) {
             ["Bedrooms", data.bedrooms],
             ["Bathrooms", data.bathrooms],
             ["Furnishing", data.furnishing],
-            ["Neighborhood", data.neighborhood_id],
             ["Photos", `${images.length} uploaded`],
           ].map(([label, value]) => value != null && (
             <div key={String(label)} className="flex justify-between border-b border-border pb-1.5">

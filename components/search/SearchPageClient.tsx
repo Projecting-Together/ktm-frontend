@@ -97,9 +97,8 @@ export default function SearchPageClient() {
   const searchParams = useSearchParams();
   const store = useFilterStore();
   const handleSearch = useCallback(
-    (query: string, location: string) => {
-      // Keep using neighborhood key for API/query-string compatibility.
-      store.setFilters({ search: query || undefined, neighborhood: location || undefined });
+    (query: string) => {
+      store.setFilters({ search: query || undefined });
     },
     [store],
   );
@@ -125,6 +124,7 @@ export default function SearchPageClient() {
           else if (key === "radius_km") params.radius_km = parsed;
         }
       } else if (key === "verified" || key === "parking" || key === "pets_allowed") {
+        if (value !== "true" && value !== "false") return;
         const boolValue = value === "true";
         if (key === "verified") params.verified = boolValue;
         else if (key === "parking") params.parking = boolValue;
@@ -138,7 +138,6 @@ export default function SearchPageClient() {
         else if (key === "purpose") params.purpose = value;
         else if (key === "city") params.city = value;
         else if (key === "district") params.district = value;
-        else if (key === "neighborhood") params.neighborhood = value;
         else if (key === "furnishing") params.furnishing = value;
         else if (key === "available_from") params.available_from = value;
         else if (key === "sort_by") params.sort_by = value;
@@ -162,7 +161,7 @@ export default function SearchPageClient() {
   }, [store, router, pathname]);
 
   useEffect(() => { syncUrl(); }, [
-    store.search, store.neighborhood, store.listing_type, store.min_price, store.max_price,
+    store.search, store.listing_type, store.min_price, store.max_price,
     store.bedrooms, store.furnishing, store.parking, store.pets_allowed, store.verified,
     store.amenities, store.available_from, store.sort_by, store.sort_order, store.page,
     store.min_lat, store.max_lat, store.min_lng, store.max_lng, store.lat, store.lng, store.radius_km,
@@ -193,7 +192,7 @@ export default function SearchPageClient() {
   return (
     <div className="container py-6">
       <div className="mb-4 md:hidden">
-        <SearchBar size="sm" defaultValue={store.search ?? ""} defaultLocation={store.neighborhood ?? ""}
+        <SearchBar size="sm" defaultValue={store.search ?? ""}
           onSearch={handleSearch} />
       </div>
 
@@ -213,9 +212,6 @@ export default function SearchPageClient() {
             <p className="mt-1 text-sm text-muted-foreground">
               Still loading — the API may be slow, or your connection may be unstable. Requests time out after about 25 seconds; then you&apos;ll see an error with a retry option.
             </p>
-          )}
-          {store.neighborhood && (
-            <p className="text-sm text-muted-foreground capitalize">in {store.neighborhood.replace(",", ", ")}</p>
           )}
         </div>
         <div className="flex items-center gap-2">
@@ -256,12 +252,17 @@ export default function SearchPageClient() {
       </div>
 
       <div className="flex gap-6">
-        <div className="hidden w-64 shrink-0 md:block"><FilterPanel mode="sidebar" /></div>
+        <div className="hidden w-64 shrink-0 md:block" data-testid="search-filter-panel-sidebar">
+          <FilterPanel mode="sidebar" />
+        </div>
 
         {store.isFilterPanelOpen && (
           <div className="fixed inset-0 z-[2000] md:hidden">
             <div className="absolute inset-0 bg-black/50" onClick={store.toggleFilterPanel} />
-            <div className="absolute bottom-0 left-0 right-0 max-h-[85vh] overflow-y-auto rounded-t-2xl bg-card">
+            <div
+              className="absolute bottom-0 left-0 right-0 max-h-[85vh] overflow-y-auto rounded-t-2xl bg-card"
+              data-testid="search-filter-panel-drawer"
+            >
               <div className="sticky top-0 flex items-center justify-between border-b border-border bg-card px-5 py-4">
                 <h3 className="font-semibold">Filters</h3>
                 <button onClick={store.toggleFilterPanel} className="text-muted-foreground">✕</button>
@@ -298,7 +299,7 @@ export default function SearchPageClient() {
             <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-20 text-center">
               <p className="text-4xl">🏠</p>
               <h3 className="mt-4 text-lg font-semibold">No listings found</h3>
-              <p className="mt-2 text-sm text-muted-foreground">Try adjusting your filters or searching in a different neighborhood.</p>
+              <p className="mt-2 text-sm text-muted-foreground">Try adjusting your filters or refining your keyword search.</p>
               <button type="button" onClick={store.resetFilters} className="btn-primary mt-4">Clear all filters</button>
             </div>
           ) : (

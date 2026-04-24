@@ -38,7 +38,7 @@ const STEPS = [
 // Fields validated at each step
 const STEP_FIELDS: Record<number, (keyof ListingFormData)[]> = {
   1: ["listing_type", "title", "description"],
-  2: ["neighborhood_id", "address_line"],
+  2: ["address_line"],
   3: ["price", "price_period"],
   4: ["bedrooms", "bathrooms", "furnishing"],
   5: [],

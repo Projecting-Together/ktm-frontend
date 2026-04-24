@@ -9,7 +9,6 @@ import { useAuthStore } from "@/lib/stores/authStore";
 
 const NAV_LINKS = [
   { href: "/apartments", label: "Apartments" },
-  { href: "/neighborhoods", label: "Neighborhoods" },
   { href: "/agents", label: "Agents" },
 ];
 

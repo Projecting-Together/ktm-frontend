@@ -176,7 +176,6 @@ export interface ListingFilters {
   purpose?: string;
   city?: string;
   district?: string;
-  neighborhood?: string;
   min_price?: number;
   max_price?: number;
   bedrooms?: number;

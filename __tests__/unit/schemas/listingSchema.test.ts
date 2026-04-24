@@ -11,7 +11,6 @@ describe("step1Schema — BasicInfo", () => {
     listing_type: "apartment" as const,
     purpose: "rent" as const,
     address_line: "Thamel Marg, Ward 26",
-    neighborhood_id: "550e8400-e29b-41d4-a716-446655440000",
   };
 
   it("passes with valid data", () => {
@@ -38,7 +37,12 @@ describe("step1Schema — BasicInfo", () => {
     expect(result.success).toBe(false);
   });
 
-  it("fails when neighborhood_id is not a UUID", () => {
+  it("allows step 1 without neighborhood_id", () => {
+    const result = step1Schema.safeParse(validStep1);
+    expect(result.success).toBe(true);
+  });
+
+  it("fails when neighborhood_id is provided but not a UUID", () => {
     const result = step1Schema.safeParse({ ...validStep1, neighborhood_id: "not-a-uuid" });
     expect(result.success).toBe(false);
   });

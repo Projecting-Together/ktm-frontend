@@ -1,9 +1,22 @@
 import { test, expect } from "@playwright/test";
 
+const filterPanel = (page: import("@playwright/test").Page) => {
+  const isMobile = test.info().project.name === "Mobile Chrome";
+  return isMobile ? page.getByTestId("search-filter-panel-drawer") : page.getByTestId("search-filter-panel-sidebar");
+};
+
+async function openMobileFilterDrawerIfPresent(page: import("@playwright/test").Page) {
+  if (test.info().project.name !== "Mobile Chrome") return;
+  const filtersBtn = page.getByRole("button", { name: /^filters$/i }).first();
+  await expect(filtersBtn).toBeVisible({ timeout: 30_000 });
+  await filtersBtn.click();
+  await expect(page.getByTestId("search-filter-panel-drawer")).toBeVisible({ timeout: 15_000 });
+}
+
 test.describe("Home / Apartments Search Page", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("/apartments");
-    await page.waitForLoadState("networkidle");
+    await page.goto("/apartments", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("load");
   });
 
   test("renders the KTM Apartments navbar logo", async ({ page }) => {
@@ -11,22 +24,16 @@ test.describe("Home / Apartments Search Page", () => {
   });
 
   test("renders the filter panel with property type buttons", async ({ page }) => {
-    await expect(page.getByRole("button", { name: /apartment/i })).toBeVisible();
-    await expect(page.getByRole("button", { name: /room/i })).toBeVisible();
-    await expect(page.getByRole("button", { name: /studio/i })).toBeVisible();
-    await expect(page.getByRole("button", { name: /house/i })).toBeVisible();
+    await openMobileFilterDrawerIfPresent(page);
+    const panel = filterPanel(page);
+    await expect(panel.getByRole("button", { name: /apartment/i })).toBeVisible();
+    await expect(panel.getByRole("button", { name: /room/i })).toBeVisible();
+    await expect(panel.getByRole("button", { name: /studio/i })).toBeVisible();
+    await expect(panel.getByRole("button", { name: /house/i })).toBeVisible();
   });
 
-  test("renders all Kathmandu neighborhood filter buttons", async ({ page }) => {
-    await expect(page.getByRole("button", { name: /thamel/i })).toBeVisible();
-    await expect(page.getByRole("button", { name: /lazimpat/i })).toBeVisible();
-    await expect(page.getByRole("button", { name: /patan/i })).toBeVisible();
-    await expect(page.getByRole("button", { name: /bhaktapur/i })).toBeVisible();
-    await expect(page.getByRole("button", { name: /koteshwor/i })).toBeVisible();
-  });
-
-  test("renders the sort dropdown", async ({ page }) => {
-    await expect(page.getByRole("combobox")).toBeVisible();
+  test("renders the sort control", async ({ page }) => {
+    await expect(page.locator('[data-testid="sort-trigger"]')).toBeVisible({ timeout: 10000 });
   });
 
   test("renders the footer with navigation links", async ({ page }) => {
@@ -34,34 +41,39 @@ test.describe("Home / Apartments Search Page", () => {
     await expect(page.getByRole("link", { name: /terms of service/i })).toBeVisible();
   });
 
-  test("clicking Apartment filter button adds active CSS class", async ({ page }) => {
-    const btn = page.getByRole("button", { name: /^apartment$/i }).first();
+  test("clicking Apartment filter button updates URL params", async ({ page }) => {
+    await openMobileFilterDrawerIfPresent(page);
+    const panel = filterPanel(page);
+    const btn = panel.getByRole("button", { name: /^apartment$/i }).first();
     await btn.click();
-    await expect(btn).toHaveClass(/filter-chip-active/, { timeout: 15000 });
+    await page.waitForURL(/listing_type=apartment/, { timeout: 15000 });
+    await expect(page).toHaveURL(/listing_type=apartment/);
   });
 
-  test("clicking Thamel neighborhood updates URL params", async ({ page }) => {
-    await page.getByRole("button", { name: /^thamel$/i }).first().click();
-    await page.waitForURL(/neighborhood=thamel/i, { timeout: 15000 });
-    await expect(page).toHaveURL(/neighborhood=thamel/i);
+  test("clicking Room filter button updates URL params", async ({ page }) => {
+    await openMobileFilterDrawerIfPresent(page);
+    await filterPanel(page).getByRole("button", { name: /^room$/i }).first().click();
+    await page.waitForURL(/listing_type=room/, { timeout: 15000 });
+    await expect(page).toHaveURL(/listing_type=room/);
   });
 
-  test("price range quick-select updates URL params", async ({ page }) => {
-    await page.getByRole("button", { name: /under 10k/i }).click();
+  test("maximum price input updates URL params", async ({ page }) => {
+    await openMobileFilterDrawerIfPresent(page);
+    const maxInput = filterPanel(page).getByLabel(/maximum price/i);
+    await maxInput.scrollIntoViewIfNeeded();
+    await maxInput.fill("10000");
+    await maxInput.press("Tab");
     await page.waitForURL(/max_price=10000/, { timeout: 15000 });
     await expect(page).toHaveURL(/max_price=10000/);
   });
 
   test("sort dropdown changes URL sort param", async ({ page }) => {
-    // Open the custom sort dropdown
     const sortTrigger = page.locator('[data-testid="sort-trigger"]');
     await expect(sortTrigger).toBeVisible({ timeout: 10000 });
     await sortTrigger.click();
-    // Click the "Price: low to high" option
     const priceAscOption = page.locator('[data-testid="sort-option-price-asc"]');
     await expect(priceAscOption).toBeVisible({ timeout: 5000 });
     await priceAscOption.click();
-    // URL should update
     await page.waitForURL(/sort_by=price/, { timeout: 20000 });
     await expect(page).toHaveURL(/sort_by=price/);
     await expect(page).toHaveURL(/sort_order=asc/);
@@ -69,8 +81,8 @@ test.describe("Home / Apartments Search Page", () => {
 
   test("renders mobile bottom navigation on small screens", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto("/apartments");
-    await page.waitForLoadState("networkidle");
+    await page.goto("/apartments", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("load");
     const mobileNav = page.locator("nav").last();
     await expect(mobileNav).toBeVisible();
   });

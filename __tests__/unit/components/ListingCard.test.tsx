@@ -22,7 +22,7 @@ describe("ListingCard", () => {
     expect(screen.getByText(/28,000/)).toBeInTheDocument();
   });
 
-  it("renders neighborhood name", () => {
+  it("renders location text from listing metadata", () => {
     render(<ListingCard listing={listing} />);
     // Use getAllByText since "Thamel" may appear in title and location
     const thamelElements = screen.getAllByText(/thamel/i);
