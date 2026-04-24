@@ -65,6 +65,12 @@ describe("ListingCard", () => {
     // Should not show standalone "Verified" text
     expect(screen.queryByText(/^verified$/i)).not.toBeInTheDocument();
   });
+
+  it("shows a clear sale badge text for sale listings", () => {
+    const saleListing = { ...mockListingItems[4], title: "Traditional Newari House in Bhaktapur", purpose: "sale" };
+    render(<ListingCard listing={saleListing} />);
+    expect(screen.getByText(/for sale/i)).toBeInTheDocument();
+  });
 });
 
 describe("ListingCardSkeleton", () => {

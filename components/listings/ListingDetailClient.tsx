@@ -61,6 +61,7 @@ export default function ListingDetailClient({ listing: initialListing, slugOrId 
   const whatsappUrl = listing.owner?.whatsapp_number
     ? buildWhatsAppUrl(listing.owner.whatsapp_number, `Hi, I am interested in: ${listing.title} - ktmapartments.com/apartments/${listing.slug}`)
     : null;
+  const inquiryCtaText = listing.purpose === "sale" ? "Send Inquiry to Seller" : "Send Inquiry";
 
   return (
     <div className="container py-6 lg:py-10">
@@ -246,7 +247,7 @@ export default function ListingDetailClient({ listing: initialListing, slugOrId 
               <div className="mt-5 flex flex-col gap-2">
                 <Link href={isAuthenticated ? `#inquiry` : "/login"}
                   className="btn-primary w-full justify-center gap-2">
-                  <MessageCircle className="h-4 w-4" /> Send Inquiry
+                  <MessageCircle className="h-4 w-4" /> {inquiryCtaText}
                 </Link>
                 {whatsappUrl && (
                   <a href={whatsappUrl} target="_blank" rel="noopener noreferrer"

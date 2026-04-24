@@ -96,6 +96,7 @@ export interface ListingListItem {
   id: string;
   slug: string;
   title: string;
+  purpose?: ListingPurpose | null;
   price?: string | number | null;
   price_period?: PricePeriod | null;
   currency: string;

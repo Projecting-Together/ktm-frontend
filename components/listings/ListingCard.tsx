@@ -18,6 +18,7 @@ interface ListingCardProps {
 export function ListingCard({ listing, variant = "grid", className }: ListingCardProps) {
   const coverImage = getListingCoverImage(listing);
   const location = getListingLocation(listing);
+  const isSaleListing = listing.purpose === "sale";
   const { isAuthenticated } = useAuthStore();
   const isFavorite = useIsFavorite(listing.id);
   const { mutate: toggleFavorite, isPending } = useToggleFavorite();
@@ -68,6 +69,11 @@ export function ListingCard({ listing, variant = "grid", className }: ListingCar
               <MapPin className="h-3 w-3 shrink-0" />
               {location}
             </p>
+            {isSaleListing && (
+              <p className="mt-1 inline-flex w-fit rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
+                For Sale
+              </p>
+            )}
           </div>
           <div>
             <div className="flex items-center gap-3 text-xs text-muted-foreground">
@@ -116,6 +122,11 @@ export function ListingCard({ listing, variant = "grid", className }: ListingCar
           {listing.listing_type && (
             <span className="rounded-full bg-primary/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary-foreground backdrop-blur-sm">
               {listing.listing_type}
+            </span>
+          )}
+          {isSaleListing && (
+            <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary-foreground">
+              For Sale
             </span>
           )}
         </div>
