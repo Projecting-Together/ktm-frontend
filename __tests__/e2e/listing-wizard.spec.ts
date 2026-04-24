@@ -53,26 +53,25 @@ test.describe("Listing Creation Wizard (Authenticated Owner)", () => {
 
   test("Step 1 — shows validation error when Next is clicked without selecting type", async ({ page }) => {
     const nextBtn = page.getByRole("button", { name: /next/i });
-    if (await nextBtn.isVisible()) {
-      await nextBtn.click();
-      await expect(page.getByText(/invalid option/i)).toBeVisible();
-    }
+    await expect(nextBtn).toBeVisible();
+    await nextBtn.click();
+    await expect(page.getByText(/invalid option/i)).toBeVisible();
   });
 
   test("Step 1 — can select apartment type and proceed", async ({ page }) => {
     const apartmentBtn = page.getByRole("button", { name: /^apartment$/i }).first();
-    if (await apartmentBtn.isVisible()) {
-      await apartmentBtn.click();
-      await page.getByRole("textbox", { name: /title/i }).fill("Modern 2BHK in Thamel");
-      await page.getByRole("textbox", { name: /description/i }).fill(
-        "A beautifully furnished apartment in the heart of Thamel with all modern amenities and mountain views."
-      );
-      const nextBtn = page.getByRole("button", { name: /next/i });
-      await nextBtn.click();
-      // Should advance to step 2
-      await expect(page.getByLabel(/street address/i)).toBeVisible();
-      await expect(page.getByText(/neighborhood/i)).toHaveCount(0);
-    }
+    await expect(apartmentBtn).toBeVisible();
+    await apartmentBtn.click();
+    await page.getByRole("textbox", { name: /title/i }).fill("Modern 2BHK in Thamel");
+    await page.getByRole("textbox", { name: /description/i }).fill(
+      "A beautifully furnished apartment in the heart of Thamel with all modern amenities and mountain views."
+    );
+    const nextBtn = page.getByRole("button", { name: /next/i });
+    await expect(nextBtn).toBeVisible();
+    await nextBtn.click();
+    // Should advance to step 2
+    await expect(page.getByLabel(/street address/i)).toBeVisible();
+    await expect(page.getByText(/neighborhood/i)).toHaveCount(0);
   });
 
   test("Step 1 — preselects purpose as sale from query parameter", async ({ page }) => {
