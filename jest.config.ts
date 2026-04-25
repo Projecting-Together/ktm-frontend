@@ -16,7 +16,10 @@ const config: Config = {
   testMatch: [
     "**/tests/unit/**/*.test.{ts,tsx}",
     "**/tests/integration/**/*.test.{ts,tsx}",
-    "**/tests/performance/helpers/**/*.test.{ts,tsx}",
+  ],
+  testPathIgnorePatterns: [
+    "<rootDir>/tests/e2e/",
+    "<rootDir>/tests/performance/",
   ],
   collectCoverageFrom: [
     "src/components/**/*.{ts,tsx}",
