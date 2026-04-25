@@ -6,6 +6,7 @@ Related plan: `docs/superpowers/plans/2026-04-24-frontend-scalability-maintainab
 ## See also
 
 - **Middleware, Edge vs Node, invalidation follow-ups:** `docs/superpowers/deployment-runtime-and-invalidation.md`
+- **Loading / Suspense UX:** `docs/superpowers/loading-and-suspense-intent.md`
 
 ## 1) Public marketing + listings
 
