@@ -11,6 +11,8 @@
     "check": "tsc --noEmit",
     "format": "prettier --write .",
     "test": "jest --passWithNoTests",
+    "test:unit": "jest --passWithNoTests tests/unit",
+    "test:integration": "jest --passWithNoTests tests/integration",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage --passWithNoTests",
     "test:e2e": "playwright test",
@@ -18,6 +20,8 @@
     "test:e2e:headed": "playwright test --headed",
     "test:perf": "playwright test -c playwright.perf.config.ts && node tooling/scripts/summarize-perf.mjs",
     "test:perf:real": "node tooling/scripts/run-perf-real.mjs && node tooling/scripts/summarize-perf.mjs",
+    "test:boundaries": "node tooling/scripts/validate-test-boundaries.mjs",
+    "test:ci": "npm run check && npm run test && npm run test:boundaries",
     "test:all": "pnpm test:coverage && pnpm test:e2e"
   },
   "dependencies": {
