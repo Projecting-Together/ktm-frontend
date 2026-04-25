@@ -71,6 +71,34 @@ describe("ListingCard", () => {
     render(<ListingCard listing={saleListing} />);
     expect(screen.getByText(/for sale/i)).toBeInTheDocument();
   });
+
+  it("renders pet-friendly image badge when pets are allowed", () => {
+    const petFriendlyListing = { ...listing, pets_allowed: true, is_moderated: false };
+    render(<ListingCard listing={petFriendlyListing} />);
+    expect(screen.getByTestId("listing-pet-friendly-badge")).toBeInTheDocument();
+    expect(screen.queryByText("Moderated")).not.toBeInTheDocument();
+  });
+
+  it("renders moderated image badge when listing is moderated", () => {
+    const moderatedListing = { ...listing, pets_allowed: false, is_moderated: true };
+    render(<ListingCard listing={moderatedListing} />);
+    expect(screen.getByText("Moderated")).toBeInTheDocument();
+    expect(screen.queryByTestId("listing-pet-friendly-badge")).not.toBeInTheDocument();
+  });
+
+  it("renders both pet-friendly and moderated badges together", () => {
+    const petFriendlyModeratedListing = { ...listing, pets_allowed: true, is_moderated: true };
+    render(<ListingCard listing={petFriendlyModeratedListing} />);
+    expect(screen.getByTestId("listing-pet-friendly-badge")).toBeInTheDocument();
+    expect(screen.getByText("Moderated")).toBeInTheDocument();
+  });
+
+  it("does not render pet-friendly or moderated badges when both are false", () => {
+    const regularListing = { ...listing, pets_allowed: false, is_moderated: false };
+    render(<ListingCard listing={regularListing} />);
+    expect(screen.queryByTestId("listing-pet-friendly-badge")).not.toBeInTheDocument();
+    expect(screen.queryByText("Moderated")).not.toBeInTheDocument();
+  });
 });
 
 describe("ListingCardSkeleton", () => {
