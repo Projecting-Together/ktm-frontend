@@ -25,8 +25,8 @@ Record from `npm run build` output (First Load JS column for route `/dashboard`)
 
 | Stage | First Load JS | Captured |
 | --- | --- | --- |
-| Before server `page.tsx` + client island | *(run build, paste value)* | |
-| After refactor | *(run build, paste value)* | |
+| Before server `page.tsx` + client island | 129 kB | `npm run build` on branch `feat/wave3-loading-islands-isr` (Next route table, `/dashboard` third column). |
+| After refactor | 129 kB | Same `npm run build` table after server `page.tsx` + `DashboardOverviewClient` split (shared First Load JS unchanged at route granularity). |
 
 ## Perf verification
 
