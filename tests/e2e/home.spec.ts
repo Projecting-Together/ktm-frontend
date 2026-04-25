@@ -37,8 +37,8 @@ test.describe("Home / Apartments Search Page", () => {
   });
 
   test("renders the footer with navigation links", async ({ page }) => {
-    await expect(page.getByRole("link", { name: /privacy policy/i })).toBeVisible();
-    await expect(page.getByRole("link", { name: /terms of service/i })).toBeVisible();
+    await expect(page.getByRole("link", { name: /^privacy$/i })).toBeVisible();
+    await expect(page.getByRole("link", { name: /^terms$/i })).toBeVisible();
   });
 
   test("clicking Apartment filter button updates URL params", async ({ page }) => {

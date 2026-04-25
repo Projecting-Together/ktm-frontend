@@ -33,6 +33,7 @@ test.describe("Listing Creation Wizard (Authenticated Owner)", () => {
             email: "sita.thapa@ktmapartments.com",
             role: "owner",
             status: "active",
+            stats: { active_listings: 1 },
           },
           accessToken: "mock-owner-token",
         },
@@ -119,8 +120,7 @@ test.describe("Listing Creation Wizard (Authenticated Owner)", () => {
         }),
       });
     });
-    await page.goto("/manage/listings/new");
-    await page.evaluate(() => {
+    await page.addInitScript(() => {
       localStorage.setItem("ktm-auth", JSON.stringify({
         state: {
           isAuthenticated: true,
@@ -136,12 +136,13 @@ test.describe("Listing Creation Wizard (Authenticated Owner)", () => {
         version: 0,
       }));
     });
-    await page.reload();
+    await page.goto("/manage/listings/new", { waitUntil: "domcontentloaded" });
     await expect(page).toHaveURL(/\/manage\/listings\/new/);
     const upgradeModalTitle = page.getByRole("heading", { name: /upgrade to agent/i });
     await expect(upgradeModalTitle).toBeVisible();
     await page.getByRole("button", { name: /cancel/i }).click();
-    await expect(page).toHaveURL(/\/manage$/);
+    await expect(page).toHaveURL(/\/manage\/listings\/new$/);
+    await expect(page.getByText(/upgrade canceled/i)).toBeVisible();
   });
 });
 
