@@ -5,6 +5,7 @@ import {
   adminGetPendingListings, adminApproveListing, adminRejectListing,
 } from "@/lib/api/client";
 import type { ListingFilters, Listing } from "@/lib/api/types";
+import { revalidatePublicListingCache } from "@/lib/cache/revalidate-public-listings";
 import { toast } from "sonner";
 
 // Query keys factory
@@ -66,7 +67,8 @@ export function useCreateListing() {
       if (r.error) throw new Error(r.error.message);
       return r.data!;
     }),
-    onSuccess: () => {
+    onSuccess: (data) => {
+      void revalidatePublicListingCache(data.id);
       qc.invalidateQueries({ queryKey: listingKeys.lists() });
       toast.success("Listing created successfully");
     },
@@ -97,7 +99,8 @@ export function useDeleteListing() {
     mutationFn: (id: string) => deleteListing(id).then((r) => {
       if (r.error) throw new Error(r.error.message);
     }),
-    onSuccess: () => {
+    onSuccess: (_void, deletedId) => {
+      void revalidatePublicListingCache(deletedId);
       qc.invalidateQueries({ queryKey: listingKeys.lists() });
       toast.success("Listing deleted");
     },
@@ -113,6 +116,7 @@ export function usePublishListing() {
       return r.data!;
     }),
     onSuccess: (data) => {
+      void revalidatePublicListingCache(data.id);
       qc.invalidateQueries({ queryKey: listingKeys.detail(data.id) });
       qc.invalidateQueries({ queryKey: listingKeys.lists() });
       toast.success("Listing submitted for review");
@@ -129,6 +133,7 @@ export function useMarkRented() {
       return r.data!;
     }),
     onSuccess: (data) => {
+      void revalidatePublicListingCache(data.id);
       qc.invalidateQueries({ queryKey: listingKeys.detail(data.id) });
       toast.success("Listing marked as rented");
     },
@@ -172,7 +177,8 @@ export function useAdminRejectListing() {
         if (r.error) throw new Error(r.error.message);
         return r.data!;
       }),
-    onSuccess: () => {
+    onSuccess: (data) => {
+      void revalidatePublicListingCache(data.id);
       qc.invalidateQueries({ queryKey: listingKeys.admin() });
       toast.success("Listing rejected");
     },

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getListing } from "@/lib/api/client";
+import { fetchPublicListingDetail } from "@/lib/api/server-public-listings";
 import ListingDetailClient from "@/components/listings/ListingDetailClient";
 
 export const revalidate = 60;
@@ -16,7 +16,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description: "View this property on KTM Apartments",
     };
   }
-  const res = await getListing(id);
+  const res = await fetchPublicListingDetail(id, { revalidate: 60 });
   if (!res.data) return { title: "Property Not Found | KTM Apartments" };
   return {
     title: `${res.data.title} | KTM Apartments`,
@@ -34,7 +34,7 @@ export default async function PropertyDetailPage({ params }: Props) {
   if (USE_MSW_IN_BROWSER) {
     return <ListingDetailClient slugOrId={id} />;
   }
-  const res = await getListing(id);
+  const res = await fetchPublicListingDetail(id, { revalidate: 60 });
   if (!res.data) notFound();
   return <ListingDetailClient listing={res.data} />;
 }

@@ -4,6 +4,7 @@
  * Access token: in-memory only (15-min expiry).
  * Refresh token: httpOnly cookie (30-day expiry, browser-managed).
  */
+import { buildListingQueryParams } from "./listing-query-params";
 import type {
   ApiResponse, TokenPair, User, Listing, ListingListItem,
   ListingFilters, PaginatedResponse, Amenity,
@@ -121,15 +122,6 @@ export async function upgradeCurrentUserToAgent() {
 }
 
 // Listings
-export function buildListingQueryParams(filters: ListingFilters): URLSearchParams {
-  const params = new URLSearchParams();
-  for (const [key, val] of Object.entries(filters)) {
-    if (val === undefined || val === null || val === "") continue;
-    if (Array.isArray(val)) val.forEach((v) => params.append(key, String(v)));
-    else params.set(key, String(val));
-  }
-  return params;
-}
 export async function getListings(filters: ListingFilters = {}) {
   const q = buildListingQueryParams(filters).toString();
   return apiFetch<PaginatedResponse<ListingListItem>>(q ? `/listings/?${q}` : "/listings/", {}, false);
