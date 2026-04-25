@@ -26,4 +26,24 @@ describe("validateTestFilePath", () => {
 
     expect(violations).toEqual([]);
   });
+
+  it("fails Jest-style tests inside Playwright-owned folders", () => {
+    const filePath = "/repo/tests/e2e/homepage.test.ts";
+
+    const violations = validateTestFilePath(filePath);
+
+    expect(violations).toContain(
+      `Jest-style test found in Playwright suite: ${filePath}`,
+    );
+  });
+
+  it("fails Playwright specs inside Jest-owned folders", () => {
+    const filePath = "/repo/tests/unit/cache/revalidate.spec.ts";
+
+    const violations = validateTestFilePath(filePath);
+
+    expect(violations).toContain(
+      `Playwright-style spec found in Jest suite: ${filePath}`,
+    );
+  });
 });
