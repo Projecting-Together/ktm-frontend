@@ -7,6 +7,7 @@ const violations = [];
 
 const isJestTestFile = (filePath) => /\.test\.(ts|tsx)$/.test(filePath);
 const isPlaywrightSpecFile = (filePath) => /\.spec\.ts$/.test(filePath);
+const isPerfPlaywrightSpecFile = (filePath) => /\.perf\.spec\.ts$/.test(filePath);
 
 async function walk(dir) {
   const entries = await readdir(dir, { withFileTypes: true });
@@ -37,6 +38,14 @@ async function walk(dir) {
       isPlaywrightSpecFile(normalized)
     ) {
       violations.push(`Playwright-style spec found in Jest suite: ${normalized}`);
+    }
+
+    if (
+      normalized.includes("/tests/performance/") &&
+      isPlaywrightSpecFile(normalized) &&
+      !isPerfPlaywrightSpecFile(normalized)
+    ) {
+      violations.push(`Performance specs must use *.perf.spec.ts naming: ${normalized}`);
     }
   }
 }
