@@ -107,6 +107,7 @@ export interface ListingListItem {
   furnishing?: FurnishingType | null;
   status: ListingStatus;
   is_verified?: boolean;
+  is_moderated?: boolean;
   pets_allowed?: boolean | null;
   parking?: boolean | null;
   location?: ListingLocation | null;
@@ -129,6 +130,7 @@ export interface Listing {
   furnishing?: FurnishingType | null;
   status: ListingStatus;
   is_verified?: boolean;
+  is_moderated?: boolean;
   pets_allowed?: boolean | null;
   smoking_allowed?: boolean | null;
   parking?: boolean | null;
