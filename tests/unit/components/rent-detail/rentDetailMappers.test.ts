@@ -36,15 +36,31 @@ function buildRentListingSparse(): Listing {
 
 describe("rent detail mappers", () => {
   it("maps known utility values and keeps unresolved rows", () => {
-    const full = buildRentListingFull();
+    const full = {
+      ...buildRentListingFull(),
+      amenities: [
+        { code: " WATER_TANK " },
+        { code: "gas_pipeline" },
+      ],
+    } as Listing;
     const sparse = buildRentListingSparse();
 
     const fullRows = toUtilityRows(full);
     const sparseRows = toUtilityRows(sparse);
 
-    expect(fullRows.find((row) => row.label === "Water")?.status).toBeTruthy();
-    expect(sparseRows.every((row) => row.status.length > 0)).toBe(true);
-    expect(sparseRows.every((row) => row.status === MISSING_DETAIL_TEXT)).toBe(true);
+    expect(fullRows).toEqual([
+      { label: "Water", status: "Available", tone: "positive" },
+      { label: "Gas", status: "Available", tone: "positive" },
+      { label: "Electricity", status: MISSING_DETAIL_TEXT, tone: "warning" },
+      { label: "Garbage", status: MISSING_DETAIL_TEXT, tone: "warning" },
+    ]);
+
+    expect(sparseRows).toEqual([
+      { label: "Water", status: MISSING_DETAIL_TEXT, tone: "warning" },
+      { label: "Gas", status: MISSING_DETAIL_TEXT, tone: "warning" },
+      { label: "Electricity", status: MISSING_DETAIL_TEXT, tone: "warning" },
+      { label: "Garbage", status: MISSING_DETAIL_TEXT, tone: "warning" },
+    ]);
   });
 
   it("formats sqft and sqm helper", () => {
@@ -54,12 +70,59 @@ describe("rent detail mappers", () => {
   });
 
   it("maps full and sparse rent detail rows deterministically", () => {
-    const fullRows = toRentDetailRows(buildRentListingFull());
+    const fullRows = toRentDetailRows({
+      ...buildRentListingFull(),
+      bedrooms: 2,
+      bathrooms: 1,
+      area_sqft: 1200,
+      furnishing: "Semi Furnished",
+      floor: 3,
+      total_floors: 5,
+      parking: false,
+      pets_allowed: false,
+      smoking_allowed: null,
+      available_from: null,
+    });
     const sparseRows = toRentDetailRows(buildRentListingSparse());
 
-    expect(fullRows.find((row) => row.key === "Bedrooms")?.value).not.toBe(MISSING_DETAIL_TEXT);
-    expect(fullRows.find((row) => row.key === "Area")?.value).toContain("sqft");
-    expect(sparseRows.every((row) => row.value.length > 0)).toBe(true);
-    expect(sparseRows.find((row) => row.key === "Area")?.value).toBe(MISSING_DETAIL_TEXT);
+    expect(fullRows).toEqual([
+      { key: "Bedrooms", value: "2" },
+      { key: "Bathrooms", value: "1" },
+      { key: "Area", value: "1200 sqft (111.5 m²)" },
+      { key: "Furnishing", value: "Semi Furnished" },
+      { key: "Floor", value: "3 of 5" },
+      { key: "Parking", value: "Not available" },
+      { key: "Pets", value: "Not available" },
+      { key: "Smoking", value: MISSING_DETAIL_TEXT },
+      { key: "Available From", value: MISSING_DETAIL_TEXT },
+    ]);
+
+    expect(sparseRows).toEqual([
+      { key: "Bedrooms", value: MISSING_DETAIL_TEXT },
+      { key: "Bathrooms", value: MISSING_DETAIL_TEXT },
+      { key: "Area", value: MISSING_DETAIL_TEXT },
+      { key: "Furnishing", value: MISSING_DETAIL_TEXT },
+      { key: "Floor", value: MISSING_DETAIL_TEXT },
+      { key: "Parking", value: MISSING_DETAIL_TEXT },
+      { key: "Pets", value: MISSING_DETAIL_TEXT },
+      { key: "Smoking", value: MISSING_DETAIL_TEXT },
+      { key: "Available From", value: MISSING_DETAIL_TEXT },
+    ]);
+  });
+
+  it("handles floor edge cases with explicit fallback behavior", () => {
+    const base = buildRentListingFull();
+
+    expect(toRentDetailRows({ ...base, floor: 5, total_floors: 2 }).find((row) => row.key === "Floor")?.value).toBe("5");
+    expect(toRentDetailRows({ ...base, floor: 3, total_floors: 7 }).find((row) => row.key === "Floor")?.value).toBe(
+      "3 of 7",
+    );
+    expect(toRentDetailRows({ ...base, floor: 4, total_floors: 0 }).find((row) => row.key === "Floor")?.value).toBe("4");
+    expect(toRentDetailRows({ ...base, floor: 0, total_floors: 9 }).find((row) => row.key === "Floor")?.value).toBe(
+      MISSING_DETAIL_TEXT,
+    );
+    expect(toRentDetailRows({ ...base, floor: null, total_floors: 10 }).find((row) => row.key === "Floor")?.value).toBe(
+      MISSING_DETAIL_TEXT,
+    );
   });
 });

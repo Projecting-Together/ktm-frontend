@@ -4,6 +4,14 @@ import { MISSING_DETAIL_TEXT, type RentDetailRow, type RentStatusRow } from "./t
 
 const SQFT_TO_SQM_FACTOR = 0.092903;
 
+function toPositiveFiniteNumber(value: number | null | undefined): number | null {
+  if (value == null || !Number.isFinite(value) || value <= 0) {
+    return null;
+  }
+
+  return value;
+}
+
 function getAmenityCodes(listing: Listing): Set<string> {
   return new Set(
     (listing.amenities ?? [])
@@ -67,11 +75,13 @@ export function toRentDetailRows(listing: Listing): RentDetailRow[] {
       ? `${listing.area_sqft} sqft (${toSqmLabel(listing.area_sqft)})`
       : MISSING_DETAIL_TEXT;
 
+  const floor = toPositiveFiniteNumber(listing.floor);
+  const totalFloors = toPositiveFiniteNumber(listing.total_floors);
   const floorLabel =
-    listing.floor != null
-      ? listing.total_floors != null
-        ? `${listing.floor} of ${listing.total_floors}`
-        : String(listing.floor)
+    floor != null
+      ? totalFloors != null && totalFloors >= floor
+        ? `${floor} of ${totalFloors}`
+        : String(floor)
       : MISSING_DETAIL_TEXT;
 
   return [
