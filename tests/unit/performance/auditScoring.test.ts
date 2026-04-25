@@ -1,5 +1,5 @@
 import { describe, expect, test } from "@jest/globals";
-import { rankFindings } from "./auditScoring";
+import { rankFindings } from "../../performance/helpers/auditScoring";
 
 describe("rankFindings", () => {
   test("orders high-impact high-confidence findings first", () => {
