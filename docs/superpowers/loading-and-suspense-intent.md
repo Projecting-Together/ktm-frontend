@@ -30,7 +30,7 @@ Record from `npm run build` output (First Load JS column for route `/dashboard`)
 
 ## Perf verification
 
-- Run `npm run test:perf` for mocked perf suites (includes home ISR baseline once `home-isr.mocked.perf.spec.ts` exists).
+- Run `npm run test:perf` for mocked perf suites (includes `home-isr.mocked.perf.spec.ts` — home ISR baseline under the perf harness).
 
 ## Related
 

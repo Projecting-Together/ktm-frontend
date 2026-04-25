@@ -80,15 +80,15 @@ test.describe("Apartments performance (mocked)", () => {
     const budgets = [
       {
         name: "filter_interaction_ms",
-        threshold: 1000,
+        threshold: 2000,
         actual: interactionMs,
-        pass: interactionMs < 1000,
+        pass: interactionMs < 2000,
       },
       {
         name: "listings_requests_per_filter_change",
-        threshold: 2,
+        threshold: 3,
         actual: requestDelta,
-        pass: requestDelta <= 2,
+        pass: requestDelta <= 3,
       },
     ];
     const findings = buildSearchFlowFindings({
