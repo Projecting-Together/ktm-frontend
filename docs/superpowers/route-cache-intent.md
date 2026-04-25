@@ -3,6 +3,10 @@
 Date: 2026-04-24  
 Related plan: `docs/superpowers/plans/2026-04-24-frontend-scalability-maintainability-wave1.md`
 
+## See also
+
+- **Middleware, Edge vs Node, invalidation follow-ups:** `docs/superpowers/deployment-runtime-and-invalidation.md`
+
 ## 1) Public marketing + listings
 
 | Route / area | Render / data | Caching |
@@ -15,13 +19,11 @@ Related plan: `docs/superpowers/plans/2026-04-24-frontend-scalability-maintainab
 
 ## 2) Authenticated app (dashboard / manage / admin)
 
-Segment layouts `src/app/dashboard/layout.tsx`, `src/app/manage/layout.tsx`, and `src/app/admin/layout.tsx` are **client components** (`"use client"`, `usePathname`). They do **not** export `dynamic` or segment cache controls.
+- **Segment layouts:** `src/app/dashboard/layout.tsx`, `src/app/manage/layout.tsx`, and `src/app/admin/layout.tsx` are **server components** that export `export const dynamic = "force-dynamic"` and render a single client shell (`DashboardLayoutClient`, `ManageLayoutClient`, `AdminLayoutClient`) containing nav + `Navbar` + `children`.
+- **Data:** Authenticated pages use **TanStack Query** and `src/lib/api/client.ts` (in-memory JWT; `accessToken` / `userRole` cookies for middleware).
+- **Freshness:** Server `dynamic = "force-dynamic"` makes the **HTML shell** for each request non-static; client data freshness remains driven by React Query `invalidateQueries` on mutations. The same mutations call `revalidatePublicListingCache` so public ISR pages stay consistent with writes.
 
-- **Data in app shells:** Loaded with **TanStack Query** and `src/lib/api/client.ts` (in-memory JWT + cookie-backed session signal in middleware).
-- **Freshness after edits:** React Query `invalidateQueries` in mutation `onSuccess` handlers keeps UI consistent inside the app.
-- **Public SEO pages:** The same mutations also call `revalidatePublicListingCache` so server-rendered public listing pages drop stale tagged `fetch` results.
-
-**Follow-up (optional, Wave 2+):** Introduce a thin **server** `layout.tsx` per segment that only renders children and `export const dynamic = "force-dynamic"`, and move the current nav shell into `*LayoutClient.tsx`, if you need explicit segment-level dynamic semantics without a large UX change.
+**Optional later refactor:** Further shrink client bundles by lifting static chrome into the server layout—out of scope for the current wave.
 
 ## 3) Tag inventory
 
