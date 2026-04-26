@@ -21,7 +21,7 @@ export function AnimatedMetric({
   className,
   "data-testid": dataTestId,
 }: AnimatedMetricProps) {
-  const [displayValue, setDisplayValue] = useState(0);
+  const [displayValue, setDisplayValue] = useState(() => (typeof window === "undefined" ? value : 0));
 
   useEffect(() => {
     if (typeof window === "undefined") {

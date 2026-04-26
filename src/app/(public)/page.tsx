@@ -213,11 +213,16 @@ export default async function HomePage() {
       {/* ── CTA Banner ────────────────────────────────────────────────────── */}
       <section className="section relative overflow-hidden bg-accent">
         <div
+          data-testid="cta-image-wrapper"
           aria-hidden="true"
           className="pointer-events-none absolute inset-0 bg-cover bg-center opacity-25"
           style={{ backgroundImage: `url(${HOME_BACKGROUND_IMAGES.cta})` }}
         />
-        <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-black/30" />
+        <div
+          data-testid="cta-image-overlay"
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-black/30"
+        />
         <div className="container text-center">
           <h2 className="text-white">Have a Property to List?</h2>
           <p className="mt-3 text-white/80">

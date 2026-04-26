@@ -1,4 +1,4 @@
-import { renderToStaticMarkup } from "react-dom/server";
+import { render, screen } from "@testing-library/react";
 import HomePage from "@/app/(public)/page";
 import { fetchPublicListings } from "@/lib/api/server-public-listings";
 
@@ -17,23 +17,39 @@ jest.mock("@/components/listings/ListingCard", () => ({
   ListingCardSkeleton: () => <div data-testid="listing-card-skeleton">Loading</div>,
 }));
 
-describe("public home dynamic hero and metrics", () => {
+describe("public home dynamic hero, banner, and metrics", () => {
   beforeEach(() => {
     (fetchPublicListings as jest.Mock).mockReset();
     (fetchPublicListings as jest.Mock).mockResolvedValue({
       data: { items: [{ id: "listing-1", title: "Modern flat in Baneshwor" }] },
       error: null,
     });
+    Object.defineProperty(window, "matchMedia", {
+      writable: true,
+      value: jest.fn().mockImplementation(() => ({
+        matches: true,
+        media: "(prefers-reduced-motion: reduce)",
+        onchange: null,
+        addListener: jest.fn(),
+        removeListener: jest.fn(),
+        addEventListener: jest.fn(),
+        removeEventListener: jest.fn(),
+        dispatchEvent: jest.fn(),
+      })),
+    });
   });
 
-  it("renders dynamic hero image wrapper and metric values", async () => {
-    const html = renderToStaticMarkup(await HomePage());
+  it("renders hero and cta image wrappers with formatted dynamic metrics", async () => {
+    render(await HomePage());
 
-    expect(html).toContain('data-testid="hero-image-wrapper"');
-    expect(html).toContain('data-testid="hero-image-overlay"');
-    expect(html).toContain("data-testid=\"home-metric-Active Listings\"");
-    expect(html).toContain("data-testid=\"home-metric-Verified Properties\"");
-    expect(html).not.toContain(">2,400+<");
-    expect(html).not.toContain(">1,800+<");
+    expect(screen.getByTestId("hero-image-wrapper")).toBeInTheDocument();
+    expect(screen.getByTestId("hero-image-overlay")).toBeInTheDocument();
+    expect(screen.getByTestId("cta-image-wrapper")).toBeInTheDocument();
+    expect(screen.getByTestId("cta-image-overlay")).toBeInTheDocument();
+
+    expect(screen.getByTestId("home-metric-Active Listings")).toHaveTextContent("2,402+");
+    expect(screen.getByTestId("home-metric-Verified Properties")).toHaveTextContent("1,800+");
+    expect(screen.getByTestId("home-metric-Years Serving Renters")).toHaveTextContent("5+");
+    expect(screen.getByTestId("home-metric-Happy Renters")).toHaveTextContent("5,004+");
   });
 });
