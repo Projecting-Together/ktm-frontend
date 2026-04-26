@@ -5,39 +5,32 @@ import {
 } from "@/components/listings/rent-detail/rentDetailMappers";
 import { MISSING_DETAIL_TEXT } from "@/components/listings/rent-detail/types";
 import type { Listing } from "@/lib/api/types";
-import { mockListings } from "@/test-utils/mockData";
-
-function buildRentListingFull(): Listing {
-  const listing = mockListings.find((item) => item.purpose === "rent");
-  if (!listing) {
-    throw new Error("Expected at least one rent listing in mockListings");
-  }
-
-  return listing;
-}
-
-function buildRentListingSparse(): Listing {
-  const base = buildRentListingFull();
-  return {
-    ...base,
-    amenities: [],
-    bedrooms: null,
-    bathrooms: null,
-    area_sqft: null,
-    furnishing: null,
-    floor: null,
-    total_floors: null,
-    parking: null,
-    pets_allowed: null,
-    smoking_allowed: null,
-    available_from: null,
-  };
-}
+import {
+  buildRentListingFull,
+  buildRentListingSparse,
+  buildRentListingMixed,
+  buildRentListingPremium,
+  buildRentListingMinimal,
+} from "@/test-utils/mockData";
 
 describe("rent detail mappers", () => {
+  it("supports all required mock listing variants", () => {
+    const variants = [
+      buildRentListingFull(),
+      buildRentListingSparse(),
+      buildRentListingMixed(),
+      buildRentListingPremium(),
+      buildRentListingMinimal(),
+    ];
+
+    expect(variants).toHaveLength(5);
+    expect(new Set(variants.map((variant) => variant.id)).size).toBe(5);
+    expect(variants.every((variant) => variant.purpose === "rent")).toBe(true);
+  });
+
   it("maps known utility values and keeps unresolved rows", () => {
     const full = {
-      ...buildRentListingFull(),
+      ...buildRentListingMixed(),
       amenities: [
         { code: " WATER_TANK " },
         { code: "gas_pipeline" },
@@ -71,7 +64,7 @@ describe("rent detail mappers", () => {
 
   it("maps full and sparse rent detail rows deterministically", () => {
     const fullRows = toRentDetailRows({
-      ...buildRentListingFull(),
+      ...buildRentListingPremium(),
       bedrooms: 2,
       bathrooms: 1,
       area_sqft: 1200,

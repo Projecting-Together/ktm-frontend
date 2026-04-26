@@ -22,7 +22,9 @@ import {
   mockAdminAnalytics,
   mockAuditLogs,
   mockAmenities,
+  mockRentListingVariants,
 } from "@/test-utils/mockData";
+import { adminListings } from "@/lib/mocks/admin/listings";
 
 const mockAdminAuthTokens = {
   access_token:
@@ -43,6 +45,8 @@ const passthroughNextAssets = http.all(
 function pathname(request: Request) {
   return new URL(request.url).pathname;
 }
+
+const mockListingsWithRentVariants = [...mockListings, ...mockRentListingVariants];
 
 function filterListingItems(request: Request) {
   const url = new URL(request.url);
@@ -186,7 +190,7 @@ export const handlers = [
     async ({ request }) => {
       const body = (await request.json()) as Record<string, unknown>;
       const newListing = {
-        ...mockListings[0],
+        ...mockListingsWithRentVariants[0],
         id: "lst-new-001",
         slug: `new-listing-${Date.now()}`,
         title: (body.title as string) ?? "New Listing",
@@ -207,7 +211,7 @@ export const handlers = [
     },
     ({ request }) => {
       const slug = pathname(request).split("/").pop()!;
-      const listing = mockListings.find((l) => l.slug === slug || l.id === slug);
+      const listing = mockListingsWithRentVariants.find((l) => l.slug === slug || l.id === slug);
       if (!listing) return HttpResponse.json({ detail: "Listing not found" }, { status: 404 });
       return HttpResponse.json(listing);
     }
@@ -218,7 +222,7 @@ export const handlers = [
     async ({ request }) => {
       const id = pathname(request).split("/").pop()!;
       const body = (await request.json()) as Record<string, unknown>;
-      const listing = mockListings.find((l) => l.id === id);
+      const listing = mockListingsWithRentVariants.find((l) => l.id === id);
       if (!listing) return HttpResponse.json({ detail: "Listing not found" }, { status: 404 });
       return HttpResponse.json({ ...listing, ...body, updated_at: new Date().toISOString() });
     }
@@ -228,7 +232,7 @@ export const handlers = [
     ({ request }) => /^\/api\/v1\/listings\/[^/]+$/.test(pathname(request)),
     ({ request }) => {
       const id = pathname(request).split("/").pop()!;
-      const listing = mockListings.find((l) => l.id === id);
+      const listing = mockListingsWithRentVariants.find((l) => l.id === id);
       if (!listing) return HttpResponse.json({ detail: "Listing not found" }, { status: 404 });
       return HttpResponse.json(null, { status: 204 });
     }
@@ -395,14 +399,27 @@ export const handlers = [
   // ── ADMIN ─────────────────────────────────────────────────────────────────
   http.get(
     ({ request }) => pathname(request).startsWith("/api/v1/admin/listings"),
-    () => HttpResponse.json(mockPendingListings)
+    ({ request }) => {
+      const status = new URL(request.url).searchParams.get("status");
+      const items = status ? adminListings.filter((listing) => listing.status === status) : adminListings;
+
+      return HttpResponse.json({
+        items,
+        total: items.length,
+        page: 1,
+        page_size: 20,
+        total_pages: 1,
+        has_next: false,
+        has_prev: false,
+      });
+    }
   ),
 
   http.patch(
     ({ request }) => /^\/api\/v1\/admin\/listings\/[^/]+\/approve$/.test(pathname(request)),
     ({ request }) => {
       const id = pathname(request).split("/")[5];
-      const listing = mockListings.find((l) => l.id === id);
+      const listing = mockListingsWithRentVariants.find((l) => l.id === id);
       if (!listing) return HttpResponse.json({ detail: "Listing not found" }, { status: 404 });
       return HttpResponse.json({ ...listing, status: "active" as const, is_verified: true });
     }
@@ -412,7 +429,7 @@ export const handlers = [
     ({ request }) => /^\/api\/v1\/admin\/listings\/[^/]+\/reject$/.test(pathname(request)),
     ({ request }) => {
       const id = pathname(request).split("/")[5];
-      const listing = mockListings.find((l) => l.id === id);
+      const listing = mockListingsWithRentVariants.find((l) => l.id === id);
       if (!listing) return HttpResponse.json({ detail: "Listing not found" }, { status: 404 });
       return HttpResponse.json({ ...listing, status: "rejected" as const });
     }

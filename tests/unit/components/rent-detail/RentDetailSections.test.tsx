@@ -1,55 +1,29 @@
 import { RentDetailSections } from "@/components/listings/rent-detail/RentDetailSections";
 import { MISSING_DETAIL_TEXT } from "@/components/listings/rent-detail/types";
-import type { Listing } from "@/lib/api/types";
-import { mockListings } from "@/test-utils/mockData";
 import { render, screen } from "@/test-utils/renderWithProviders";
-
-function buildRentListingFull(): Listing {
-  const listing = mockListings.find((item) => item.purpose === "rent");
-  if (!listing) {
-    throw new Error("Expected at least one rent listing in mockListings");
-  }
-
-  return listing;
-}
-
-function buildRentListingSparse(): Listing {
-  const base = buildRentListingFull();
-  return {
-    ...base,
-    description: null,
-    amenities: [],
-    furnishing: null,
-    floor: null,
-    total_floors: null,
-    bedrooms: null,
-    bathrooms: null,
-    area_sqft: null,
-    parking: null,
-    pets_allowed: null,
-    smoking_allowed: null,
-    available_from: null,
-    location: {
-      ...base.location,
-      latitude: null,
-      longitude: null,
-    },
-  };
-}
-
-function buildRentListingWithCoordinates(): Listing {
-  const base = buildRentListingFull();
-  return {
-    ...base,
-    location: {
-      ...base.location,
-      latitude: "27.7172",
-      longitude: "85.3240",
-    },
-  };
-}
+import {
+  buildRentListingFull,
+  buildRentListingSparse,
+  buildRentListingMixed,
+  buildRentListingPremium,
+  buildRentListingMinimal,
+} from "@/test-utils/mockData";
 
 describe("RentDetailSections", () => {
+  it("keeps all required rent fixture variants available", () => {
+    const variants = [
+      buildRentListingFull(),
+      buildRentListingSparse(),
+      buildRentListingMixed(),
+      buildRentListingPremium(),
+      buildRentListingMinimal(),
+    ];
+
+    expect(variants).toHaveLength(5);
+    expect(new Set(variants.map((variant) => variant.id)).size).toBe(5);
+    expect(variants.every((variant) => variant.purpose === "rent")).toBe(true);
+  });
+
   it("renders rent sections in approved order", () => {
     render(<RentDetailSections listing={buildRentListingSparse()} />);
 
@@ -88,9 +62,17 @@ describe("RentDetailSections", () => {
   });
 
   it("shows deterministic map panel state when coordinates exist", () => {
-    render(<RentDetailSections listing={buildRentListingWithCoordinates()} />);
+    const listing = buildRentListingMixed();
+    render(<RentDetailSections listing={listing} />);
 
     expect(screen.getByText("Map preview ready: 27.71720, 85.32400")).toBeInTheDocument();
     expect(screen.getByText("Coordinates source: listing location")).toBeInTheDocument();
+  });
+
+  it("renders premium listing details without missing value placeholders", () => {
+    render(<RentDetailSections listing={buildRentListingPremium()} />);
+
+    expect(screen.getByText("1800 sqft (167.2 m²)")).toBeInTheDocument();
+    expect(screen.getAllByText("Available").length).toBeGreaterThan(0);
   });
 });

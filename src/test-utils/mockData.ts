@@ -848,6 +848,143 @@ export const mockListings: Listing[] = [
   },
 ];
 
+function cloneListing<T extends Listing>(listing: T): T {
+  return {
+    ...listing,
+    location: listing.location ? { ...listing.location } : listing.location,
+    images: listing.images.map((image) => ({ ...image })),
+    amenities: listing.amenities.map((amenity) => ({ ...amenity })),
+    owner: listing.owner ? { ...listing.owner } : listing.owner,
+  };
+}
+
+function getBaseRentListing(): Listing {
+  const listing = mockListings.find((item) => item.purpose === "rent");
+  if (!listing) {
+    throw new Error("Expected at least one rent listing in mockListings");
+  }
+
+  return cloneListing(listing);
+}
+
+export function buildRentListingFull(): Listing {
+  return {
+    ...getBaseRentListing(),
+    id: "rent-variant-full",
+    slug: "rent-variant-full",
+  };
+}
+
+export function buildRentListingSparse(): Listing {
+  const base = getBaseRentListing();
+  return {
+    ...base,
+    id: "rent-variant-sparse",
+    slug: "rent-variant-sparse",
+    description: null,
+    amenities: [],
+    furnishing: null,
+    floor: null,
+    total_floors: null,
+    bedrooms: null,
+    bathrooms: null,
+    area_sqft: null,
+    parking: null,
+    pets_allowed: null,
+    smoking_allowed: null,
+    available_from: null,
+    location: base.location
+      ? {
+          ...base.location,
+          latitude: null,
+          longitude: null,
+        }
+      : base.location,
+  };
+}
+
+export function buildRentListingMixed(): Listing {
+  const base = getBaseRentListing();
+  return {
+    ...base,
+    id: "rent-variant-mixed",
+    slug: "rent-variant-mixed",
+    description: "Balanced rent fixture with partial utility coverage for mixed-state rendering.",
+    bedrooms: 2,
+    bathrooms: 1,
+    area_sqft: 920,
+    furnishing: "semi",
+    floor: 2,
+    total_floors: 5,
+    parking: false,
+    pets_allowed: true,
+    smoking_allowed: null,
+    available_from: null,
+    amenities: [mockAmenities[0], mockAmenities[2]],
+    location: base.location
+      ? {
+          ...base.location,
+          latitude: "27.7172",
+          longitude: "85.3240",
+        }
+      : base.location,
+  };
+}
+
+export function buildRentListingPremium(): Listing {
+  const base = getBaseRentListing();
+  return {
+    ...base,
+    id: "rent-variant-premium",
+    slug: "rent-variant-premium",
+    title: "Premium Penthouse Rental Fixture",
+    description: "High-spec rent fixture with extensive amenities for premium detail states.",
+    price: 85000,
+    security_deposit: 170000,
+    bedrooms: 4,
+    bathrooms: 4,
+    area_sqft: 1800,
+    furnishing: "fully",
+    floor: 8,
+    total_floors: 10,
+    parking: true,
+    pets_allowed: true,
+    smoking_allowed: false,
+    available_from: "2026-05-01",
+    amenities: [mockAmenities[0], mockAmenities[1], mockAmenities[4], mockAmenities[6], mockAmenities[7]],
+  };
+}
+
+export function buildRentListingMinimal(): Listing {
+  const base = getBaseRentListing();
+  return {
+    ...base,
+    id: "rent-variant-minimal",
+    slug: "rent-variant-minimal",
+    title: "Minimal Rent Fixture",
+    description: "Compact city unit.",
+    bedrooms: 1,
+    bathrooms: 1,
+    area_sqft: 350,
+    furnishing: "unfurnished",
+    floor: null,
+    total_floors: null,
+    parking: null,
+    pets_allowed: null,
+    smoking_allowed: null,
+    available_from: null,
+    amenities: [],
+  };
+}
+
+export const mockRentListingVariants: Listing[] = [
+  buildRentListingFull(),
+  buildRentListingSparse(),
+  buildRentListingMixed(),
+  buildRentListingPremium(),
+  buildRentListingMinimal(),
+];
+
 // ─────────────────────────────────────────────────────────────────────────────
 // LISTING LIST ITEMS (for search results)
 // ─────────────────────────────────────────────────────────────────────────────
