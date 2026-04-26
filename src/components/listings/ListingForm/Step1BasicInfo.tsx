@@ -3,12 +3,14 @@ import { useFormContext } from "react-hook-form";
 import type { ListingFormData } from "@/lib/validations/listingSchema";
 
 const LISTING_TYPES = [
-  { value: "apartment", label: "🏢 Apartment", desc: "Unit in a multi-story building" },
-  { value: "room", label: "🛏 Room", desc: "Single room in a shared house" },
-  { value: "house", label: "🏠 House", desc: "Full standalone house" },
-  { value: "studio", label: "🏨 Studio", desc: "Open-plan studio apartment" },
-  { value: "penthouse", label: "🌆 Penthouse", desc: "Top-floor luxury unit" },
-  { value: "commercial", label: "🏪 Commercial", desc: "Office or commercial space" },
+  { value: "apartment", label: "Apartment", desc: "Unit in a multi-story building" },
+  { value: "room", label: "Room", desc: "Single room in a shared house" },
+  { value: "house", label: "House", desc: "Full standalone house" },
+  { value: "studio", label: "Studio", desc: "Open-plan studio apartment" },
+  { value: "penthouse", label: "Penthouse", desc: "Top-floor luxury unit" },
+  { value: "commercial", label: "Commercial", desc: "Office or commercial space" },
+  { value: "land", label: "Land", desc: "Empty plot for development or resale" },
+  { value: "video_shooting", label: "Video Shooting", desc: "Property listed as a shoot location" },
 ];
 
 const PURPOSE_OPTIONS = [
@@ -64,9 +66,8 @@ export function Step1BasicInfo() {
                   ? "border-accent bg-accent/10 ring-1 ring-accent"
                   : "border-border hover:border-accent/50"
               }`}>
-              <p className="text-xl mb-1">{t.label.split(" ")[0]}</p>
-              <p className="text-sm font-semibold">{t.label.split(" ").slice(1).join(" ")}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">{t.desc}</p>
+              <p className="text-sm font-semibold">{t.label}</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">{t.desc}</p>
             </button>
           ))}
         </div>
