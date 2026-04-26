@@ -136,6 +136,12 @@ describe("Dashboard overview expired listings metric", () => {
   it("shows archived listings count as expired metric", async () => {
     mockGetListings.mockResolvedValueOnce({
       data: {
+        page: 1,
+        page_size: 2,
+        total: 3,
+        total_pages: 2,
+        has_next: true,
+        has_prev: false,
         items: [
           {
             id: "l1",
@@ -155,6 +161,19 @@ describe("Dashboard overview expired listings metric", () => {
             images: [],
             created_at: "2026-01-01T00:00:00Z",
           },
+        ],
+      },
+      error: null,
+    } as never);
+    mockGetListings.mockResolvedValueOnce({
+      data: {
+        page: 2,
+        page_size: 2,
+        total: 3,
+        total_pages: 2,
+        has_next: false,
+        has_prev: true,
+        items: [
           {
             id: "l3",
             slug: "listing-3",
@@ -175,5 +194,7 @@ describe("Dashboard overview expired listings metric", () => {
     await waitFor(() => {
       expect(expiredTile).toHaveTextContent("2");
     });
+    expect(mockGetListings).toHaveBeenNthCalledWith(1, { limit: 100, page: 1 });
+    expect(mockGetListings).toHaveBeenNthCalledWith(2, { limit: 100, page: 2 });
   });
 });

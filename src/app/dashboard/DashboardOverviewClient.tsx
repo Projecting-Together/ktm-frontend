@@ -12,14 +12,28 @@ export default function DashboardOverviewClient() {
   const { data: listingData } = useQuery({
     queryKey: ["dashboard", "listings", "expired-metric"],
     queryFn: async () => {
-      const res = await getListings({ limit: 100 });
-      if (res.error) throw new Error(res.error.message);
-      return res.data;
+      const pageSize = 100;
+      let page = 1;
+      let archivedCount = 0;
+      let totalPages = 1;
+
+      do {
+        const res = await getListings({ limit: pageSize, page });
+        if (res.error) throw new Error(res.error.message);
+        const pageData = res.data;
+        if (!pageData) break;
+
+        archivedCount += pageData.items.filter((listing) => listing.status === "archived").length;
+        totalPages = pageData.total_pages || 1;
+        page += 1;
+      } while (page <= totalPages);
+
+      return archivedCount;
     },
   });
 
   // Backend does not expose an explicit "expired" status; archived listings are the closest stable proxy.
-  const expiredListingsCount = listingData?.items?.filter((listing) => listing.status === "archived").length ?? 0;
+  const expiredListingsCount = listingData ?? 0;
 
   const stats = [
     { label: "Saved Listings", value: favorites?.length ?? 0, icon: Heart, href: "/dashboard/favorites" },

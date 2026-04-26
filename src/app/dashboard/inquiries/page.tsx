@@ -16,10 +16,20 @@ type InquiryGroup = {
   hasNew: boolean;
 };
 
+type InquiryWithOwner = Inquiry & {
+  owner?: {
+    first_name?: string | null;
+    last_name?: string | null;
+  } | null;
+};
+
+function hasOwnerProfile(inquiry: Inquiry): inquiry is InquiryWithOwner {
+  return "owner" in inquiry && typeof inquiry.owner === "object" && inquiry.owner !== null;
+}
+
 function formatOwnerLabel(inquiry: Inquiry): string {
-  const maybeOwner = (inquiry as Inquiry & { owner?: { first_name?: string; last_name?: string } }).owner;
-  if (maybeOwner?.first_name && maybeOwner?.last_name) {
-    return `${maybeOwner.first_name.charAt(0).toUpperCase()}. ${maybeOwner.last_name}`;
+  if (hasOwnerProfile(inquiry) && inquiry.owner?.first_name && inquiry.owner.last_name) {
+    return `${inquiry.owner.first_name.charAt(0).toUpperCase()}. ${inquiry.owner.last_name}`;
   }
 
   const ownerRole = inquiry.owner_id.split("-")[1] ?? "owner";
