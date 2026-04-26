@@ -1,18 +1,41 @@
 import React from "react";
-import { render, screen, within } from "@/test-utils/renderWithProviders";
+import { render, screen, waitFor, within } from "@/test-utils/renderWithProviders";
 import userEvent from "@testing-library/user-event";
 import InquiriesPage from "@/app/dashboard/inquiries/page";
-import { getMyInquiries } from "@/lib/api/client";
+import DashboardOverviewClient from "@/app/dashboard/DashboardOverviewClient";
+import { getMyInquiries, getListings } from "@/lib/api/client";
+import { useFavorites } from "@/lib/hooks/useFavorites";
 
 jest.mock("@/lib/api/client", () => ({
   getMyInquiries: jest.fn(),
+  getListings: jest.fn(),
+}));
+
+jest.mock("@/lib/hooks/useFavorites", () => ({
+  useFavorites: jest.fn(),
+}));
+
+jest.mock("@/lib/stores/authStore", () => ({
+  useAuthStore: () => ({
+    user: {
+      profile: {
+        first_name: "Ram",
+      },
+    },
+  }),
 }));
 
 const mockGetMyInquiries = getMyInquiries as jest.MockedFunction<typeof getMyInquiries>;
+const mockGetListings = getListings as jest.MockedFunction<typeof getListings>;
+const mockUseFavorites = useFavorites as jest.MockedFunction<typeof useFavorites>;
 
 describe("Dashboard inquiries grouping", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockUseFavorites.mockReturnValue({
+      data: [],
+      isLoading: false,
+    } as never);
   });
 
   it("groups inquiries by property and supports collapse with property context", async () => {
@@ -98,5 +121,59 @@ describe("Dashboard inquiries grouping", () => {
     await user.click(groupHeading);
     expect(within(firstGroup as HTMLElement).queryByText(/is this available this weekend/i)).not.toBeInTheDocument();
     expect(within(firstGroup as HTMLElement).queryByText(/can i schedule a viewing on sunday/i)).not.toBeInTheDocument();
+  });
+});
+
+describe("Dashboard overview expired listings metric", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockUseFavorites.mockReturnValue({
+      data: [{ listing_id: "fav-1" }],
+      isLoading: false,
+    } as never);
+  });
+
+  it("shows archived listings count as expired metric", async () => {
+    mockGetListings.mockResolvedValueOnce({
+      data: {
+        items: [
+          {
+            id: "l1",
+            slug: "listing-1",
+            title: "Archived 1",
+            status: "archived",
+            currency: "NPR",
+            images: [],
+            created_at: "2026-01-01T00:00:00Z",
+          },
+          {
+            id: "l2",
+            slug: "listing-2",
+            title: "Active",
+            status: "active",
+            currency: "NPR",
+            images: [],
+            created_at: "2026-01-01T00:00:00Z",
+          },
+          {
+            id: "l3",
+            slug: "listing-3",
+            title: "Archived 2",
+            status: "archived",
+            currency: "NPR",
+            images: [],
+            created_at: "2026-01-01T00:00:00Z",
+          },
+        ],
+      },
+      error: null,
+    } as never);
+
+    render(<DashboardOverviewClient />);
+
+    const expiredTile = await screen.findByRole("link", { name: /expired listings/i });
+    await waitFor(() => {
+      expect(expiredTile).toHaveTextContent("2");
+    });
   });
 });

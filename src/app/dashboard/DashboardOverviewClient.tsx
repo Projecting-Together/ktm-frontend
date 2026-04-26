@@ -3,16 +3,29 @@ import Link from "next/link";
 import { Heart, MessageCircle, Calendar, Eye, Clock3 } from "lucide-react";
 import { useFavorites } from "@/lib/hooks/useFavorites";
 import { useAuthStore } from "@/lib/stores/authStore";
+import { useQuery } from "@tanstack/react-query";
+import { getListings } from "@/lib/api/client";
 
 export default function DashboardOverviewClient() {
   const { user } = useAuthStore();
   const { data: favorites } = useFavorites();
+  const { data: listingData } = useQuery({
+    queryKey: ["dashboard", "listings", "expired-metric"],
+    queryFn: async () => {
+      const res = await getListings({ limit: 100 });
+      if (res.error) throw new Error(res.error.message);
+      return res.data;
+    },
+  });
+
+  // Backend does not expose an explicit "expired" status; archived listings are the closest stable proxy.
+  const expiredListingsCount = listingData?.items?.filter((listing) => listing.status === "archived").length ?? 0;
 
   const stats = [
     { label: "Saved Listings", value: favorites?.length ?? 0, icon: Heart, href: "/dashboard/favorites" },
     { label: "Active Inquiries", value: 0, icon: MessageCircle, href: "/dashboard/inquiries" },
     { label: "Visit Requests", value: 0, icon: Calendar, href: "/dashboard/visits" },
-    { label: "Expired Listings", value: 0, icon: Clock3, href: "/dashboard/favorites" },
+    { label: "Expired Listings", value: expiredListingsCount, icon: Clock3, href: "/dashboard/favorites" },
     { label: "Recently Viewed", value: 0, icon: Eye, href: "/dashboard/recently-viewed" },
   ];
 
