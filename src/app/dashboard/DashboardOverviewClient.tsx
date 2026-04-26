@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { Heart, MessageCircle, Calendar, Eye } from "lucide-react";
+import { Heart, MessageCircle, Calendar, Eye, Clock3 } from "lucide-react";
 import { useFavorites } from "@/lib/hooks/useFavorites";
 import { useAuthStore } from "@/lib/stores/authStore";
 
@@ -12,6 +12,7 @@ export default function DashboardOverviewClient() {
     { label: "Saved Listings", value: favorites?.length ?? 0, icon: Heart, href: "/dashboard/favorites" },
     { label: "Active Inquiries", value: 0, icon: MessageCircle, href: "/dashboard/inquiries" },
     { label: "Visit Requests", value: 0, icon: Calendar, href: "/dashboard/visits" },
+    { label: "Expired Listings", value: 0, icon: Clock3, href: "/dashboard/favorites" },
     { label: "Recently Viewed", value: 0, icon: Eye, href: "/dashboard/recently-viewed" },
   ];
 
@@ -22,7 +23,7 @@ export default function DashboardOverviewClient() {
       </h1>
       <p className="mt-1 text-muted-foreground">{"Here's your rental activity overview."}</p>
 
-      <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-5">
         {stats.map((s) => {
           const Icon = s.icon;
           return (
