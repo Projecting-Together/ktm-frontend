@@ -36,6 +36,11 @@ interface FilterPanelProps {
 
 export function FilterPanel({ mode = "sidebar" }: FilterPanelProps) {
   const store = useFilterStore();
+  const parseAreaValue = (raw: string): number | undefined => {
+    if (!raw) return undefined;
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  };
 
   const activeTypes = (store.listing_type ?? "").split(",").filter(Boolean);
   const activeAmenities = store.amenities ?? [];
@@ -208,9 +213,7 @@ export function FilterPanel({ mode = "sidebar" }: FilterPanelProps) {
             aria-label="Minimum area in sqft"
             placeholder="Min sqft"
             value={store.min_area_sqft ?? ""}
-            onChange={(e) =>
-              store.setFilter("min_area_sqft", e.target.value ? Number(e.target.value) : undefined)
-            }
+            onChange={(e) => store.setAreaRange(parseAreaValue(e.target.value), store.max_area_sqft)}
             className="h-8 w-full rounded-lg border border-border bg-background px-2 text-xs focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
           />
           <span className="text-muted-foreground">—</span>
@@ -219,9 +222,7 @@ export function FilterPanel({ mode = "sidebar" }: FilterPanelProps) {
             aria-label="Maximum area in sqft"
             placeholder="Max sqft"
             value={store.max_area_sqft ?? ""}
-            onChange={(e) =>
-              store.setFilter("max_area_sqft", e.target.value ? Number(e.target.value) : undefined)
-            }
+            onChange={(e) => store.setAreaRange(store.min_area_sqft, parseAreaValue(e.target.value))}
             className="h-8 w-full rounded-lg border border-border bg-background px-2 text-xs focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
           />
         </div>

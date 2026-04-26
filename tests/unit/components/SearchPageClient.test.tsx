@@ -125,6 +125,16 @@ describe("SearchPageClient", () => {
     expect(useFilterStore.getState().max_area_sqft).toBe(1100);
   });
 
+  it("ignores invalid area params during URL hydration", () => {
+    mockSearchParams.set("min_area_sqft", "not-a-number");
+    mockSearchParams.set("max_area_sqft", "NaN");
+
+    render(<SearchPageClient />);
+
+    expect(useFilterStore.getState().min_area_sqft).toBeUndefined();
+    expect(useFilterStore.getState().max_area_sqft).toBeUndefined();
+  });
+
   it("syncs neighborhood and area filters into URL params", () => {
     render(<SearchPageClient />);
     mockReplace.mockClear();
@@ -149,5 +159,29 @@ describe("SearchPageClient", () => {
       expect.stringMatching(/max_area_sqft=1200/),
       expect.objectContaining({ scroll: false }),
     );
+  });
+
+  it("reset clears neighborhood and area filters", () => {
+    act(() => {
+      useFilterStore.getState().setFilters({
+        neighborhood_slug: "baneshwor",
+        min_area_sqft: 450,
+        max_area_sqft: 1000,
+      });
+      useFilterStore.getState().resetFilters();
+    });
+
+    expect(useFilterStore.getState().neighborhood_slug).toBeUndefined();
+    expect(useFilterStore.getState().min_area_sqft).toBeUndefined();
+    expect(useFilterStore.getState().max_area_sqft).toBeUndefined();
+  });
+
+  it("normalizes area range ordering via setAreaRange", () => {
+    act(() => {
+      useFilterStore.getState().setAreaRange(1200, 500);
+    });
+
+    expect(useFilterStore.getState().min_area_sqft).toBe(500);
+    expect(useFilterStore.getState().max_area_sqft).toBe(1200);
   });
 });
