@@ -100,6 +100,15 @@ describe("ListingCard", () => {
     expect(card.getByText(/^moderated$/i)).toBeInTheDocument();
   });
 
+  it("keeps verified badge visible when pet-friendly and moderated badges are shown", () => {
+    const fullyBadgedListing = { ...listing, is_verified: true, pets_allowed: true, is_moderated: true };
+    const { container } = render(<ListingCard listing={fullyBadgedListing} />);
+    const card = within(container);
+    expect(card.getByText(/^verified$/i)).toBeInTheDocument();
+    expect(card.getByTestId("listing-pet-friendly-badge")).toBeInTheDocument();
+    expect(card.getByText(/^moderated$/i)).toBeInTheDocument();
+  });
+
   it("does not render pet-friendly or moderated badges when both are false", () => {
     const regularListing = { ...listing, pets_allowed: false, is_moderated: false };
     const { container } = render(<ListingCard listing={regularListing} />);
