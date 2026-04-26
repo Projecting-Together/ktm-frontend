@@ -90,6 +90,9 @@ export default function AdminMarketListingPage() {
     <div className="space-y-6">
       <div>
         <h1 className="mb-1 text-2xl font-bold">Flagged Listings Moderation Queue</h1>
+        <p className="inline-flex rounded-full bg-muted px-2 py-0.5 text-xs font-semibold text-foreground">
+          flagged-listings-first
+        </p>
         <p className="text-muted-foreground">
           Only flagged or risk-signaled listings require manual moderation review.
         </p>

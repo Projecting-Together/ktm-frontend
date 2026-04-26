@@ -214,6 +214,7 @@ describe("market listing public and moderation pages", () => {
     render(<AdminMarketListingPage />);
 
     expect(screen.getByRole("heading", { name: "Flagged Listings Moderation Queue" })).toBeInTheDocument();
+    expect(screen.getByText("flagged-listings-first")).toBeInTheDocument();
     expect(
       screen.getByText("Only flagged or risk-signaled listings require manual moderation review."),
     ).toBeInTheDocument();
