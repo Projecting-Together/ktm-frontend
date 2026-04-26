@@ -35,6 +35,32 @@ export function ListingCard({ listing, variant = "grid", className }: ListingCar
     toggleFavorite(listing.id);
   };
 
+  const renderStatusBadgeOverlay = (positionClassName: string) => {
+    if (!showPetFriendlyBadge && !showModeratedBadge) {
+      return null;
+    }
+
+    return (
+      <div className={cn("absolute flex flex-col items-end gap-1.5", positionClassName)}>
+        {showPetFriendlyBadge && (
+          <span
+            role="img"
+            data-testid="listing-pet-friendly-badge"
+            aria-label="Pets allowed"
+            className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-green-400"
+          >
+            <PawPrint aria-hidden="true" className="h-3.5 w-3.5 text-black" />
+          </span>
+        )}
+        {showModeratedBadge && (
+          <span className="rounded-full bg-card/85 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-foreground backdrop-blur-sm">
+            Moderated
+          </span>
+        )}
+      </div>
+    );
+  };
+
   if (variant === "list") {
     return (
       <Link href={`/apartments/${listing.slug}`} className={cn("listing-card flex overflow-hidden", className)}>
@@ -51,24 +77,7 @@ export function ListingCard({ listing, variant = "grid", className }: ListingCar
               <VerifiedBadge size="sm" />
             </div>
           )}
-          {(showPetFriendlyBadge || showModeratedBadge) && (
-            <div className="absolute right-2 top-2 flex flex-col items-end gap-1.5">
-              {showPetFriendlyBadge && (
-                <span
-                  data-testid="listing-pet-friendly-badge"
-                  aria-label="Pets allowed"
-                  className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-green-400"
-                >
-                  <PawPrint className="h-3.5 w-3.5 text-black" />
-                </span>
-              )}
-              {showModeratedBadge && (
-                <span className="rounded-full bg-card/85 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-foreground backdrop-blur-sm">
-                  Moderated
-                </span>
-              )}
-            </div>
-          )}
+          {renderStatusBadgeOverlay("right-2 top-2")}
         </div>
         <div className="flex flex-1 flex-col justify-between p-4">
           <div>
@@ -159,24 +168,7 @@ export function ListingCard({ listing, variant = "grid", className }: ListingCar
         >
           <Heart className={cn("h-4 w-4", isFavorite && "fill-accent text-accent")} />
         </button>
-        {(showPetFriendlyBadge || showModeratedBadge) && (
-          <div className="absolute right-3 top-12 flex flex-col items-end gap-1.5">
-            {showPetFriendlyBadge && (
-              <span
-                data-testid="listing-pet-friendly-badge"
-                aria-label="Pets allowed"
-                className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-green-400"
-              >
-                <PawPrint className="h-3.5 w-3.5 text-black" />
-              </span>
-            )}
-            {showModeratedBadge && (
-              <span className="rounded-full bg-card/85 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-foreground backdrop-blur-sm">
-                Moderated
-              </span>
-            )}
-          </div>
-        )}
+        {renderStatusBadgeOverlay("right-3 top-12")}
         {/* Image count */}
         {listing.images.length > 1 && (
           <span className="absolute bottom-2 right-2 rounded-full bg-black/50 px-2 py-0.5 text-[10px] text-white">
