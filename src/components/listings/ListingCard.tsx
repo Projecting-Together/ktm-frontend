@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Heart, MapPin, Bed, Bath, Square } from "lucide-react";
+import { Heart, MapPin, Bed, Bath, Square, PawPrint } from "lucide-react";
 import { cn, formatPrice, getListingCoverImage, getListingLocation, formatBedBath, formatRelativeTime } from "@/lib/utils";
 import { ListingCoverImage } from "@/components/listings/ListingCoverImage";
 import { VerifiedBadge } from "@/components/common/VerifiedBadge";
@@ -19,6 +19,8 @@ export function ListingCard({ listing, variant = "grid", className }: ListingCar
   const coverImage = getListingCoverImage(listing);
   const location = getListingLocation(listing);
   const isSaleListing = listing.purpose === "sale";
+  const showPetFriendlyBadge = listing.pets_allowed === true;
+  const showModeratedBadge = listing.is_moderated === true;
   const { isAuthenticated } = useAuthStore();
   const isFavorite = useIsFavorite(listing.id);
   const { mutate: toggleFavorite, isPending } = useToggleFavorite();
@@ -47,6 +49,24 @@ export function ListingCard({ listing, variant = "grid", className }: ListingCar
           {listing.is_verified && (
             <div className="absolute left-2 top-2">
               <VerifiedBadge size="sm" />
+            </div>
+          )}
+          {(showPetFriendlyBadge || showModeratedBadge) && (
+            <div className="absolute right-2 top-2 flex flex-col items-end gap-1.5">
+              {showPetFriendlyBadge && (
+                <span
+                  data-testid="listing-pet-friendly-badge"
+                  aria-label="Pets allowed"
+                  className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-green-400"
+                >
+                  <PawPrint className="h-3.5 w-3.5 text-black" />
+                </span>
+              )}
+              {showModeratedBadge && (
+                <span className="rounded-full bg-card/85 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-foreground backdrop-blur-sm">
+                  Moderated
+                </span>
+              )}
             </div>
           )}
         </div>
@@ -139,6 +159,24 @@ export function ListingCard({ listing, variant = "grid", className }: ListingCar
         >
           <Heart className={cn("h-4 w-4", isFavorite && "fill-accent text-accent")} />
         </button>
+        {(showPetFriendlyBadge || showModeratedBadge) && (
+          <div className="absolute right-3 top-12 flex flex-col items-end gap-1.5">
+            {showPetFriendlyBadge && (
+              <span
+                data-testid="listing-pet-friendly-badge"
+                aria-label="Pets allowed"
+                className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-green-400"
+              >
+                <PawPrint className="h-3.5 w-3.5 text-black" />
+              </span>
+            )}
+            {showModeratedBadge && (
+              <span className="rounded-full bg-card/85 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-foreground backdrop-blur-sm">
+                Moderated
+              </span>
+            )}
+          </div>
+        )}
         {/* Image count */}
         {listing.images.length > 1 && (
           <span className="absolute bottom-2 right-2 rounded-full bg-black/50 px-2 py-0.5 text-[10px] text-white">
