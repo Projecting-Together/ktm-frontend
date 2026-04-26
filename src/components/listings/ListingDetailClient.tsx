@@ -98,7 +98,7 @@ export default function ListingDetailClient({ listing: initialListing, slugOrId 
                 sizes="(max-width: 1024px) 100vw, 66vw"
                 priority
               />
-              {listing.is_verified && <div className="absolute left-4 top-4"><VerifiedBadge size="md" /></div>}
+              {listing.is_verified && <div className="absolute left-4 top-4"><VerifiedBadge size="md" showLabel={false} /></div>}
               {listing.status !== "active" && (
                 <div className="absolute right-4 top-4">
                   <span className={cn("rounded-full px-3 py-1 text-xs font-semibold capitalize", getStatusColor(listing.status))}>{listing.status}</span>
@@ -247,12 +247,6 @@ export default function ListingDetailClient({ listing: initialListing, slugOrId 
               {listing.price_negotiable && (
                 <p className="mt-1 text-xs text-muted-foreground">Price is negotiable</p>
               )}
-              {listing.security_deposit && (
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Security deposit: {formatPrice(listing.security_deposit, listing.currency)}
-                </p>
-              )}
-
               <div className="mt-5 flex flex-col gap-2">
                 <Link href={isAuthenticated ? `#inquiry` : "/login"}
                   onClick={() => {
