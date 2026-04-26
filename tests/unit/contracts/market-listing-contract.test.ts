@@ -4,7 +4,7 @@ import {
   canModerateMarketListingTransition,
   nextStatusForSubmit,
 } from "@/lib/contracts/marketListing";
-import type { ListingFilters, ListingType, MarketListing } from "@/lib/api/types";
+import type { ListingFilters, ListingType } from "@/lib/api/types";
 
 describe("market listing contract", () => {
   it("defines expected full market listing statuses", () => {
@@ -65,31 +65,5 @@ describe("market listing contract", () => {
     expect(filters.min_area_sqft).toBe(400);
     expect(filters.max_area_sqft).toBe(2400);
     expect(filters.neighborhood_slug).toBe("thamel");
-  });
-
-  it("supports optional market listing moderation metadata", () => {
-    const listing: MarketListing = {
-      id: "listing-1",
-      title: "Shoot-ready rooftop space",
-      slug: "shoot-ready-rooftop-space",
-      description: "Large open rooftop suitable for video production.",
-      price: 90000,
-      currency: "NPR",
-      location: "Lazimpat",
-      property_type: "video_shooting",
-      status: "pending_review",
-      created_at: "2026-04-25T00:00:00.000Z",
-      updated_at: "2026-04-25T00:00:00.000Z",
-      is_moderated: true,
-      is_verified: false,
-      moderated_at: "2026-04-25T02:00:00.000Z",
-      moderated_by: "admin-1",
-      moderation_note: "Please provide additional ownership proof.",
-    };
-
-    expect(listing.is_moderated).toBe(true);
-    expect(listing.is_verified).toBe(false);
-    expect(listing.moderated_by).toBe("admin-1");
-    expect(listing.moderation_note).toContain("ownership proof");
   });
 });

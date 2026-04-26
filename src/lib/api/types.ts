@@ -343,11 +343,6 @@ export interface MarketListing {
   property_type: MarketListingPropertyType;
   status: MarketListingStatus;
   published_at?: string | null;
-  is_verified?: boolean;
-  is_moderated?: boolean;
-  moderated_at?: string | null;
-  moderated_by?: string | null;
-  moderation_note?: string | null;
   created_at: string;
   updated_at: string;
 }
