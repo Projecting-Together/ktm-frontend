@@ -58,7 +58,7 @@ export interface Amenity {
   icon?: string | null;
 }
 
-export type ListingType = "apartment" | "room" | "house" | "studio" | "commercial";
+export type ListingType = "apartment" | "room" | "house" | "studio" | "commercial" | "land" | "video_shooting";
 export type ListingPurpose = "rent" | "sale";
 export type ListingStatus = "draft" | "pending" | "active" | "rented" | "sold" | "rejected" | "archived";
 export type FurnishingType = "fully" | "semi" | "unfurnished";
@@ -201,6 +201,9 @@ export interface ListingFilters {
   lat?: number;
   lng?: number;
   radius_km?: number;
+  neighborhood_slug?: string;
+  min_area_sqft?: number;
+  max_area_sqft?: number;
 }
 
 export type InquiryStatus = "pending" | "replied" | "closed";
@@ -326,7 +329,7 @@ export interface NewsFilters {
 }
 
 export type MarketListingStatus = "draft" | "pending_review" | "published" | "rejected";
-export type MarketListingPropertyType = "apartment" | "house" | "commercial" | "land";
+export type MarketListingPropertyType = "apartment" | "house" | "commercial" | "land" | "video_shooting";
 export type MarketListingCurrency = "NPR" | "USD";
 
 export interface MarketListing {
@@ -340,6 +343,11 @@ export interface MarketListing {
   property_type: MarketListingPropertyType;
   status: MarketListingStatus;
   published_at?: string | null;
+  is_verified?: boolean;
+  is_moderated?: boolean;
+  moderated_at?: string | null;
+  moderated_by?: string | null;
+  moderation_note?: string | null;
   created_at: string;
   updated_at: string;
 }
