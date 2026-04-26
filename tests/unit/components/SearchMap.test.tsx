@@ -82,6 +82,6 @@ describe("SearchMap", () => {
     render(<SearchMap listings={[listingWithArea, listingWithoutArea]} />);
 
     expect(screen.getByText("1200 sqft")).toBeInTheDocument();
-    expect(screen.queryByText("1800 sqft")).not.toBeInTheDocument();
+    expect(screen.getAllByText(/sqft/i)).toHaveLength(1);
   });
 });
