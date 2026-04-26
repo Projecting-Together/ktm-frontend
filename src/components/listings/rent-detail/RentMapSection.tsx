@@ -20,17 +20,28 @@ export function RentMapSection({ listing }: RentMapSectionProps) {
   const latitude = toCoordinate(listing.location?.latitude);
   const longitude = toCoordinate(listing.location?.longitude);
   const hasCoordinates = latitude != null && longitude != null;
+  const mapStateText = hasCoordinates ? "Map preview ready" : "Map unavailable";
+  const mapDescription = hasCoordinates
+    ? `${mapStateText}: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`
+    : `${mapStateText}: ${MISSING_DETAIL_TEXT}.`;
 
   return (
     <RentSectionCard title="Location">
-      <div className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
+      <div
+        data-testid="rent-map-panel"
+        className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground"
+      >
+        <p data-testid="rent-map-panel-state" className="font-medium text-foreground">
+          {mapStateText}
+        </p>
         {hasCoordinates ? (
           <p>
-            Map location available at {latitude.toFixed(5)}, {longitude.toFixed(5)}.
+            {mapDescription}
           </p>
         ) : (
-          <p>{MISSING_DETAIL_TEXT}</p>
+          <p>{mapDescription}</p>
         )}
+        <p className="mt-1 text-xs">Coordinates source: listing location</p>
       </div>
     </RentSectionCard>
   );

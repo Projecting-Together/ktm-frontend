@@ -1,5 +1,6 @@
 import type { Listing } from "@/lib/api/types";
 
+import { RentDetailsTable } from "./RentDetailsTable";
 import { RentStatusChips } from "./RentStatusChips";
 import { RentSectionCard } from "./RentSectionCard";
 import { MISSING_DETAIL_TEXT, type RentStatusRow } from "./types";
@@ -42,11 +43,13 @@ function toUnitUtilityRows(listing: Listing): RentStatusRow[] {
 }
 
 export function RentUnitUtilitiesSection({ listing }: RentUnitUtilitiesSectionProps) {
-  const rows = toUnitUtilityRows(listing);
+  const statusRows = toUnitUtilityRows(listing);
+  const tableRows = statusRows.map((row) => ({ key: row.label, value: row.status }));
 
   return (
     <RentSectionCard title="Unit Utilities">
-      <RentStatusChips rows={rows} />
+      <RentStatusChips rows={statusRows} />
+      <RentDetailsTable rows={tableRows} className="mt-2" />
     </RentSectionCard>
   );
 }

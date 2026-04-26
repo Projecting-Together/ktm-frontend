@@ -37,6 +37,18 @@ function buildRentListingSparse(): Listing {
   };
 }
 
+function buildRentListingWithCoordinates(): Listing {
+  const base = buildRentListingFull();
+  return {
+    ...base,
+    location: {
+      ...base.location,
+      latitude: "27.7172",
+      longitude: "85.3240",
+    },
+  };
+}
+
 describe("RentDetailSections", () => {
   it("renders rent sections in approved order", () => {
     render(<RentDetailSections listing={buildRentListingSparse()} />);
@@ -56,6 +68,29 @@ describe("RentDetailSections", () => {
   it("shows fallback text for missing rows and sections", () => {
     render(<RentDetailSections listing={buildRentListingSparse()} />);
 
-    expect(screen.getAllByText(MISSING_DETAIL_TEXT).length).toBeGreaterThan(0);
+    expect(screen.getByTestId("rent-status-chip-Wi-Fi")).toHaveTextContent(MISSING_DETAIL_TEXT);
+    expect(screen.getByTestId("rent-status-chip-Parking")).toHaveTextContent(MISSING_DETAIL_TEXT);
+    expect(screen.getByText(`Map unavailable: ${MISSING_DETAIL_TEXT}.`)).toBeInTheDocument();
+  });
+
+  it("renders hybrid chips and compact table for utility and amenity sections", () => {
+    render(<RentDetailSections listing={buildRentListingSparse()} />);
+
+    expect(screen.getByTestId("rent-status-chip-Wi-Fi")).toBeInTheDocument();
+    expect(screen.getByTestId("rent-status-chip-Parking")).toBeInTheDocument();
+    expect(screen.getByTestId("rent-status-chip-Air Conditioning")).toBeInTheDocument();
+
+    const rowEls = screen.getAllByTestId("rent-detail-row");
+    expect(rowEls.length).toBeGreaterThanOrEqual(12);
+    expect(screen.getAllByText("Wi-Fi").length).toBeGreaterThan(1);
+    expect(screen.getAllByText("Parking").length).toBeGreaterThan(1);
+    expect(screen.getAllByText("Air Conditioning").length).toBeGreaterThan(1);
+  });
+
+  it("shows deterministic map panel state when coordinates exist", () => {
+    render(<RentDetailSections listing={buildRentListingWithCoordinates()} />);
+
+    expect(screen.getByText("Map preview ready: 27.71720, 85.32400")).toBeInTheDocument();
+    expect(screen.getByText("Coordinates source: listing location")).toBeInTheDocument();
   });
 });
