@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type AnimatedMetricProps = {
   value: number;
@@ -21,10 +21,17 @@ export function AnimatedMetric({
   className,
   "data-testid": dataTestId,
 }: AnimatedMetricProps) {
-  const [displayValue, setDisplayValue] = useState(() => (typeof window === "undefined" ? value : 0));
+  const [displayValue, setDisplayValue] = useState(value);
+  const hasMountedRef = useRef(false);
+  const displayValueRef = useRef(value);
 
   useEffect(() => {
-    if (typeof window === "undefined") {
+    displayValueRef.current = displayValue;
+  }, [displayValue]);
+
+  useEffect(() => {
+    if (!hasMountedRef.current) {
+      hasMountedRef.current = true;
       setDisplayValue(value);
       return;
     }
@@ -35,13 +42,15 @@ export function AnimatedMetric({
       return;
     }
 
+    const startValue = displayValueRef.current;
     const startedAt = performance.now();
     let frameId = 0;
 
     const tick = (timestamp: number) => {
       const elapsed = timestamp - startedAt;
       const progress = Math.min(1, elapsed / durationMs);
-      setDisplayValue(Math.round(value * progress));
+      const nextValue = startValue + (value - startValue) * progress;
+      setDisplayValue(Math.round(nextValue));
       if (progress < 1) {
         frameId = window.requestAnimationFrame(tick);
       }
