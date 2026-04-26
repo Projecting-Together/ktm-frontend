@@ -16,7 +16,13 @@ export const adminListings: AdminListing[] = [
 ].map((listing, index) => ({
   id: listing.id,
   title: listing.title,
-  type: listing.listing_type ?? "apartment",
+  type:
+    listing.listing_type === "room" ||
+    listing.listing_type === "house" ||
+    listing.listing_type === "studio" ||
+    listing.listing_type === "commercial"
+      ? listing.listing_type
+      : "apartment",
   status: index === 0 ? "pending" : index === 1 ? "active" : index === 2 ? "rejected" : "active",
   city: listing.location?.city ?? "Kathmandu",
   priceNpr: Number(listing.price ?? 0),

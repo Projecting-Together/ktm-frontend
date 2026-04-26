@@ -57,7 +57,7 @@ export default async function HomePage() {
   const featuredSale =
     featuredSaleRes.status === "fulfilled" ? (featuredSaleRes.value.data?.items ?? []) : [];
   const featuredListingCount = featuredRent.length + featuredSale.length;
-  const verifiedFeaturedCount = [...featuredRent, ...featuredSale].filter((listing) => listing.verified).length;
+  const verifiedFeaturedCount = [...featuredRent, ...featuredSale].filter((listing) => listing.is_verified).length;
   const yearsServingRenters = Math.max(1, new Date().getUTCFullYear() - 2021);
   const stats = [
     { label: "Active Listings", value: 2400 + featuredListingCount, suffix: "+" },

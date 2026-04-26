@@ -58,7 +58,7 @@ export interface Amenity {
   icon?: string | null;
 }
 
-export type ListingType = "apartment" | "room" | "house" | "studio" | "commercial" | "land" | "video_shooting";
+export type ListingType = "apartment" | "room" | "house" | "studio" | "penthouse" | "commercial" | "land" | "video_shooting";
 export type ListingPurpose = "rent" | "sale";
 export type ListingStatus = "draft" | "pending" | "active" | "rented" | "sold" | "rejected" | "archived";
 export type FurnishingType = "fully" | "semi" | "unfurnished";
