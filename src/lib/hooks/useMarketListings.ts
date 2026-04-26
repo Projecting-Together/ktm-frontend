@@ -89,14 +89,14 @@ export function getMarketListingSubmitTransitionDecision(
     return {
       allowed: true,
       nextStatus,
-      message: "Owner market listing submitted to moderation queue as pending review.",
+      message: "Owner market listing submitted to flagged moderation queue after a risk signal.",
     };
   }
 
   return {
     allowed: true,
     nextStatus,
-    message: "Trusted agent published the approved market listing to public market surfaces.",
+    message: "Trusted agent cleared the flagged listing and published it to public market surfaces.",
   };
 }
 
@@ -123,6 +123,6 @@ export function getMarketListingPublishTransitionDecision(
   return {
     allowed: true,
     nextStatus: "published",
-    message: "Trusted agent published the approved market listing to public market surfaces.",
+    message: "Trusted agent cleared the flagged listing and published it to public market surfaces.",
   };
 }
