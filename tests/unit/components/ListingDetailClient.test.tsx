@@ -103,5 +103,6 @@ describe("ListingDetailClient", () => {
     const detailVerifiedBadge = document.querySelector(".absolute.left-4.top-4");
     expect(detailVerifiedBadge).toBeTruthy();
     expect(detailVerifiedBadge).not.toHaveTextContent(/^verified$/i);
+    expect(screen.getByLabelText(/verified owner/i)).toBeInTheDocument();
   });
 });
