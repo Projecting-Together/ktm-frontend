@@ -20,6 +20,7 @@ const config: Config = {
   testPathIgnorePatterns: [
     "<rootDir>/tests/e2e/",
     "<rootDir>/tests/performance/",
+    "<rootDir>/.worktrees/",
   ],
   collectCoverageFrom: [
     "src/components/**/*.{ts,tsx}",

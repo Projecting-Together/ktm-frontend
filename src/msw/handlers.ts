@@ -4,6 +4,8 @@
  */
 import { http, HttpResponse, passthrough } from "msw";
 import type { ListingStats } from "@/lib/api/types";
+import { scenarioCatalog } from "@/msw/mockScenarioData";
+import { resolveScenarioState } from "@/msw/mockScenarioSelector";
 import {
   mockListingsPage1,
   mockThamelListings,
@@ -47,6 +49,22 @@ function pathname(request: Request) {
 }
 
 const mockListingsWithRentVariants = [...mockListings, ...mockRentListingVariants];
+
+function getScenarioState() {
+  return resolveScenarioState(process.env.NEXT_PUBLIC_MSW_SCENARIO_STATE);
+}
+
+function getPublicScenario() {
+  return scenarioCatalog.public[getScenarioState()];
+}
+
+function getAuthScenario() {
+  return scenarioCatalog.auth[getScenarioState()];
+}
+
+function getAdminScenario() {
+  return scenarioCatalog.admin[getScenarioState()];
+}
 
 function filterListingItems(request: Request) {
   const url = new URL(request.url);
@@ -122,6 +140,11 @@ export const handlers = [
   http.get(
     ({ request }) => pathname(request) === "/api/v1/auth/me",
     ({ request }) => {
+      const authScenario = getAuthScenario();
+      if (authScenario.meStatus !== 200) {
+        return HttpResponse.json(authScenario.meBody ?? { detail: "Unexpected auth scenario error" }, { status: authScenario.meStatus });
+      }
+
       const auth = request.headers.get("Authorization");
       if (!auth?.startsWith("Bearer ")) {
         return HttpResponse.json({ detail: "Not authenticated" }, { status: 401 });
@@ -179,7 +202,16 @@ export const handlers = [
       const p = pathname(request);
       return (p === "/api/v1/listings" || p === "/api/v1/listings/") && request.method === "GET";
     },
-    ({ request }) => HttpResponse.json(filterListingItems(request))
+    ({ request }) => {
+      const publicScenario = getPublicScenario();
+      if (publicScenario.listingsStatus) {
+        return HttpResponse.json(publicScenario.listingsBody ?? { detail: "Unexpected public scenario error" }, { status: publicScenario.listingsStatus });
+      }
+      if (publicScenario.listings) {
+        return HttpResponse.json(publicScenario.listings);
+      }
+      return HttpResponse.json(filterListingItems(request));
+    }
   ),
 
   http.post(
@@ -473,6 +505,15 @@ export const handlers = [
 
   http.get(
     ({ request }) => pathname(request) === "/api/v1/admin/analytics/overview",
-    () => HttpResponse.json(mockAdminAnalytics)
+    () => {
+      const adminScenario = getAdminScenario();
+      if (adminScenario.analyticsStatus) {
+        return HttpResponse.json(adminScenario.analyticsBody ?? { detail: "Unexpected admin scenario error" }, { status: adminScenario.analyticsStatus });
+      }
+      if (adminScenario.analytics) {
+        return HttpResponse.json(adminScenario.analytics);
+      }
+      return HttpResponse.json(mockAdminAnalytics);
+    }
   ),
 ];

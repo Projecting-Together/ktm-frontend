@@ -7,10 +7,11 @@ import { useEffect, useState } from "react";
  * so all `fetch` calls to `NEXT_PUBLIC_API_URL` are served by mock handlers.
  */
 export function MswGate({ children }: { children: React.ReactNode }) {
-  const [ready, setReady] = useState(() => process.env.NEXT_PUBLIC_USE_MSW !== "true");
+  const isMswEnabled = process.env.NEXT_PUBLIC_USE_MSW === "true";
+  const [ready, setReady] = useState(() => !isMswEnabled);
 
   useEffect(() => {
-    if (process.env.NEXT_PUBLIC_USE_MSW !== "true") return;
+    if (!isMswEnabled) return;
     let cancelled = false;
     void import("@/msw/startBrowserWorker")
       .then(({ startMsw }) => startMsw())
@@ -24,7 +25,7 @@ export function MswGate({ children }: { children: React.ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [isMswEnabled]);
 
   if (!ready) {
     return (
