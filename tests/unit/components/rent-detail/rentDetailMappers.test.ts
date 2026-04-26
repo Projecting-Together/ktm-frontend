@@ -57,8 +57,8 @@ describe("rent detail mappers", () => {
     ]);
   });
 
-  it("formats sqft and sqm helper", () => {
-    expect(toSqmLabel(1000)).toBe("92.9 m²");
+  it("formats m2 helper", () => {
+    expect(toSqmLabel(1000)).toBe("1000.0 m²");
     expect(toSqmLabel(undefined)).toBe(MISSING_DETAIL_TEXT);
     expect(toRentDetailRows(buildRentListingSparse()).length).toBeGreaterThan(0);
   });
@@ -98,7 +98,7 @@ describe("rent detail mappers", () => {
       ...buildRentListingPremium(),
       bedrooms: 2,
       bathrooms: 1,
-      area_sqft: 1200,
+      area_m2: 1200,
       furnishing: "Semi Furnished",
       floor: 3,
       total_floors: 5,
@@ -112,7 +112,7 @@ describe("rent detail mappers", () => {
     expect(fullRows).toEqual([
       { key: "Bedrooms", value: "2" },
       { key: "Bathrooms", value: "1" },
-      { key: "Area", value: "1200 sqft (111.5 m²)" },
+      { key: "Area", value: "1200.0 m²" },
       { key: "Furnishing", value: "Semi Furnished" },
       { key: "Floor", value: "3 of 5" },
       { key: "Parking", value: "Not available" },

@@ -75,13 +75,13 @@ describe("SearchMap", () => {
     expect(screen.getByText("Thamel, Kathmandu")).toBeInTheDocument();
   });
 
-  it("shows area in marker popup only when available", () => {
-    const listingWithArea = { ...mockListingItems[0], id: "with-area", area_sqft: 1200 };
-    const listingWithoutArea = { ...mockListingItems[1], id: "without-area", area_sqft: null };
+  it("shows area in marker popup as m² text only when available", () => {
+    const listingWithArea = { ...mockListingItems[0], id: "with-area", area_m2: 1200 };
+    const listingWithoutArea = { ...mockListingItems[1], id: "without-area", area_m2: null };
 
     render(<SearchMap listings={[listingWithArea, listingWithoutArea]} />);
 
-    expect(screen.getByText("1200 sqft")).toBeInTheDocument();
-    expect(screen.getAllByText(/sqft/i)).toHaveLength(1);
+    expect(screen.getByText("Area: 1200 m²")).toBeInTheDocument();
+    expect(screen.getAllByText(/m²/i)).toHaveLength(1);
   });
 });

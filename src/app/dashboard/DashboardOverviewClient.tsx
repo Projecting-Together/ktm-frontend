@@ -11,6 +11,8 @@ export default function DashboardOverviewClient() {
   const { data: favorites } = useFavorites();
   const { data: listingData } = useQuery({
     queryKey: ["dashboard", "listings", "expired-metric"],
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
     queryFn: async () => {
       const pageSize = 100;
       let page = 1;

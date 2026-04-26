@@ -45,7 +45,7 @@ export const step1Schema = z.object({
   neighborhood_id: z.string().uuid("Select a neighborhood").optional().nullable(),
   floor: z.number().int().min(-5).max(100).optional().nullable(),
   total_floors: z.number().int().min(1).max(100).optional().nullable(),
-  area_sqft: z.number().positive("Enter a valid area").max(50000).optional().nullable(),
+  area_m2: z.number().positive("Enter a valid area").max(50000).optional().nullable(),
 });
 
 // ─── Step 2: Details ──────────────────────────────────────────────────────────

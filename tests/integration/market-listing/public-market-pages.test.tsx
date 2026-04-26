@@ -8,6 +8,8 @@ import { getMarketListingDetail, getMarketListings } from "@/lib/api/client";
 import { canModerateMarketListingTransition } from "@/lib/contracts/marketListing";
 import { useMarketListings } from "@/lib/hooks/useMarketListings";
 import { useAuthStore } from "@/lib/stores/authStore";
+import { adaptListingsForSearch } from "@/lib/contracts/adapters";
+import { ListingCard } from "@/components/listings/ListingCard";
 import { notFound } from "next/navigation";
 
 jest.mock("@/lib/api/client", () => ({
@@ -25,6 +27,11 @@ jest.mock("@/lib/hooks/useMarketListings", () => {
 
 jest.mock("@/lib/stores/authStore", () => ({
   useAuthStore: jest.fn(),
+}));
+
+jest.mock("@/lib/hooks/useFavorites", () => ({
+  useIsFavorite: () => false,
+  useToggleFavorite: () => ({ mutate: jest.fn(), isPending: false }),
 }));
 
 jest.mock("next/navigation", () => ({
@@ -270,5 +277,130 @@ describe("market listing public and moderation pages", () => {
       "Transition blocked: cannot move from pending review to unpublished.",
     );
     expect(screen.getByRole("status")).toHaveClass("bg-rose-50");
+  });
+
+  it("shows sponsored label on listing cards for transparent trust signaling", () => {
+    const sponsoredListing = {
+      id: "listing-sponsored-1",
+      slug: "listing-sponsored-1",
+      title: "Sponsored listing",
+      description: "Sponsored content",
+      purpose: "rent",
+      property_type: "apartment",
+      listing_type: "apartment",
+      furnishing: null,
+      bedrooms: 2,
+      bathrooms: 1,
+      area_m2: 80,
+      price: 35000,
+      currency: "NPR",
+      price_period: "month",
+      images: [],
+      amenities: [],
+      is_verified: false,
+      is_sponsored: true,
+      is_moderated: false,
+      pets_allowed: false,
+      parking: false,
+      smoking_allowed: false,
+      status: "active",
+      owner: null,
+      location: {
+        city: "Kathmandu",
+        district: "Kathmandu",
+        municipality: null,
+        ward: null,
+        neighborhood: null,
+        latitude: 27.7,
+        longitude: 85.3,
+      },
+      created_at: "2026-04-20T08:00:00.000Z",
+      updated_at: "2026-04-20T08:00:00.000Z",
+      available_from: null,
+      floor: null,
+      total_floors: null,
+      price_negotiable: false,
+      utilities: null,
+      restrictions: null,
+    };
+
+    render(<ListingCard listing={sponsoredListing as never} />);
+    expect(screen.getByText("Sponsored")).toBeInTheDocument();
+  });
+
+  it("applies deterministic sponsored merge with fairness caps", () => {
+    const listings = adaptListingsForSearch([
+      { id: "s1", title: "Sponsored 1", slug: "s1", is_sponsored: true, sponsored_weight: 0.7 },
+      { id: "o1", title: "Organic 1", slug: "o1", is_sponsored: false },
+      { id: "s2", title: "Sponsored 2", slug: "s2", is_sponsored: true, sponsored_weight: 0.9 },
+      { id: "o2", title: "Organic 2", slug: "o2", is_sponsored: false },
+      { id: "o3", title: "Organic 3", slug: "o3", is_sponsored: false },
+      { id: "s3", title: "Sponsored 3", slug: "s3", is_sponsored: true, sponsored_weight: 1.2 },
+      { id: "o4", title: "Organic 4", slug: "o4", is_sponsored: false },
+      { id: "o5", title: "Organic 5", slug: "o5", is_sponsored: false },
+    ] as never);
+
+    const sponsoredIndexes = listings
+      .map((listing, index) => ({ listing, index }))
+      .filter(({ listing }) => listing.is_sponsored)
+      .map(({ index }) => index);
+
+    expect(sponsoredIndexes.length).toBeLessThanOrEqual(Math.floor(listings.length * 0.25));
+
+    for (let start = 0; start <= listings.length - 4; start += 1) {
+      const sponsoredInWindow = listings.slice(start, start + 4).filter((listing) => listing.is_sponsored).length;
+      expect(sponsoredInWindow).toBeLessThanOrEqual(1);
+    }
+
+    const secondPass = adaptListingsForSearch([
+      { id: "s1", title: "Sponsored 1", slug: "s1", is_sponsored: true, sponsored_weight: 0.7 },
+      { id: "o1", title: "Organic 1", slug: "o1", is_sponsored: false },
+      { id: "s2", title: "Sponsored 2", slug: "s2", is_sponsored: true, sponsored_weight: 0.9 },
+      { id: "o2", title: "Organic 2", slug: "o2", is_sponsored: false },
+      { id: "o3", title: "Organic 3", slug: "o3", is_sponsored: false },
+      { id: "s3", title: "Sponsored 3", slug: "s3", is_sponsored: true, sponsored_weight: 1.2 },
+      { id: "o4", title: "Organic 4", slug: "o4", is_sponsored: false },
+      { id: "o5", title: "Organic 5", slug: "o5", is_sponsored: false },
+    ] as never);
+
+    expect(secondPass.map((listing) => listing.id)).toEqual(listings.map((listing) => listing.id));
+  });
+
+  it("returns non-empty deterministic results for all-sponsored arrays", () => {
+    const listings = adaptListingsForSearch([
+      { id: "s1", title: "Sponsored 1", slug: "s1", is_sponsored: true, sponsored_weight: 0.5 },
+      { id: "s2", title: "Sponsored 2", slug: "s2", is_sponsored: true, sponsored_weight: 1.5 },
+      { id: "s3", title: "Sponsored 3", slug: "s3", is_sponsored: true, sponsored_weight: 1.1 },
+    ] as never);
+
+    expect(listings.length).toBeGreaterThan(0);
+    expect(listings[0]?.id).toBe("s2");
+
+    const secondPass = adaptListingsForSearch([
+      { id: "s1", title: "Sponsored 1", slug: "s1", is_sponsored: true, sponsored_weight: 0.5 },
+      { id: "s2", title: "Sponsored 2", slug: "s2", is_sponsored: true, sponsored_weight: 1.5 },
+      { id: "s3", title: "Sponsored 3", slug: "s3", is_sponsored: true, sponsored_weight: 1.1 },
+    ] as never);
+
+    expect(secondPass.map((listing) => listing.id)).toEqual(listings.map((listing) => listing.id));
+  });
+
+  it("keeps small arrays under fairness window valid and deterministic", () => {
+    const listings = adaptListingsForSearch([
+      { id: "s1", title: "Sponsored 1", slug: "s1", is_sponsored: true, sponsored_weight: 0.9 },
+      { id: "o1", title: "Organic 1", slug: "o1", is_sponsored: false },
+      { id: "o2", title: "Organic 2", slug: "o2", is_sponsored: false },
+    ] as never);
+
+    expect(listings).toHaveLength(3);
+    expect(listings.map((listing) => listing.id)).toEqual(["o1", "o2", "s1"]);
+
+    const secondPass = adaptListingsForSearch([
+      { id: "s1", title: "Sponsored 1", slug: "s1", is_sponsored: true, sponsored_weight: 0.9 },
+      { id: "o1", title: "Organic 1", slug: "o1", is_sponsored: false },
+      { id: "o2", title: "Organic 2", slug: "o2", is_sponsored: false },
+    ] as never);
+
+    expect(secondPass.map((listing) => listing.id)).toEqual(listings.map((listing) => listing.id));
   });
 });

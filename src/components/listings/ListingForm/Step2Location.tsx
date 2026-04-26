@@ -35,10 +35,10 @@ export function Step2Location() {
       </div>
 
       <div>
-        <label className="mb-1.5 block text-sm font-medium">Area (sq ft)</label>
-        <input {...register("area_sqft", { valueAsNumber: true })} type="number" min="1" max="50000" placeholder="e.g. 850"
+        <label className="mb-1.5 block text-sm font-medium">Area (m²)</label>
+        <input {...register("area_m2", { valueAsNumber: true })} type="number" min="1" max="50000" placeholder="e.g. 78.9"
           className="h-11 w-full rounded-lg border border-border bg-background px-3 text-sm placeholder:text-muted-foreground focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent" />
-        {errors.area_sqft && <p className="mt-1 text-xs text-destructive">{errors.area_sqft.message}</p>}
+        {errors.area_m2 && <p className="mt-1 text-xs text-destructive">{errors.area_m2.message}</p>}
       </div>
     </div>
   );

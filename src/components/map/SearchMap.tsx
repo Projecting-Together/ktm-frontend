@@ -47,8 +47,8 @@ export function SearchMap({ listings, className }: SearchMapProps) {
             listing.location?.district?.trim();
           const locationContext = [neighborhoodName, locationFallback].filter(Boolean).join(", ");
           const areaText =
-            typeof listing.area_sqft === "number" && Number.isFinite(listing.area_sqft)
-              ? `${listing.area_sqft} sqft`
+            typeof listing.area_m2 === "number" && Number.isFinite(listing.area_m2)
+              ? `Area: ${listing.area_m2} m²`
               : null;
           return (
             <Marker key={listing.id} position={[lat, lng]}>

@@ -2,8 +2,6 @@ import type { Listing } from "@/lib/api/types";
 
 import { MISSING_DETAIL_TEXT, type RentDetailRow, type RentStatusRow } from "./types";
 
-const SQFT_TO_SQM_FACTOR = 0.092903;
-
 function toPositiveFiniteNumber(value: number | null | undefined): number | null {
   if (value == null || !Number.isFinite(value) || value <= 0) {
     return null;
@@ -75,13 +73,12 @@ function toBinaryStatus(
   return provided ? providedLabel : "Not available";
 }
 
-export function toSqmLabel(areaSqft?: number | null): string {
-  if (areaSqft == null || !Number.isFinite(areaSqft) || areaSqft <= 0) {
+export function toSqmLabel(areaM2?: number | null): string {
+  if (areaM2 == null || !Number.isFinite(areaM2) || areaM2 <= 0) {
     return MISSING_DETAIL_TEXT;
   }
 
-  const sqm = Math.round(areaSqft * SQFT_TO_SQM_FACTOR * 10) / 10;
-  return `${sqm.toFixed(1)} m²`;
+  return `${areaM2.toFixed(1)} m²`;
 }
 
 export function toUtilityRows(listing: Listing): RentStatusRow[] {
@@ -150,9 +147,9 @@ export function toUnitUtilityRows(listing: Listing): RentStatusRow[] {
 }
 
 export function toRentDetailRows(listing: Listing): RentDetailRow[] {
-  const areaSqftLabel =
-    listing.area_sqft != null && Number.isFinite(listing.area_sqft) && listing.area_sqft > 0
-      ? `${listing.area_sqft} sqft (${toSqmLabel(listing.area_sqft)})`
+  const areaM2Label =
+    listing.area_m2 != null && Number.isFinite(listing.area_m2) && listing.area_m2 > 0
+      ? toSqmLabel(listing.area_m2)
       : MISSING_DETAIL_TEXT;
 
   const floor = toPositiveFiniteNumber(listing.floor);
@@ -167,7 +164,7 @@ export function toRentDetailRows(listing: Listing): RentDetailRow[] {
   return [
     { key: "Bedrooms", value: listing.bedrooms != null ? String(listing.bedrooms) : MISSING_DETAIL_TEXT },
     { key: "Bathrooms", value: listing.bathrooms != null ? String(listing.bathrooms) : MISSING_DETAIL_TEXT },
-    { key: "Area", value: areaSqftLabel },
+    { key: "Area", value: areaM2Label },
     { key: "Furnishing", value: listing.furnishing ?? MISSING_DETAIL_TEXT },
     { key: "Floor", value: floorLabel },
     { key: "Parking", value: toBinaryStatus(listing.parking, "Available") },

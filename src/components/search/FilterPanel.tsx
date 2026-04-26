@@ -50,8 +50,8 @@ export function FilterPanel({ mode = "sidebar" }: FilterPanelProps) {
     store.neighborhood_slug != null && store.neighborhood_slug !== "",
     store.min_price != null,
     store.max_price != null,
-    store.min_area_sqft != null,
-    store.max_area_sqft != null,
+    store.min_area_m2 != null,
+    store.max_area_m2 != null,
     store.bedrooms != null,
     store.bathrooms != null,
     store.furnishing != null,
@@ -202,27 +202,29 @@ export function FilterPanel({ mode = "sidebar" }: FilterPanelProps) {
         />
       </div>
 
-      {/* Area (sqft) */}
+      {/* Area (m²) */}
       <div>
         <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Area (sqft)
+          Area (m²)
         </p>
         <div className="flex items-center gap-2">
           <input
             type="number"
-            aria-label="Minimum area in sqft"
-            placeholder="Min sqft"
-            value={store.min_area_sqft ?? ""}
-            onChange={(e) => store.setAreaRange(parseAreaValue(e.target.value), store.max_area_sqft)}
+            aria-label="Minimum area in m2"
+            placeholder="Min m²"
+            step="0.1"
+            value={store.min_area_m2 ?? ""}
+            onChange={(e) => store.setAreaRange(parseAreaValue(e.target.value), store.max_area_m2)}
             className="h-8 w-full rounded-lg border border-border bg-background px-2 text-xs focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
           />
           <span className="text-muted-foreground">—</span>
           <input
             type="number"
-            aria-label="Maximum area in sqft"
-            placeholder="Max sqft"
-            value={store.max_area_sqft ?? ""}
-            onChange={(e) => store.setAreaRange(store.min_area_sqft, parseAreaValue(e.target.value))}
+            aria-label="Maximum area in m2"
+            placeholder="Max m²"
+            step="0.1"
+            value={store.max_area_m2 ?? ""}
+            onChange={(e) => store.setAreaRange(store.min_area_m2, parseAreaValue(e.target.value))}
             className="h-8 w-full rounded-lg border border-border bg-background px-2 text-xs focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
           />
         </div>
@@ -276,6 +278,17 @@ export function FilterPanel({ mode = "sidebar" }: FilterPanelProps) {
           Furnishing
         </p>
         <div className="flex flex-col gap-1.5">
+          <label className="flex cursor-pointer items-center gap-2.5">
+            <input
+              type="radio"
+              name="furnishing"
+              value=""
+              checked={store.furnishing == null}
+              onChange={() => store.setFilter("furnishing", undefined)}
+              className="h-3.5 w-3.5 accent-accent"
+            />
+            <span className="text-sm">Any Furnishing</span>
+          </label>
           {FURNISHING_OPTIONS.map((opt) => (
             <label key={opt.value} className="flex cursor-pointer items-center gap-2.5">
               <input
@@ -283,7 +296,7 @@ export function FilterPanel({ mode = "sidebar" }: FilterPanelProps) {
                 name="furnishing"
                 value={opt.value}
                 checked={store.furnishing === opt.value}
-                onChange={() => store.setFilter("furnishing", store.furnishing === opt.value ? undefined : opt.value)}
+                onChange={() => store.setFilter("furnishing", opt.value)}
                 className="h-3.5 w-3.5 accent-accent"
               />
               <span className="text-sm">{opt.label}</span>

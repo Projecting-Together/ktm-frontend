@@ -48,8 +48,8 @@ export function Step4Details() {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <label className="mb-1.5 block text-sm font-medium">Area (sqft)</label>
-          <input {...register("area_sqft", { valueAsNumber: true })} type="number" placeholder="e.g. 850"
+          <label className="mb-1.5 block text-sm font-medium">Area (m²)</label>
+          <input {...register("area_m2", { valueAsNumber: true })} type="number" placeholder="e.g. 78.9"
             className="h-11 w-full rounded-lg border border-border bg-background px-3 text-sm focus:border-accent focus:outline-none" />
         </div>
         
