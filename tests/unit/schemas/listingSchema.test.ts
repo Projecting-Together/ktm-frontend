@@ -48,7 +48,16 @@ describe("step1Schema — BasicInfo", () => {
   });
 
   it("accepts all valid listing types", () => {
-    const types = ["apartment", "room", "house", "studio", "commercial"] as const;
+    const types = [
+      "apartment",
+      "room",
+      "house",
+      "studio",
+      "penthouse",
+      "commercial",
+      "land",
+      "video_shooting",
+    ] as const;
     types.forEach((type) => {
       const result = step1Schema.safeParse({ ...validStep1, listing_type: type });
       expect(result.success).toBe(true);

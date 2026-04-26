@@ -2,7 +2,11 @@
 import { useFormContext } from "react-hook-form";
 import type { ListingFormData } from "@/lib/validations/listingSchema";
 
-const LISTING_TYPES = [
+const LISTING_TYPES: Array<{
+  value: ListingFormData["listing_type"];
+  label: string;
+  desc: string;
+}> = [
   { value: "apartment", label: "Apartment", desc: "Unit in a multi-story building" },
   { value: "room", label: "Room", desc: "Single room in a shared house" },
   { value: "house", label: "House", desc: "Full standalone house" },
@@ -60,7 +64,7 @@ export function Step1BasicInfo() {
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {LISTING_TYPES.map((t) => (
             <button key={t.value} type="button"
-              onClick={() => setValue("listing_type", t.value as never, { shouldValidate: true })}
+              onClick={() => setValue("listing_type", t.value, { shouldValidate: true })}
               className={`rounded-xl border p-4 text-left transition-all ${
                 selectedType === t.value
                   ? "border-accent bg-accent/10 ring-1 ring-accent"
