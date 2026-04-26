@@ -20,6 +20,10 @@ function getAmenityCodes(listing: Listing): Set<string> {
   );
 }
 
+function hasAnyAmenityCode(amenityCodes: Set<string>, codes: string[]): boolean {
+  return codes.some((code) => amenityCodes.has(code));
+}
+
 function toBinaryStatus(
   provided: boolean | null | undefined,
   providedLabel: string,
@@ -67,6 +71,37 @@ export function toUtilityRows(listing: Listing): RentStatusRow[] {
     ...row,
     tone: row.status === MISSING_DETAIL_TEXT ? "warning" : "positive",
   }));
+}
+
+export function toUnitUtilityRows(listing: Listing): RentStatusRow[] {
+  const amenityCodes = getAmenityCodes(listing);
+  const hasWifi = hasAnyAmenityCode(amenityCodes, ["wifi", "wi_fi"]);
+  const hasBalcony = hasAnyAmenityCode(amenityCodes, ["balcony", "terrace", "balcony_terrace"]);
+  const hasAirConditioning = hasAnyAmenityCode(amenityCodes, ["ac", "a_c", "air_conditioning"]);
+  const furnishingStatus = listing.furnishing ? String(listing.furnishing) : MISSING_DETAIL_TEXT;
+
+  return [
+    {
+      label: "Wi-Fi",
+      status: hasWifi ? "Included" : MISSING_DETAIL_TEXT,
+      tone: hasWifi ? "positive" : "warning",
+    },
+    {
+      label: "Furnishing",
+      status: furnishingStatus,
+      tone: furnishingStatus === MISSING_DETAIL_TEXT ? "warning" : "neutral",
+    },
+    {
+      label: "Balcony",
+      status: hasBalcony ? "Included" : MISSING_DETAIL_TEXT,
+      tone: hasBalcony ? "positive" : "warning",
+    },
+    {
+      label: "Air Conditioning",
+      status: hasAirConditioning ? "Included" : MISSING_DETAIL_TEXT,
+      tone: hasAirConditioning ? "positive" : "warning",
+    },
+  ];
 }
 
 export function toRentDetailRows(listing: Listing): RentDetailRow[] {

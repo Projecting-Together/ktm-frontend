@@ -1,6 +1,7 @@
 import {
   toRentDetailRows,
   toSqmLabel,
+  toUnitUtilityRows,
   toUtilityRows,
 } from "@/components/listings/rent-detail/rentDetailMappers";
 import { MISSING_DETAIL_TEXT } from "@/components/listings/rent-detail/types";
@@ -60,6 +61,33 @@ describe("rent detail mappers", () => {
     expect(toSqmLabel(1000)).toBe("92.9 m²");
     expect(toSqmLabel(undefined)).toBe(MISSING_DETAIL_TEXT);
     expect(toRentDetailRows(buildRentListingSparse()).length).toBeGreaterThan(0);
+  });
+
+  it("infers unit utilities from amenity codes with fallback", () => {
+    const inferredListing = {
+      ...buildRentListingSparse(),
+      furnishing: "fully",
+      amenities: [
+        { id: "am-unit-1", name: "Wifi", code: "wifi" },
+        { id: "am-unit-2", name: "Balcony", code: "balcony" },
+        { id: "am-unit-3", name: "Air Conditioning", code: "ac" },
+      ],
+    } as Listing;
+    const fallbackListing = buildRentListingSparse();
+
+    expect(toUnitUtilityRows(inferredListing)).toEqual([
+      { label: "Wi-Fi", status: "Included", tone: "positive" },
+      { label: "Furnishing", status: "fully", tone: "neutral" },
+      { label: "Balcony", status: "Included", tone: "positive" },
+      { label: "Air Conditioning", status: "Included", tone: "positive" },
+    ]);
+
+    expect(toUnitUtilityRows(fallbackListing)).toEqual([
+      { label: "Wi-Fi", status: MISSING_DETAIL_TEXT, tone: "warning" },
+      { label: "Furnishing", status: MISSING_DETAIL_TEXT, tone: "warning" },
+      { label: "Balcony", status: MISSING_DETAIL_TEXT, tone: "warning" },
+      { label: "Air Conditioning", status: MISSING_DETAIL_TEXT, tone: "warning" },
+    ]);
   });
 
   it("maps full and sparse rent detail rows deterministically", () => {

@@ -1,6 +1,6 @@
 import { RentDetailSections } from "@/components/listings/rent-detail/RentDetailSections";
 import { MISSING_DETAIL_TEXT } from "@/components/listings/rent-detail/types";
-import { render, screen } from "@/test-utils/renderWithProviders";
+import { render, screen, within } from "@/test-utils/renderWithProviders";
 import {
   buildRentListingFull,
   buildRentListingSparse,
@@ -45,6 +45,16 @@ describe("RentDetailSections", () => {
     expect(screen.getByTestId("rent-status-chip-Wi-Fi")).toHaveTextContent(MISSING_DETAIL_TEXT);
     expect(screen.getByTestId("rent-status-chip-Parking")).toHaveTextContent(MISSING_DETAIL_TEXT);
     expect(screen.getByText(`Map unavailable: ${MISSING_DETAIL_TEXT}.`)).toBeInTheDocument();
+  });
+
+  it("keeps floor plan fallback deterministic regardless of listing images", () => {
+    render(<RentDetailSections listing={buildRentListingFull()} />);
+
+    const floorPlanHeading = screen.getByRole("heading", { name: "Floor Plan" });
+    const floorPlanSection = floorPlanHeading.closest("section");
+    expect(floorPlanSection).not.toBeNull();
+    expect(within(floorPlanSection as HTMLElement).getByText(MISSING_DETAIL_TEXT)).toBeInTheDocument();
+    expect(within(floorPlanSection as HTMLElement).queryByText("Floor plan image is not provided separately for this listing.")).not.toBeInTheDocument();
   });
 
   it("renders hybrid chips and compact table for utility and amenity sections", () => {
