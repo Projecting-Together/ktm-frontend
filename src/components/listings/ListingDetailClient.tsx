@@ -11,6 +11,7 @@ import { VerifiedBadge } from "@/components/common/VerifiedBadge";
 import { ListingCoverImage } from "@/components/listings/ListingCoverImage";
 import { useToggleFavorite, useIsFavorite } from "@/lib/hooks/useFavorites";
 import { ListingCard } from "@/components/listings/ListingCard";
+import { RentDetailSections } from "@/components/listings/rent-detail/RentDetailSections";
 import { useListing, useListings } from "@/lib/hooks/useListings";
 import { useAuthStore } from "@/lib/stores/authStore";
 import { trackInquiryCtaClick } from "@/lib/analytics/events";
@@ -311,6 +312,8 @@ export default function ListingDetailClient({ listing: initialListing, slugOrId 
           </div>
         </div>
       </div>
+
+      {listing.purpose === "rent" && <RentDetailSections listing={listing} />}
 
       {relatedListings.length > 0 && (
         <section className="mt-10 border-t border-border pt-8">

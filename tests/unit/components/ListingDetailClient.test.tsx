@@ -49,6 +49,20 @@ describe("ListingDetailClient", () => {
     expect(screen.getByRole("link", { name: /^apartments$/i })).toHaveAttribute("href", "/apartments");
   });
 
+  it("shows rent detail section heading for rent listings", () => {
+    const rentListing = mockListings[0];
+    render(<ListingDetailClient listing={rentListing} />);
+
+    expect(screen.getByRole("heading", { name: /^utilities$/i })).toBeInTheDocument();
+  });
+
+  it("does not show rent detail section heading for sale listings", () => {
+    const saleListing = mockListings[4];
+    render(<ListingDetailClient listing={saleListing} />);
+
+    expect(screen.queryByRole("heading", { name: /^utilities$/i })).not.toBeInTheDocument();
+  });
+
   it("tracks inquiry CTA click with click semantics", async () => {
     const saleListing = mockListings[4];
     const user = userEvent.setup();
