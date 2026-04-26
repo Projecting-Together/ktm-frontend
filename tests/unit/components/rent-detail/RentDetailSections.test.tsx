@@ -1,53 +1,61 @@
-import React from "react";
+import { RentDetailSections } from "@/components/listings/rent-detail/RentDetailSections";
+import { MISSING_DETAIL_TEXT } from "@/components/listings/rent-detail/types";
+import type { Listing } from "@/lib/api/types";
+import { mockListings } from "@/test-utils/mockData";
 import { render, screen } from "@/test-utils/renderWithProviders";
-import { RentDetailsTable } from "@/components/listings/rent-detail/RentDetailsTable";
-import { RentSectionCard } from "@/components/listings/rent-detail/RentSectionCard";
-import { RentStatusChips } from "@/components/listings/rent-detail/RentStatusChips";
-import type { RentDetailRow, RentStatusRow } from "@/components/listings/rent-detail/types";
 
-describe("rent detail section primitives", () => {
-  it("renders status chips with tone-specific styles", () => {
-    const rows: RentStatusRow[] = [
-      { label: "Water", status: "Available", tone: "positive" },
-      { label: "Gas", status: "Ask owner for this detail", tone: "warning" },
-      { label: "Internet", status: "Ask owner for this detail", tone: "neutral" },
-    ];
+function buildRentListingFull(): Listing {
+  const listing = mockListings.find((item) => item.purpose === "rent");
+  if (!listing) {
+    throw new Error("Expected at least one rent listing in mockListings");
+  }
 
-    render(<RentStatusChips rows={rows} />);
+  return listing;
+}
 
-    expect(screen.getByText("Water")).toBeInTheDocument();
-    expect(screen.getByText("Available")).toBeInTheDocument();
+function buildRentListingSparse(): Listing {
+  const base = buildRentListingFull();
+  return {
+    ...base,
+    description: null,
+    amenities: [],
+    furnishing: null,
+    floor: null,
+    total_floors: null,
+    bedrooms: null,
+    bathrooms: null,
+    area_sqft: null,
+    parking: null,
+    pets_allowed: null,
+    smoking_allowed: null,
+    available_from: null,
+    location: {
+      ...base.location,
+      latitude: null,
+      longitude: null,
+    },
+  };
+}
 
-    const positiveChip = screen.getByTestId("rent-status-chip-Water");
-    const warningChip = screen.getByTestId("rent-status-chip-Gas");
-    const neutralChip = screen.getByTestId("rent-status-chip-Internet");
+describe("RentDetailSections", () => {
+  it("renders rent sections in approved order", () => {
+    render(<RentDetailSections listing={buildRentListingSparse()} />);
 
-    expect(positiveChip).toHaveClass("border-verified/30");
-    expect(warningChip).toHaveClass("border-warning/30");
-    expect(neutralChip).toHaveClass("border-border");
+    const headings = screen.getAllByRole("heading").map((heading) => heading.textContent?.trim());
+    expect(headings).toEqual([
+      "Description",
+      "Utilities",
+      "Building Amenities",
+      "Unit Utilities",
+      "Floor Plan",
+      "Property Details",
+      "Location",
+    ]);
   });
 
-  it("renders compact two-column detail table", () => {
-    const rows: RentDetailRow[] = [
-      { key: "Bedrooms", value: "2" },
-      { key: "Floor", value: "3 of 5" },
-    ];
+  it("shows fallback text for missing rows and sections", () => {
+    render(<RentDetailSections listing={buildRentListingSparse()} />);
 
-    const { container } = render(<RentDetailsTable rows={rows} />);
-
-    expect(screen.getByText("Bedrooms")).toBeInTheDocument();
-    expect(screen.getByText("3 of 5")).toBeInTheDocument();
-    expect(container.querySelectorAll("[data-testid='rent-detail-row']")).toHaveLength(2);
-  });
-
-  it("renders section card title with wrapped content", () => {
-    render(
-      <RentSectionCard title="Utilities">
-        <p>Section content</p>
-      </RentSectionCard>,
-    );
-
-    expect(screen.getByRole("heading", { name: "Utilities" })).toBeInTheDocument();
-    expect(screen.getByText("Section content")).toBeInTheDocument();
+    expect(screen.getAllByText(MISSING_DETAIL_TEXT).length).toBeGreaterThan(0);
   });
 });
