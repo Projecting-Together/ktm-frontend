@@ -41,6 +41,7 @@ describe("public home dynamic hero, banner, and metrics", () => {
 
   it("renders hero and cta image wrappers with formatted dynamic metrics", async () => {
     render(await HomePage());
+    const yearsServingRenters = Math.max(1, new Date().getUTCFullYear() - 2021);
 
     expect(screen.getByTestId("hero-image-wrapper")).toBeInTheDocument();
     expect(screen.getByTestId("hero-image-overlay")).toBeInTheDocument();
@@ -49,7 +50,9 @@ describe("public home dynamic hero, banner, and metrics", () => {
 
     expect(screen.getByTestId("home-metric-Active Listings")).toHaveTextContent("2,402+");
     expect(screen.getByTestId("home-metric-Verified Properties")).toHaveTextContent("1,800+");
-    expect(screen.getByTestId("home-metric-Years Serving Renters")).toHaveTextContent("5+");
+    expect(screen.getByTestId("home-metric-Years Serving Renters")).toHaveTextContent(
+      `${yearsServingRenters}+`
+    );
     expect(screen.getByTestId("home-metric-Happy Renters")).toHaveTextContent("5,004+");
   });
 });

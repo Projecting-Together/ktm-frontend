@@ -42,8 +42,8 @@ const API_FILTER_KEYS = [
   "neighborhood_slug",
   "min_price",
   "max_price",
-  "min_area_sqft",
-  "max_area_sqft",
+  "min_area_m2",
+  "max_area_m2",
   "bedrooms",
   "bathrooms",
   "furnishing",
@@ -75,15 +75,15 @@ function normalizePriceRange(min?: number, max?: number): Pick<SearchFilters, "m
   return { min_price: minPrice, max_price: maxPrice };
 }
 
-function normalizeAreaRange(min?: number, max?: number): Pick<SearchFilters, "min_area_sqft" | "max_area_sqft"> {
+function normalizeAreaRange(min?: number, max?: number): Pick<SearchFilters, "min_area_m2" | "max_area_m2"> {
   const minArea = Number.isFinite(min) ? min : undefined;
   const maxArea = Number.isFinite(max) ? max : undefined;
 
   if (minArea != null && maxArea != null && minArea > maxArea) {
-    return { min_area_sqft: maxArea, max_area_sqft: minArea };
+    return { min_area_m2: maxArea, max_area_m2: minArea };
   }
 
-  return { min_area_sqft: minArea, max_area_sqft: maxArea };
+  return { min_area_m2: minArea, max_area_m2: maxArea };
 }
 
 export const useFilterStore = create<FilterState & FilterActions>((set, get) => ({
@@ -101,15 +101,19 @@ export const useFilterStore = create<FilterState & FilterActions>((set, get) => 
   setFilters: (filters) =>
     set((state) => {
       const hasExplicitPage = Object.prototype.hasOwnProperty.call(filters, "page");
-      const normalizedAreas =
-        Object.prototype.hasOwnProperty.call(filters, "min_area_sqft") ||
-        Object.prototype.hasOwnProperty.call(filters, "max_area_sqft")
-          ? normalizeAreaRange(filters.min_area_sqft, filters.max_area_sqft)
+      const hasMinArea = Object.prototype.hasOwnProperty.call(filters, "min_area_m2");
+      const hasMaxArea = Object.prototype.hasOwnProperty.call(filters, "max_area_m2");
+      const normalizedAreasWithStateFallback =
+        hasMinArea || hasMaxArea
+          ? normalizeAreaRange(
+              hasMinArea ? filters.min_area_m2 : state.min_area_m2,
+              hasMaxArea ? filters.max_area_m2 : state.max_area_m2
+            )
           : {};
       return {
         ...state,
         ...filters,
-        ...normalizedAreas,
+        ...normalizedAreasWithStateFallback,
         page: hasExplicitPage ? filters.page : 1,
       };
     }),
@@ -141,8 +145,8 @@ export const useFilterStore = create<FilterState & FilterActions>((set, get) => 
       min_price: undefined,
       max_price: undefined,
       neighborhood_slug: undefined,
-      min_area_sqft: undefined,
-      max_area_sqft: undefined,
+      min_area_m2: undefined,
+      max_area_m2: undefined,
       bedrooms: undefined,
       bathrooms: undefined,
       furnishing: undefined,

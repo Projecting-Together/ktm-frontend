@@ -102,12 +102,15 @@ export interface ListingListItem {
   currency: string;
   bedrooms?: number | null;
   bathrooms?: string | number | null;
-  area_sqft?: number | null;
+  area_m2?: number | null;
   listing_type?: ListingType | null;
   furnishing?: FurnishingType | null;
   status: ListingStatus;
   is_verified?: boolean;
   is_moderated?: boolean;
+  is_sponsored?: boolean;
+  sponsored_weight?: number | null;
+  sponsored_until?: string | null;
   pets_allowed?: boolean | null;
   parking?: boolean | null;
   location?: ListingLocation | null;
@@ -131,6 +134,9 @@ export interface Listing {
   status: ListingStatus;
   is_verified?: boolean;
   is_moderated?: boolean;
+  is_sponsored?: boolean;
+  sponsored_weight?: number | null;
+  sponsored_until?: string | null;
   pets_allowed?: boolean | null;
   smoking_allowed?: boolean | null;
   parking?: boolean | null;
@@ -138,7 +144,7 @@ export interface Listing {
   bathrooms?: string | number | null;
   floor?: number | null;
   total_floors?: number | null;
-  area_sqft?: number | null;
+  area_m2?: number | null;
   available_from?: string | null;
   security_deposit?: number | null;
   price_negotiable?: boolean | null;
@@ -190,7 +196,7 @@ export interface ListingFilters {
   available_from?: string;
   amenities?: string[];
   search?: string;
-  sort_by?: "created_at" | "price" | "area_sqft" | "bedrooms" | string;
+  sort_by?: "created_at" | "price" | "area_m2" | "bedrooms" | string;
   sort_order?: "asc" | "desc" | string;
   /** PostGIS bbox (reserved; backend not wired yet). */
   min_lat?: number;
@@ -202,8 +208,8 @@ export interface ListingFilters {
   lng?: number;
   radius_km?: number;
   neighborhood_slug?: string;
-  min_area_sqft?: number;
-  max_area_sqft?: number;
+  min_area_m2?: number;
+  max_area_m2?: number;
 }
 
 export type InquiryStatus = "pending" | "replied" | "closed";
@@ -342,6 +348,9 @@ export interface MarketListing {
   location: string;
   property_type: MarketListingPropertyType;
   status: MarketListingStatus;
+  is_sponsored?: boolean;
+  sponsored_weight?: number;
+  sponsored_until?: string | null;
   published_at?: string | null;
   created_at: string;
   updated_at: string;

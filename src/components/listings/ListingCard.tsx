@@ -103,6 +103,11 @@ export function ListingCard({ listing, variant = "grid", className }: ListingCar
                 For Sale
               </p>
             )}
+            {listing.is_sponsored && (
+              <p className="mt-1 inline-flex w-fit rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-900">
+                Sponsored
+              </p>
+            )}
           </div>
           <div>
             <div className="flex items-center gap-3 text-xs text-muted-foreground">
@@ -116,9 +121,9 @@ export function ListingCard({ listing, variant = "grid", className }: ListingCar
                   <Bath className="h-3 w-3" /> {listing.bathrooms} bath
                 </span>
               )}
-              {listing.area_sqft != null && (
+              {listing.area_m2 != null && (
                 <span className="flex items-center gap-1">
-                  <Square className="h-3 w-3" /> {listing.area_sqft} sqft
+                  <Square className="h-3 w-3" /> {listing.area_m2} m²
                 </span>
               )}
             </div>
@@ -148,6 +153,11 @@ export function ListingCard({ listing, variant = "grid", className }: ListingCar
         {/* Badges */}
         <div className="absolute left-3 top-3 flex flex-col gap-1.5">
           {listing.is_verified && <VerifiedBadge size="sm" />}
+          {listing.is_sponsored && (
+            <span className="rounded-full bg-amber-400 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-950">
+              Sponsored
+            </span>
+          )}
           {listing.listing_type && (
             <span className="rounded-full bg-primary/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary-foreground backdrop-blur-sm">
               {listing.listing_type}
@@ -197,9 +207,9 @@ export function ListingCard({ listing, variant = "grid", className }: ListingCar
               <Bath className="h-3 w-3" /> {listing.bathrooms}
             </span>
           )}
-          {listing.area_sqft != null && (
+          {listing.area_m2 != null && (
             <span className="flex items-center gap-1">
-              <Square className="h-3 w-3" /> {listing.area_sqft} sqft
+              <Square className="h-3 w-3" /> {listing.area_m2} m²
             </span>
           )}
           {listing.furnishing && (

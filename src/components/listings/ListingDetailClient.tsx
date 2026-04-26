@@ -176,10 +176,10 @@ export default function ListingDetailClient({ listing: initialListing, slugOrId 
                   <div><p className="text-xs text-muted-foreground">Bathrooms</p><p className="font-semibold">{listing.bathrooms}</p></div>
                 </div>
               )}
-              {listing.area_sqft != null && (
+              {listing.area_m2 != null && (
                 <div className="flex items-center gap-2 rounded-xl border border-border bg-card p-3">
                   <Square className="h-5 w-5 text-accent" />
-                  <div><p className="text-xs text-muted-foreground">Area</p><p className="font-semibold">{listing.area_sqft} sqft</p></div>
+                  <div><p className="text-xs text-muted-foreground">Area</p><p className="font-semibold">{listing.area_m2} m²</p></div>
                 </div>
               )}
               {listing.available_from && (

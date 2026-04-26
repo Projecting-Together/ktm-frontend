@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen } from "@/test-utils/renderWithProviders";
+import { render, screen, within } from "@/test-utils/renderWithProviders";
 import userEvent from "@testing-library/user-event";
 import ListingDetailClient from "@/components/listings/ListingDetailClient";
 import { mockListings } from "@/test-utils/mockData";
@@ -100,9 +100,8 @@ describe("ListingDetailClient", () => {
     const rentListing = mockListings[0];
     render(<ListingDetailClient listing={rentListing} />);
 
-    const detailVerifiedBadge = document.querySelector(".absolute.left-4.top-4");
-    expect(detailVerifiedBadge).toBeTruthy();
-    expect(detailVerifiedBadge).not.toHaveTextContent(/^verified$/i);
-    expect(screen.getByLabelText(/verified owner/i)).toBeInTheDocument();
+    const detailVerifiedBadge = screen.getByLabelText(/verified owner/i);
+    expect(detailVerifiedBadge).toBeInTheDocument();
+    expect(within(detailVerifiedBadge).queryByText(/verified/i)).not.toBeInTheDocument();
   });
 });

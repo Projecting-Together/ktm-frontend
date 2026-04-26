@@ -1,6 +1,7 @@
 import React from "react";
 import { render, screen, fireEvent } from "@/test-utils/renderWithProviders";
 import { FilterPanel } from "@/components/search/FilterPanel";
+import { useFilterStore } from "@/lib/stores/filterStore";
 
 describe("FilterPanel", () => {
   it("renders without crashing", () => {
@@ -95,5 +96,17 @@ describe("FilterPanel", () => {
     expect(bathroomButton).toBeDefined();
     if (bathroomButton) fireEvent.click(bathroomButton);
     expect(screen.getByRole("button", { name: /reset/i })).toBeInTheDocument();
+  });
+
+  it("allows clearing furnishing selection via Any option", () => {
+    render(<FilterPanel />);
+
+    const fullyFurnished = screen.getByRole("radio", { name: /fully furnished/i });
+    fireEvent.click(fullyFurnished);
+    expect(useFilterStore.getState().furnishing).toBe("fully");
+
+    const anyFurnishing = screen.getByRole("radio", { name: /any furnishing/i });
+    fireEvent.click(anyFurnishing);
+    expect(useFilterStore.getState().furnishing).toBeUndefined();
   });
 });

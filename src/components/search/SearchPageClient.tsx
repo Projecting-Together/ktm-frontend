@@ -30,8 +30,26 @@ const SORT_OPTIONS = [
   { value: "created_at:desc", label: "Newest first" },
   { value: "price:asc", label: "Price: low to high" },
   { value: "price:desc", label: "Price: high to low" },
-  { value: "area_sqft:desc", label: "Largest first" },
+  { value: "area_m2:desc", label: "Largest first" },
 ];
+
+const NUMERIC_URL_FILTER_KEYS = new Set([
+  "page",
+  "limit",
+  "min_price",
+  "max_price",
+  "min_area_m2",
+  "max_area_m2",
+  "bedrooms",
+  "bathrooms",
+  "min_lat",
+  "max_lat",
+  "min_lng",
+  "max_lng",
+  "lat",
+  "lng",
+  "radius_km",
+]);
 
 function parseFiniteNumber(value: string): number | null {
   const parsed = Number(value);
@@ -110,16 +128,17 @@ export default function SearchPageClient() {
   useEffect(() => {
     const params: Partial<ListingFilters> = {};
     searchParams.forEach((value, key) => {
-      if (key === "page" || key === "limit" || key === "min_price" || key === "max_price" || key === "min_area_sqft" || key === "max_area_sqft" || key === "bedrooms" || key === "min_lat" || key === "max_lat" || key === "min_lng" || key === "max_lng" || key === "lat" || key === "lng" || key === "radius_km") {
+      if (NUMERIC_URL_FILTER_KEYS.has(key)) {
         const parsed = parseFiniteNumber(value);
         if (parsed != null) {
           if (key === "page") params.page = parsed;
           else if (key === "limit") params.limit = parsed;
           else if (key === "min_price") params.min_price = parsed;
           else if (key === "max_price") params.max_price = parsed;
-          else if (key === "min_area_sqft") params.min_area_sqft = parsed;
-          else if (key === "max_area_sqft") params.max_area_sqft = parsed;
+          else if (key === "min_area_m2") params.min_area_m2 = parsed;
+          else if (key === "max_area_m2") params.max_area_m2 = parsed;
           else if (key === "bedrooms") params.bedrooms = parsed;
+          else if (key === "bathrooms") params.bathrooms = parsed;
           else if (key === "min_lat") params.min_lat = parsed;
           else if (key === "max_lat") params.max_lat = parsed;
           else if (key === "min_lng") params.min_lng = parsed;
@@ -172,9 +191,9 @@ export default function SearchPageClient() {
     syncUrl();
   }, [
     store.search, store.listing_type, store.purpose, store.min_price, store.max_price,
-    store.bedrooms, store.furnishing, store.parking, store.pets_allowed, store.verified,
+    store.bedrooms, store.bathrooms, store.furnishing, store.parking, store.pets_allowed, store.verified,
     store.amenities, store.available_from, store.sort_by, store.sort_order, store.page,
-    store.neighborhood_slug, store.min_area_sqft, store.max_area_sqft,
+    store.neighborhood_slug, store.min_area_m2, store.max_area_m2,
     store.min_lat, store.max_lat, store.min_lng, store.max_lng, store.lat, store.lng, store.radius_km,
     syncUrl,
   ]);

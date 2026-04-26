@@ -83,7 +83,7 @@ describe("RentDetailSections", () => {
   it("renders premium listing details without missing value placeholders", () => {
     render(<RentDetailSections listing={buildRentListingPremium()} />);
 
-    expect(screen.getByText("1800 sqft (167.2 m²)")).toBeInTheDocument();
+    expect(screen.getByText("1800.0 m²")).toBeInTheDocument();
     expect(screen.getAllByText("Available").length).toBeGreaterThan(0);
   });
 });

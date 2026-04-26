@@ -85,7 +85,7 @@ export function mapListingDto(dto: ListingDto): ListingListItem {
     currency: trimText(dto.currency) || DEFAULT_CURRENCY,
     bedrooms: dto.bedrooms ?? null,
     bathrooms: dto.bathrooms ?? null,
-    area_sqft: dto.area_sqft ?? null,
+    area_m2: dto.area_m2 ?? null,
     listing_type: normalizeEnum(dto.listing_type, ALLOWED_LISTING_TYPES),
     furnishing: normalizeEnum(dto.furnishing, ALLOWED_FURNISHING_TYPES),
     status: dto.status ?? DEFAULT_STATUS,
