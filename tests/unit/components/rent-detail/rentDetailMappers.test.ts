@@ -63,14 +63,15 @@ describe("rent detail mappers", () => {
     expect(toRentDetailRows(buildRentListingSparse()).length).toBeGreaterThan(0);
   });
 
-  it("infers unit utilities from amenity codes with fallback", () => {
+  it("infers unit utilities from amenity code or name with fallback", () => {
     const inferredListing = {
       ...buildRentListingSparse(),
       furnishing: "fully",
       amenities: [
-        { id: "am-unit-1", name: "Wifi", code: "wifi" },
+        { id: "am-unit-1", name: "Wi Fi", code: null },
         { id: "am-unit-2", name: "Balcony", code: "balcony" },
-        { id: "am-unit-3", name: "Air Conditioning", code: "ac" },
+        { id: "am-unit-3", name: "Air Conditioning", code: null },
+        { id: "am-unit-4", name: "Room Heater", code: null },
       ],
     } as Listing;
     const fallbackListing = buildRentListingSparse();
@@ -80,6 +81,7 @@ describe("rent detail mappers", () => {
       { label: "Furnishing", status: "fully", tone: "neutral" },
       { label: "Balcony", status: "Included", tone: "positive" },
       { label: "Air Conditioning", status: "Included", tone: "positive" },
+      { label: "Heating", status: "Included", tone: "positive" },
     ]);
 
     expect(toUnitUtilityRows(fallbackListing)).toEqual([
@@ -87,6 +89,7 @@ describe("rent detail mappers", () => {
       { label: "Furnishing", status: MISSING_DETAIL_TEXT, tone: "warning" },
       { label: "Balcony", status: MISSING_DETAIL_TEXT, tone: "warning" },
       { label: "Air Conditioning", status: MISSING_DETAIL_TEXT, tone: "warning" },
+      { label: "Heating", status: MISSING_DETAIL_TEXT, tone: "warning" },
     ]);
   });
 

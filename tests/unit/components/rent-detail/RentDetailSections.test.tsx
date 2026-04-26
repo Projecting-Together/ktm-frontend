@@ -63,6 +63,7 @@ describe("RentDetailSections", () => {
     expect(screen.getByTestId("rent-status-chip-Wi-Fi")).toBeInTheDocument();
     expect(screen.getByTestId("rent-status-chip-Parking")).toBeInTheDocument();
     expect(screen.getByTestId("rent-status-chip-Air Conditioning")).toBeInTheDocument();
+    expect(screen.getByTestId("rent-status-chip-Heating")).toBeInTheDocument();
 
     const rowEls = screen.getAllByTestId("rent-detail-row");
     expect(rowEls.length).toBeGreaterThanOrEqual(12);

@@ -20,8 +20,47 @@ function getAmenityCodes(listing: Listing): Set<string> {
   );
 }
 
+function normalizeAmenityToken(value: string | null | undefined): string | null {
+  if (!value) {
+    return null;
+  }
+
+  const normalized = value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+
+  return normalized || null;
+}
+
+function getAmenitySignals(listing: Listing): Set<string> {
+  const signals = new Set<string>();
+
+  for (const amenity of listing.amenities ?? []) {
+    const code = normalizeAmenityToken(amenity.code);
+    if (code) {
+      signals.add(code);
+    }
+
+    const name = normalizeAmenityToken(amenity.name);
+    if (name) {
+      signals.add(name);
+    }
+  }
+
+  return signals;
+}
+
 function hasAnyAmenityCode(amenityCodes: Set<string>, codes: string[]): boolean {
   return codes.some((code) => amenityCodes.has(code));
+}
+
+function hasAnyAmenitySignal(amenitySignals: Set<string>, values: string[]): boolean {
+  return values.some((value) => {
+    const normalizedValue = normalizeAmenityToken(value);
+    return normalizedValue ? amenitySignals.has(normalizedValue) : false;
+  });
 }
 
 function toBinaryStatus(
@@ -74,10 +113,11 @@ export function toUtilityRows(listing: Listing): RentStatusRow[] {
 }
 
 export function toUnitUtilityRows(listing: Listing): RentStatusRow[] {
-  const amenityCodes = getAmenityCodes(listing);
-  const hasWifi = hasAnyAmenityCode(amenityCodes, ["wifi", "wi_fi"]);
-  const hasBalcony = hasAnyAmenityCode(amenityCodes, ["balcony", "terrace", "balcony_terrace"]);
-  const hasAirConditioning = hasAnyAmenityCode(amenityCodes, ["ac", "a_c", "air_conditioning"]);
+  const amenitySignals = getAmenitySignals(listing);
+  const hasWifi = hasAnyAmenitySignal(amenitySignals, ["wifi", "wi fi", "wi-fi"]);
+  const hasBalcony = hasAnyAmenitySignal(amenitySignals, ["balcony", "terrace", "balcony terrace"]);
+  const hasAirConditioning = hasAnyAmenitySignal(amenitySignals, ["ac", "a c", "air conditioning"]);
+  const hasHeating = hasAnyAmenitySignal(amenitySignals, ["heating", "heater", "room heater"]);
   const furnishingStatus = listing.furnishing ? String(listing.furnishing) : MISSING_DETAIL_TEXT;
 
   return [
@@ -100,6 +140,11 @@ export function toUnitUtilityRows(listing: Listing): RentStatusRow[] {
       label: "Air Conditioning",
       status: hasAirConditioning ? "Included" : MISSING_DETAIL_TEXT,
       tone: hasAirConditioning ? "positive" : "warning",
+    },
+    {
+      label: "Heating",
+      status: hasHeating ? "Included" : MISSING_DETAIL_TEXT,
+      tone: hasHeating ? "positive" : "warning",
     },
   ];
 }
