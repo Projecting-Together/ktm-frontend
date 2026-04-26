@@ -37,7 +37,7 @@ describe("market listing contract", () => {
   });
 
   it("throws deterministic error for invalid runtime role input", () => {
-    expect(() => nextStatusForSubmit("super-admin" as unknown as "owner")).toThrow(
+    expect(() => Reflect.apply(nextStatusForSubmit, undefined, ["super-admin"])).toThrow(
       'Invalid publishing role for market listing submit transition: "super-admin"',
     );
   });
