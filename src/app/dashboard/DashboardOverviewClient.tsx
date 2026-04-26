@@ -1,17 +1,45 @@
 "use client";
 import Link from "next/link";
-import { Heart, MessageCircle, Calendar, Eye } from "lucide-react";
+import { Heart, MessageCircle, Calendar, Eye, Clock3 } from "lucide-react";
 import { useFavorites } from "@/lib/hooks/useFavorites";
 import { useAuthStore } from "@/lib/stores/authStore";
+import { useQuery } from "@tanstack/react-query";
+import { getListings } from "@/lib/api/client";
 
 export default function DashboardOverviewClient() {
   const { user } = useAuthStore();
   const { data: favorites } = useFavorites();
+  const { data: listingData } = useQuery({
+    queryKey: ["dashboard", "listings", "expired-metric"],
+    queryFn: async () => {
+      const pageSize = 100;
+      let page = 1;
+      let archivedCount = 0;
+      let totalPages = 1;
+
+      do {
+        const res = await getListings({ limit: pageSize, page });
+        if (res.error) throw new Error(res.error.message);
+        const pageData = res.data;
+        if (!pageData) break;
+
+        archivedCount += pageData.items.filter((listing) => listing.status === "archived").length;
+        totalPages = pageData.total_pages || 1;
+        page += 1;
+      } while (page <= totalPages);
+
+      return archivedCount;
+    },
+  });
+
+  // Backend does not expose an explicit "expired" status; archived listings are the closest stable proxy.
+  const expiredListingsCount = listingData ?? 0;
 
   const stats = [
     { label: "Saved Listings", value: favorites?.length ?? 0, icon: Heart, href: "/dashboard/favorites" },
     { label: "Active Inquiries", value: 0, icon: MessageCircle, href: "/dashboard/inquiries" },
     { label: "Visit Requests", value: 0, icon: Calendar, href: "/dashboard/visits" },
+    { label: "Expired Listings", value: expiredListingsCount, icon: Clock3, href: "/dashboard/favorites" },
     { label: "Recently Viewed", value: 0, icon: Eye, href: "/dashboard/recently-viewed" },
   ];
 
@@ -22,7 +50,7 @@ export default function DashboardOverviewClient() {
       </h1>
       <p className="mt-1 text-muted-foreground">{"Here's your rental activity overview."}</p>
 
-      <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-5">
         {stats.map((s) => {
           const Icon = s.icon;
           return (

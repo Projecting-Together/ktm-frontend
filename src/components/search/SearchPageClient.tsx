@@ -110,13 +110,15 @@ export default function SearchPageClient() {
   useEffect(() => {
     const params: Partial<ListingFilters> = {};
     searchParams.forEach((value, key) => {
-      if (key === "page" || key === "limit" || key === "min_price" || key === "max_price" || key === "bedrooms" || key === "min_lat" || key === "max_lat" || key === "min_lng" || key === "max_lng" || key === "lat" || key === "lng" || key === "radius_km") {
+      if (key === "page" || key === "limit" || key === "min_price" || key === "max_price" || key === "min_area_sqft" || key === "max_area_sqft" || key === "bedrooms" || key === "min_lat" || key === "max_lat" || key === "min_lng" || key === "max_lng" || key === "lat" || key === "lng" || key === "radius_km") {
         const parsed = parseFiniteNumber(value);
         if (parsed != null) {
           if (key === "page") params.page = parsed;
           else if (key === "limit") params.limit = parsed;
           else if (key === "min_price") params.min_price = parsed;
           else if (key === "max_price") params.max_price = parsed;
+          else if (key === "min_area_sqft") params.min_area_sqft = parsed;
+          else if (key === "max_area_sqft") params.max_area_sqft = parsed;
           else if (key === "bedrooms") params.bedrooms = parsed;
           else if (key === "min_lat") params.min_lat = parsed;
           else if (key === "max_lat") params.max_lat = parsed;
@@ -141,6 +143,7 @@ export default function SearchPageClient() {
         else if (key === "purpose") params.purpose = value;
         else if (key === "city") params.city = value;
         else if (key === "district") params.district = value;
+        else if (key === "neighborhood_slug") params.neighborhood_slug = value;
         else if (key === "furnishing") params.furnishing = value;
         else if (key === "available_from") params.available_from = value;
         else if (key === "sort_by") params.sort_by = value;
@@ -171,6 +174,7 @@ export default function SearchPageClient() {
     store.search, store.listing_type, store.purpose, store.min_price, store.max_price,
     store.bedrooms, store.furnishing, store.parking, store.pets_allowed, store.verified,
     store.amenities, store.available_from, store.sort_by, store.sort_order, store.page,
+    store.neighborhood_slug, store.min_area_sqft, store.max_area_sqft,
     store.min_lat, store.max_lat, store.min_lng, store.max_lng, store.lat, store.lng, store.radius_km,
     syncUrl,
   ]);

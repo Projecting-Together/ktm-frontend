@@ -88,4 +88,21 @@ describe("ListingDetailClient", () => {
     expect(screen.getByRole("heading", { name: /related sale listings/i })).toBeInTheDocument();
     expect(screen.queryByText(/related rent listings/i)).not.toBeInTheDocument();
   });
+
+  it("does not render security deposit text in the right-side card", () => {
+    const rentListing = mockListings[0];
+    render(<ListingDetailClient listing={rentListing} />);
+
+    expect(screen.queryByText(/security deposit:/i)).not.toBeInTheDocument();
+  });
+
+  it("uses checkmark-only verified owner treatment without label text", () => {
+    const rentListing = mockListings[0];
+    render(<ListingDetailClient listing={rentListing} />);
+
+    const detailVerifiedBadge = document.querySelector(".absolute.left-4.top-4");
+    expect(detailVerifiedBadge).toBeTruthy();
+    expect(detailVerifiedBadge).not.toHaveTextContent(/^verified$/i);
+    expect(screen.getByLabelText(/verified owner/i)).toBeInTheDocument();
+  });
 });

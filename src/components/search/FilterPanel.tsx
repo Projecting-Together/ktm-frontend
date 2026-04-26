@@ -36,14 +36,22 @@ interface FilterPanelProps {
 
 export function FilterPanel({ mode = "sidebar" }: FilterPanelProps) {
   const store = useFilterStore();
+  const parseAreaValue = (raw: string): number | undefined => {
+    if (!raw) return undefined;
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  };
 
   const activeTypes = (store.listing_type ?? "").split(",").filter(Boolean);
   const activeAmenities = store.amenities ?? [];
 
   const activeFilterCount = [
     activeTypes.length > 0,
+    store.neighborhood_slug != null && store.neighborhood_slug !== "",
     store.min_price != null,
     store.max_price != null,
+    store.min_area_sqft != null,
+    store.max_area_sqft != null,
     store.bedrooms != null,
     store.bathrooms != null,
     store.furnishing != null,
@@ -171,6 +179,50 @@ export function FilterPanel({ mode = "sidebar" }: FilterPanelProps) {
             placeholder="Max"
             value={store.max_price ?? ""}
             onChange={(e) => store.setPriceRange(store.min_price, e.target.value ? Number(e.target.value) : undefined)}
+            className="h-8 w-full rounded-lg border border-border bg-background px-2 text-xs focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+          />
+        </div>
+      </div>
+
+      {/* Neighborhood */}
+      <div>
+        <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Neighborhood
+        </p>
+        <input
+          type="text"
+          aria-label="Neighborhood slug"
+          placeholder="e.g. baneshwor"
+          value={store.neighborhood_slug ?? ""}
+          onChange={(e) => {
+            const value = e.target.value.trim().toLowerCase();
+            store.setFilter("neighborhood_slug", value || undefined);
+          }}
+          className="h-8 w-full rounded-lg border border-border bg-background px-2 text-xs focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+        />
+      </div>
+
+      {/* Area (sqft) */}
+      <div>
+        <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Area (sqft)
+        </p>
+        <div className="flex items-center gap-2">
+          <input
+            type="number"
+            aria-label="Minimum area in sqft"
+            placeholder="Min sqft"
+            value={store.min_area_sqft ?? ""}
+            onChange={(e) => store.setAreaRange(parseAreaValue(e.target.value), store.max_area_sqft)}
+            className="h-8 w-full rounded-lg border border-border bg-background px-2 text-xs focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+          />
+          <span className="text-muted-foreground">—</span>
+          <input
+            type="number"
+            aria-label="Maximum area in sqft"
+            placeholder="Max sqft"
+            value={store.max_area_sqft ?? ""}
+            onChange={(e) => store.setAreaRange(store.min_area_sqft, parseAreaValue(e.target.value))}
             className="h-8 w-full rounded-lg border border-border bg-background px-2 text-xs focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
           />
         </div>

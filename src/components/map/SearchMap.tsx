@@ -40,6 +40,16 @@ export function SearchMap({ listings, className }: SearchMapProps) {
         {points.length > 0 ? <FitBounds positions={points} /> : null}
         {normalizedListings.map(({ listing, lat, lng }) => {
           const img = getListingCoverImage(listing);
+          const neighborhoodName = listing.location?.neighborhood?.name?.trim();
+          const locationFallback =
+            listing.location?.city?.trim() ||
+            listing.location?.municipality?.trim() ||
+            listing.location?.district?.trim();
+          const locationContext = [neighborhoodName, locationFallback].filter(Boolean).join(", ");
+          const areaText =
+            typeof listing.area_sqft === "number" && Number.isFinite(listing.area_sqft)
+              ? `${listing.area_sqft} sqft`
+              : null;
           return (
             <Marker key={listing.id} position={[lat, lng]}>
               <Popup>
@@ -59,6 +69,10 @@ export function SearchMap({ listings, className }: SearchMapProps) {
                     />
                   </div>
                   <p className="text-sm font-semibold leading-tight">{listing.title}</p>
+                  {locationContext ? (
+                    <p className="mt-1 text-xs text-muted-foreground">{locationContext}</p>
+                  ) : null}
+                  {areaText ? <p className="mt-1 text-xs text-muted-foreground">{areaText}</p> : null}
                   <Link
                     href={`/apartments/${listing.slug}`}
                     className="mt-2 inline-block text-xs font-medium text-accent underline"

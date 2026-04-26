@@ -39,9 +39,9 @@ export default function AdminMarketListingPage() {
   const pendingQueue = useMarketListings({ page: 1, limit: 10, status: "pending_review" });
 
   const pendingCountText = useMemo(() => {
-    if (pendingQueue.isLoading) return "Loading moderation queue...";
-    if (pendingQueue.isError) return "Queue unavailable";
-    return `${pendingQueue.data?.items.length ?? 0} listing(s) pending review`;
+    if (pendingQueue.isLoading) return "Loading flagged listings queue...";
+    if (pendingQueue.isError) return "Flagged listings queue unavailable";
+    return `${pendingQueue.data?.items.length ?? 0} flagged listing(s) awaiting review`;
   }, [pendingQueue.data, pendingQueue.isError, pendingQueue.isLoading]);
 
   const applyAction = (status: MarketListingModerationStatus) => {
@@ -89,16 +89,21 @@ export default function AdminMarketListingPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="mb-1 text-2xl font-bold">Market Listing Moderation Queue</h1>
-        <p className="text-muted-foreground">Review pending updates, enforce quality standards, and decide publication outcomes.</p>
+        <h1 className="mb-1 text-2xl font-bold">Flagged Listings Moderation Queue</h1>
+        <p className="inline-flex rounded-full bg-muted px-2 py-0.5 text-xs font-semibold text-foreground">
+          flagged-listings-first
+        </p>
+        <p className="text-muted-foreground">
+          Only flagged or risk-signaled listings require manual moderation review.
+        </p>
       </div>
 
       <div className="rounded-xl border border-border bg-card p-5">
         <p className="text-sm text-muted-foreground">
-          Queue status: <span className="font-semibold capitalize text-foreground">{queueStatus.replace("_", " ")}</span>
+          Flagged queue status: <span className="font-semibold capitalize text-foreground">{queueStatus.replace("_", " ")}</span>
         </p>
         <p className="mt-2 text-sm text-muted-foreground">
-          Pending snapshot: <span className="font-semibold text-foreground">{pendingCountText}</span>
+          Flagged snapshot: <span className="font-semibold text-foreground">{pendingCountText}</span>
         </p>
       </div>
 

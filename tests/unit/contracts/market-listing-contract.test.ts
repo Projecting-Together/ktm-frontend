@@ -4,6 +4,7 @@ import {
   canModerateMarketListingTransition,
   nextStatusForSubmit,
 } from "@/lib/contracts/marketListing";
+import type { ListingFilters, ListingType } from "@/lib/api/types";
 
 describe("market listing contract", () => {
   it("defines expected full market listing statuses", () => {
@@ -36,7 +37,7 @@ describe("market listing contract", () => {
   });
 
   it("throws deterministic error for invalid runtime role input", () => {
-    expect(() => nextStatusForSubmit("super-admin" as unknown as "owner")).toThrow(
+    expect(() => Reflect.apply(nextStatusForSubmit, undefined, ["super-admin"])).toThrow(
       'Invalid publishing role for market listing submit transition: "super-admin"',
     );
   });
@@ -46,5 +47,23 @@ describe("market listing contract", () => {
     expect(canModerateMarketListingTransition("pending_review", "rejected")).toBe(true);
     expect(canModerateMarketListingTransition("published", "unpublished")).toBe(true);
     expect(canModerateMarketListingTransition("draft", "published")).toBe(false);
+  });
+
+  it("supports land and video_shooting listing property types", () => {
+    const listingTypeValues: ListingType[] = ["land", "video_shooting"];
+
+    expect(listingTypeValues).toEqual(["land", "video_shooting"]);
+  });
+
+  it("supports neighborhood and area filter fields", () => {
+    const filters: ListingFilters = {
+      neighborhood_slug: "thamel",
+      min_area_sqft: 400,
+      max_area_sqft: 2400,
+    };
+
+    expect(filters.min_area_sqft).toBe(400);
+    expect(filters.max_area_sqft).toBe(2400);
+    expect(filters.neighborhood_slug).toBe("thamel");
   });
 });

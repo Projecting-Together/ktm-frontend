@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { Heart } from "lucide-react";
 import { useFavorites } from "@/lib/hooks/useFavorites";
-import { ListingCard, ListingCardSkeleton } from "@/components/listings/ListingCard";
+import { ListingCardSkeleton } from "@/components/listings/ListingCard";
 
 export default function FavoritesPage() {
   const { data: favorites, isLoading } = useFavorites();
@@ -13,7 +13,7 @@ export default function FavoritesPage() {
       <p className="text-muted-foreground mb-6">Properties you've saved for later.</p>
 
       {isLoading ? (
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {Array.from({length:3}).map((_,i) => <ListingCardSkeleton key={i} />)}
         </div>
       ) : !favorites?.length ? (
@@ -24,9 +24,31 @@ export default function FavoritesPage() {
           <Link href="/apartments" className="btn-primary mt-4">Browse Apartments</Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {favorites.map((fav) => (
-            fav.listing ? <ListingCard key={fav.listing_id} listing={fav.listing as never} /> : null
+            fav.listing ? (
+              <Link
+                key={fav.listing_id}
+                href={`/apartments/${fav.listing_id}`}
+                className="flex items-center gap-3 rounded-lg border border-border bg-card p-3 transition-all hover:border-accent hover:shadow-sm"
+              >
+                {fav.listing.images?.[0]?.image_url ? (
+                  <img
+                    src={fav.listing.images[0].image_url}
+                    alt={fav.listing.title}
+                    className="h-14 w-14 shrink-0 rounded-md object-cover"
+                  />
+                ) : (
+                  <div className="h-14 w-14 shrink-0 rounded-md bg-muted" aria-hidden />
+                )}
+                <div className="min-w-0">
+                  <p className="line-clamp-1 text-sm font-semibold">{fav.listing.title}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Saved {new Date(fav.created_at).toLocaleDateString()}
+                  </p>
+                </div>
+              </Link>
+            ) : null
           ))}
         </div>
       )}

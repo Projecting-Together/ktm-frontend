@@ -182,7 +182,7 @@ describe("market listing public and moderation pages", () => {
     fireEvent.click(screen.getByRole("button", { name: "Submit For Review" }));
 
     expect(screen.getByRole("status")).toHaveTextContent(
-      "Owner market listing submitted to moderation queue as pending review.",
+      "Owner market listing submitted to flagged moderation queue after a risk signal.",
     );
   });
 
@@ -194,7 +194,7 @@ describe("market listing public and moderation pages", () => {
     fireEvent.click(screen.getByRole("button", { name: "Submit For Review" }));
 
     expect(screen.getByRole("status")).toHaveTextContent(
-      "Trusted agent published the approved market listing to public market surfaces.",
+      "Trusted agent cleared the flagged listing and published it to public market surfaces.",
     );
     expect(screen.getByText(/Current listing state:/)).toHaveTextContent("published");
   });
@@ -212,6 +212,12 @@ describe("market listing public and moderation pages", () => {
     (useAuthStore as jest.Mock).mockReturnValue({ user: { role: "admin" } });
 
     render(<AdminMarketListingPage />);
+
+    expect(screen.getByRole("heading", { name: "Flagged Listings Moderation Queue" })).toBeInTheDocument();
+    expect(screen.getByText("flagged-listings-first")).toBeInTheDocument();
+    expect(
+      screen.getByText("Only flagged or risk-signaled listings require manual moderation review."),
+    ).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText("Rejection reason"), {
       target: { value: "Missing market comps." },

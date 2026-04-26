@@ -68,4 +68,20 @@ describe("SearchMap", () => {
       screen.getByText("No listings with map coordinates in this result set."),
     ).toBeInTheDocument();
   });
+
+  it("shows neighborhood/location context in marker popup", () => {
+    render(<SearchMap listings={[mockListingItems[0]]} />);
+
+    expect(screen.getByText("Thamel, Kathmandu")).toBeInTheDocument();
+  });
+
+  it("shows area in marker popup only when available", () => {
+    const listingWithArea = { ...mockListingItems[0], id: "with-area", area_sqft: 1200 };
+    const listingWithoutArea = { ...mockListingItems[1], id: "without-area", area_sqft: null };
+
+    render(<SearchMap listings={[listingWithArea, listingWithoutArea]} />);
+
+    expect(screen.getByText("1200 sqft")).toBeInTheDocument();
+    expect(screen.getAllByText(/sqft/i)).toHaveLength(1);
+  });
 });

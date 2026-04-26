@@ -30,7 +30,16 @@ const nepalPhoneSchema = z
 // ─── Listing creation — Step 1: Property Basics ───────────────────────────────
 export const step1Schema = z.object({
   title: z.string().min(10, "Title must be at least 10 characters").max(120, "Title too long"),
-  listing_type: z.enum(["apartment", "room", "house", "studio", "commercial"]),
+  listing_type: z.enum([
+    "apartment",
+    "room",
+    "house",
+    "studio",
+    "penthouse",
+    "commercial",
+    "land",
+    "video_shooting",
+  ]),
   purpose: z.enum(["rent", "sale"]).default("rent"),
   address_line: z.string().min(5, "Enter a valid address"),
   neighborhood_id: z.string().uuid("Select a neighborhood").optional().nullable(),

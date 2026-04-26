@@ -5,9 +5,10 @@ interface VerifiedBadgeProps {
   size?: "sm" | "md" | "lg";
   className?: string;
   showLabel?: boolean;
+  ariaLabel?: string;
 }
 
-export function VerifiedBadge({ size = "md", className, showLabel = true }: VerifiedBadgeProps) {
+export function VerifiedBadge({ size = "md", className, showLabel = true, ariaLabel }: VerifiedBadgeProps) {
   const sizeClasses = {
     sm: "gap-0.5 px-1.5 py-0.5 text-[10px]",
     md: "gap-1 px-2 py-0.5 text-xs",
@@ -22,6 +23,7 @@ export function VerifiedBadge({ size = "md", className, showLabel = true }: Veri
 
   return (
     <span
+      aria-label={ariaLabel}
       className={cn(
         "inline-flex items-center rounded-full bg-verified/15 font-semibold text-verified",
         sizeClasses[size],

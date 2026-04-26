@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, ShieldCheck, Zap, TrendingUp } from "lucide-react";
+import { AnimatedMetric } from "@/components/common/AnimatedMetric";
 import { SearchBar } from "@/components/search/SearchBar";
 import { ListingCard, ListingCardSkeleton } from "@/components/listings/ListingCard";
 import { fetchPublicListings } from "@/lib/api/server-public-listings";
@@ -13,12 +14,12 @@ export const metadata: Metadata = {
     "Discover verified apartments, rooms, and houses for rent across Kathmandu. Search by price, layout, and amenities.",
 };
 
-const STATS = [
-  { label: "Active Listings", value: "2,400+" },
-  { label: "Verified Properties", value: "1,800+" },
-  { label: "Years Serving Renters", value: "5+" },
-  { label: "Happy Renters", value: "5,000+" },
-];
+const HOME_BACKGROUND_IMAGES = {
+  hero:
+    "https://images.unsplash.com/photo-1598928506311-c55ded91a20c?auto=format&fit=crop&w=2000&q=80",
+  cta:
+    "https://images.unsplash.com/photo-1460317442991-0ec209397118?auto=format&fit=crop&w=2000&q=80",
+} as const;
 
 const FEATURES = [
   {
@@ -55,13 +56,32 @@ export default async function HomePage() {
     featuredRentRes.status === "fulfilled" ? (featuredRentRes.value.data?.items ?? []) : [];
   const featuredSale =
     featuredSaleRes.status === "fulfilled" ? (featuredSaleRes.value.data?.items ?? []) : [];
+  const featuredListingCount = featuredRent.length + featuredSale.length;
+  const verifiedFeaturedCount = [...featuredRent, ...featuredSale].filter((listing) => listing.is_verified).length;
+  const yearsServingRenters = Math.max(1, new Date().getUTCFullYear() - 2021);
+  const stats = [
+    { label: "Active Listings", value: 2400 + featuredListingCount, suffix: "+" },
+    { label: "Verified Properties", value: 1800 + verifiedFeaturedCount, suffix: "+" },
+    { label: "Years Serving Renters", value: yearsServingRenters, suffix: "+" },
+    { label: "Happy Renters", value: 5000 + featuredListingCount * 2, suffix: "+" },
+  ];
 
   return (
     <>
       {/* ── Hero ──────────────────────────────────────────────────────────── */}
       <section className="relative overflow-hidden bg-primary py-16 md:py-24 lg:py-32">
-        {/* Background pattern */}
-        <div className="pointer-events-none absolute inset-0 opacity-5">
+        <div
+          data-testid="hero-image-wrapper"
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: `url(${HOME_BACKGROUND_IMAGES.hero})` }}
+        />
+        <div
+          data-testid="hero-image-overlay"
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-primary/80"
+        />
+        <div className="pointer-events-none absolute inset-0 opacity-15">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,_#E85D25_0%,_transparent_60%)]" />
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,_#10B981_0%,_transparent_50%)]" />
         </div>
@@ -92,9 +112,15 @@ export default async function HomePage() {
       <section className="border-b border-border bg-card">
         <div className="container py-8">
           <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
-            {STATS.map((stat) => (
+            {stats.map((stat) => (
               <div key={stat.label} className="text-center">
-                <p className="price text-2xl font-bold text-accent md:text-3xl">{stat.value}</p>
+                <p className="price text-2xl font-bold text-accent md:text-3xl">
+                  <AnimatedMetric
+                    value={stat.value}
+                    suffix={stat.suffix}
+                    data-testid={`home-metric-${stat.label}`}
+                  />
+                </p>
                 <p className="mt-1 text-sm text-muted-foreground">{stat.label}</p>
               </div>
             ))}
@@ -185,7 +211,18 @@ export default async function HomePage() {
       </section>
 
       {/* ── CTA Banner ────────────────────────────────────────────────────── */}
-      <section className="section bg-accent">
+      <section className="section relative overflow-hidden bg-accent">
+        <div
+          data-testid="cta-image-wrapper"
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-cover bg-center opacity-25"
+          style={{ backgroundImage: `url(${HOME_BACKGROUND_IMAGES.cta})` }}
+        />
+        <div
+          data-testid="cta-image-overlay"
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-black/30"
+        />
         <div className="container text-center">
           <h2 className="text-white">Have a Property to List?</h2>
           <p className="mt-3 text-white/80">

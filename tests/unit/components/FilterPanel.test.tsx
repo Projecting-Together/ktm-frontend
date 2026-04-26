@@ -16,10 +16,10 @@ describe("FilterPanel", () => {
     expect(screen.getByRole("button", { name: /studio/i })).toBeInTheDocument();
   });
 
-  it("does not render a neighborhood filter section", () => {
+  it("renders a neighborhood filter section", () => {
     render(<FilterPanel />);
-    expect(screen.queryByText(/neighborhood/i)).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /^thamel$/i })).not.toBeInTheDocument();
+    expect(screen.getByText(/neighborhood/i)).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: /neighborhood slug/i })).toBeInTheDocument();
   });
 
   it("renders price range slider and min/max inputs", () => {

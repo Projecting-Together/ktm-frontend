@@ -15,6 +15,7 @@ interface FilterActions {
   setFilter: <K extends keyof SearchFilters>(key: K, value: SearchFilters[K]) => void;
   setFilters: (filters: Partial<SearchFilters>) => void;
   setPriceRange: (min?: number, max?: number) => void;
+  setAreaRange: (min?: number, max?: number) => void;
   resetFilters: () => void;
   toggleFilterPanel: () => void;
   setView: (view: FilterState["view"]) => void;
@@ -38,8 +39,11 @@ const API_FILTER_KEYS = [
   "purpose",
   "city",
   "district",
+  "neighborhood_slug",
   "min_price",
   "max_price",
+  "min_area_sqft",
+  "max_area_sqft",
   "bedrooms",
   "bathrooms",
   "furnishing",
@@ -71,6 +75,17 @@ function normalizePriceRange(min?: number, max?: number): Pick<SearchFilters, "m
   return { min_price: minPrice, max_price: maxPrice };
 }
 
+function normalizeAreaRange(min?: number, max?: number): Pick<SearchFilters, "min_area_sqft" | "max_area_sqft"> {
+  const minArea = Number.isFinite(min) ? min : undefined;
+  const maxArea = Number.isFinite(max) ? max : undefined;
+
+  if (minArea != null && maxArea != null && minArea > maxArea) {
+    return { min_area_sqft: maxArea, max_area_sqft: minArea };
+  }
+
+  return { min_area_sqft: minArea, max_area_sqft: maxArea };
+}
+
 export const useFilterStore = create<FilterState & FilterActions>((set, get) => ({
   ...DEFAULT_FILTERS,
   isFilterPanelOpen: false,
@@ -86,9 +101,15 @@ export const useFilterStore = create<FilterState & FilterActions>((set, get) => 
   setFilters: (filters) =>
     set((state) => {
       const hasExplicitPage = Object.prototype.hasOwnProperty.call(filters, "page");
+      const normalizedAreas =
+        Object.prototype.hasOwnProperty.call(filters, "min_area_sqft") ||
+        Object.prototype.hasOwnProperty.call(filters, "max_area_sqft")
+          ? normalizeAreaRange(filters.min_area_sqft, filters.max_area_sqft)
+          : {};
       return {
         ...state,
         ...filters,
+        ...normalizedAreas,
         page: hasExplicitPage ? filters.page : 1,
       };
     }),
@@ -97,6 +118,13 @@ export const useFilterStore = create<FilterState & FilterActions>((set, get) => 
     set((state) => ({
       ...state,
       ...normalizePriceRange(min, max),
+      page: 1,
+    })),
+
+  setAreaRange: (min, max) =>
+    set((state) => ({
+      ...state,
+      ...normalizeAreaRange(min, max),
       page: 1,
     })),
 
@@ -112,6 +140,9 @@ export const useFilterStore = create<FilterState & FilterActions>((set, get) => 
       purpose: undefined,
       min_price: undefined,
       max_price: undefined,
+      neighborhood_slug: undefined,
+      min_area_sqft: undefined,
+      max_area_sqft: undefined,
       bedrooms: undefined,
       bathrooms: undefined,
       furnishing: undefined,
