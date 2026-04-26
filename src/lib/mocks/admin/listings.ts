@@ -1,30 +1,32 @@
 import type { AdminListing } from "@/lib/admin/types";
-import {
-  buildRentListingFull,
-  buildRentListingSparse,
-  buildRentListingMixed,
-  buildRentListingPremium,
-  buildRentListingMinimal,
-} from "@/test-utils/mockData";
 
+// Keep admin facade fixtures deterministic for service tests.
 export const adminListings: AdminListing[] = [
-  buildRentListingFull(),
-  buildRentListingSparse(),
-  buildRentListingMixed(),
-  buildRentListingPremium(),
-  buildRentListingMinimal(),
-].map((listing, index) => ({
-  id: listing.id,
-  title: listing.title,
-  type:
-    listing.listing_type === "room" ||
-    listing.listing_type === "house" ||
-    listing.listing_type === "studio" ||
-    listing.listing_type === "commercial"
-      ? listing.listing_type
-      : "apartment",
-  status: index === 0 ? "pending" : index === 1 ? "active" : index === 2 ? "rejected" : "active",
-  city: listing.location?.city ?? "Kathmandu",
-  priceNpr: Number(listing.price ?? 0),
-  createdAt: listing.created_at,
-}));
+  {
+    id: "l1",
+    title: "Sunrise Residency Apartment",
+    type: "apartment",
+    status: "pending",
+    city: "Kathmandu",
+    priceNpr: 45000,
+    createdAt: "2026-04-24T08:10:00.000Z",
+  },
+  {
+    id: "l2",
+    title: "Patan Commercial Space",
+    type: "commercial",
+    status: "active",
+    city: "Patan",
+    priceNpr: 85000,
+    createdAt: "2026-04-24T07:10:00.000Z",
+  },
+  {
+    id: "l3",
+    title: "Bhaktapur Family House",
+    type: "house",
+    status: "rejected",
+    city: "Bhaktapur",
+    priceNpr: 60000,
+    createdAt: "2026-04-24T06:10:00.000Z",
+  },
+];
