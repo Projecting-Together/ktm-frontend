@@ -1,5 +1,6 @@
 import React from "react";
 import { render, screen, fireEvent } from "@/test-utils/renderWithProviders";
+import { act } from "@testing-library/react";
 import SearchPageClient from "@/components/search/SearchPageClient";
 import { useFilterStore } from "@/lib/stores/filterStore";
 
@@ -72,6 +73,9 @@ const resetStoreData = () => {
     lat: undefined,
     lng: undefined,
     radius_km: undefined,
+    neighborhood_slug: undefined,
+    min_area_sqft: undefined,
+    max_area_sqft: undefined,
   });
 };
 
@@ -107,5 +111,43 @@ describe("SearchPageClient", () => {
     expect(mockUseListings).toHaveBeenCalled();
     const [firstCallFilters] = mockUseListings.mock.calls[0] as [Record<string, unknown>];
     expect(firstCallFilters.purpose).toBe("rent");
+  });
+
+  it("hydrates neighborhood and area filters from URL params", () => {
+    mockSearchParams.set("neighborhood_slug", "baneshwor");
+    mockSearchParams.set("min_area_sqft", "450");
+    mockSearchParams.set("max_area_sqft", "1100");
+
+    render(<SearchPageClient />);
+
+    expect(useFilterStore.getState().neighborhood_slug).toBe("baneshwor");
+    expect(useFilterStore.getState().min_area_sqft).toBe(450);
+    expect(useFilterStore.getState().max_area_sqft).toBe(1100);
+  });
+
+  it("syncs neighborhood and area filters into URL params", () => {
+    render(<SearchPageClient />);
+    mockReplace.mockClear();
+
+    act(() => {
+      useFilterStore.getState().setFilters({
+        neighborhood_slug: "baneshwor",
+        min_area_sqft: 500,
+        max_area_sqft: 1200,
+      });
+    });
+
+    expect(mockReplace).toHaveBeenCalledWith(
+      expect.stringMatching(/neighborhood_slug=baneshwor/),
+      expect.objectContaining({ scroll: false }),
+    );
+    expect(mockReplace).toHaveBeenCalledWith(
+      expect.stringMatching(/min_area_sqft=500/),
+      expect.objectContaining({ scroll: false }),
+    );
+    expect(mockReplace).toHaveBeenCalledWith(
+      expect.stringMatching(/max_area_sqft=1200/),
+      expect.objectContaining({ scroll: false }),
+    );
   });
 });
