@@ -1,5 +1,6 @@
 import React from "react";
 import { render, screen } from "@/test-utils/renderWithProviders";
+import { within } from "@testing-library/react";
 import { ListingCard, ListingCardSkeleton } from "@/components/listings/ListingCard";
 import { mockListingItems } from "@/test-utils/mockData";
 
@@ -74,30 +75,37 @@ describe("ListingCard", () => {
 
   it("renders pet-friendly image badge when pets are allowed", () => {
     const petFriendlyListing = { ...listing, pets_allowed: true, is_moderated: false };
-    render(<ListingCard listing={petFriendlyListing} />);
-    expect(screen.getByTestId("listing-pet-friendly-badge")).toBeInTheDocument();
-    expect(screen.queryByText("Moderated")).not.toBeInTheDocument();
+    const { container } = render(<ListingCard listing={petFriendlyListing} />);
+    const card = within(container);
+    const petBadge = card.getByTestId("listing-pet-friendly-badge");
+    expect(petBadge).toBeInTheDocument();
+    // Add semantic expectation so this assertion isn't purely structural.
+    expect(petBadge).toHaveAccessibleName(/pet/i);
+    expect(card.queryByText(/^moderated$/i)).not.toBeInTheDocument();
   });
 
   it("renders moderated image badge when listing is moderated", () => {
     const moderatedListing = { ...listing, pets_allowed: false, is_moderated: true };
-    render(<ListingCard listing={moderatedListing} />);
-    expect(screen.getByText("Moderated")).toBeInTheDocument();
-    expect(screen.queryByTestId("listing-pet-friendly-badge")).not.toBeInTheDocument();
+    const { container } = render(<ListingCard listing={moderatedListing} />);
+    const card = within(container);
+    expect(card.getByText(/^moderated$/i)).toBeInTheDocument();
+    expect(card.queryByTestId("listing-pet-friendly-badge")).not.toBeInTheDocument();
   });
 
   it("renders both pet-friendly and moderated badges together", () => {
     const petFriendlyModeratedListing = { ...listing, pets_allowed: true, is_moderated: true };
-    render(<ListingCard listing={petFriendlyModeratedListing} />);
-    expect(screen.getByTestId("listing-pet-friendly-badge")).toBeInTheDocument();
-    expect(screen.getByText("Moderated")).toBeInTheDocument();
+    const { container } = render(<ListingCard listing={petFriendlyModeratedListing} />);
+    const card = within(container);
+    expect(card.getByTestId("listing-pet-friendly-badge")).toBeInTheDocument();
+    expect(card.getByText(/^moderated$/i)).toBeInTheDocument();
   });
 
   it("does not render pet-friendly or moderated badges when both are false", () => {
     const regularListing = { ...listing, pets_allowed: false, is_moderated: false };
-    render(<ListingCard listing={regularListing} />);
-    expect(screen.queryByTestId("listing-pet-friendly-badge")).not.toBeInTheDocument();
-    expect(screen.queryByText("Moderated")).not.toBeInTheDocument();
+    const { container } = render(<ListingCard listing={regularListing} />);
+    const card = within(container);
+    expect(card.queryByTestId("listing-pet-friendly-badge")).not.toBeInTheDocument();
+    expect(card.queryByText(/^moderated$/i)).not.toBeInTheDocument();
   });
 });
 
