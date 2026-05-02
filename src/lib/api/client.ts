@@ -4,6 +4,7 @@
  * Access token: in-memory only (15-min expiry).
  * Refresh token: httpOnly cookie (30-day expiry, browser-managed).
  */
+import { logger } from "@/lib/observability/logger";
 import type { AdminAnalyticsPoint, AdminDashboardActivity, AdminDashboardKpi } from "@/lib/admin/types";
 import { buildListingQueryParams } from "./listing-query-params";
 import { API_BASE, API_FETCH_TIMEOUT_MS } from "@/shared/appConfig";
@@ -49,11 +50,15 @@ export function persistTokens(tokens: TokenPair) { accessToken = tokens.access_t
 export function initializeAuth() { /* access token is in-memory only */ }
 
 async function apiFetch<T>(path: string, options: RequestInit = {}, withAuth = true): Promise<ApiResponse<T>> {
+  const method = (options.method ?? "GET").toUpperCase();
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...(options.headers as Record<string, string>),
   };
   if (withAuth && accessToken) headers["Authorization"] = `Bearer ${accessToken}`;
+
+  logger.info("apiFetch:request", { method, url: path });
+  const startMs = Date.now();
 
   try {
     const { signal: userSignal, ...restOptions } = options;
@@ -78,9 +83,11 @@ async function apiFetch<T>(path: string, options: RequestInit = {}, withAuth = t
         });
         if (retry.ok) {
           const data = retry.status === 204 ? null : await retry.json();
+          logger.info("apiFetch:response", { status: retry.status, durationMs: Date.now() - startMs, url: path });
           return { data: data as T, error: null };
         }
       }
+      logger.warn("apiFetch:client-error", { status: 401, url: path, message: "Unauthorized" });
       clearTokens();
       return { data: null, error: { message: "Unauthorized", status: 401 } };
     }
@@ -89,12 +96,19 @@ async function apiFetch<T>(path: string, options: RequestInit = {}, withAuth = t
       let body: { detail?: string; message?: string } = {};
       try { body = await res.json(); } catch { /* ignore */ }
       const message = typeof body.detail === "string" ? body.detail : body.message ?? `HTTP ${res.status}`;
+      if (res.status >= 500) {
+        logger.error("apiFetch:server-error", { status: res.status, url: path, message });
+      } else {
+        logger.warn("apiFetch:client-error", { status: res.status, url: path, message });
+      }
       return { data: null, error: { message, status: res.status } };
     }
 
+    logger.info("apiFetch:response", { status: res.status, durationMs: Date.now() - startMs, url: path });
     if (res.status === 204) return { data: null, error: null };
     return { data: await res.json() as T, error: null };
   } catch (err) {
+    logger.error("apiFetch:network-error", { url: path, error: err instanceof Error ? err.message : String(err) });
     return { data: null, error: { message: mapFetchFailure(err) } };
   }
 }

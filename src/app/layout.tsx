@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import "./globals.css";
 import { fontMono, fontSans, fontSerif } from "@/lib/fonts";
 import { Providers } from "@/lib/providers/Providers";
@@ -6,6 +7,8 @@ import { applyThemeVariables } from "@/lib/theme/applyTheme";
 import { themeTokens } from "@/lib/theme/tokens";
 
 const themeVariables = applyThemeVariables();
+
+const gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID ?? "";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://ktmapartments.com"),
@@ -51,6 +54,17 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <style>{`:root {\n${themeVariables}\n}`}</style>
       </head>
       <body suppressHydrationWarning>
+        {gaId && (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
+              strategy="afterInteractive"
+            />
+            <Script id="gtag-init" strategy="afterInteractive">
+              {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${gaId}');`}
+            </Script>
+          </>
+        )}
         <Providers>{children}</Providers>
         {process.env.NODE_ENV === "development" && process.env.NEXT_PUBLIC_USE_MSW === "true" ? (
           <div

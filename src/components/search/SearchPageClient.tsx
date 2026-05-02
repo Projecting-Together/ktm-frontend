@@ -10,7 +10,7 @@ import { SearchBar } from "@/components/search/SearchBar";
 import { useFilterStore, selectApiFilters } from "@/lib/stores/filterStore";
 import { useListings } from "@/lib/hooks/useListings";
 import { adaptListingsForSearch } from "@/lib/contracts/adapters";
-import { trackPurposeModeChange } from "@/lib/analytics/events";
+import { trackPurposeModeChange } from "@/lib/observability";
 import type { ListingFilters } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 import { SEARCH_MAP_LOADING_MESSAGE, SORT_OPTIONS } from "@/shared/ui/search";

@@ -17,7 +17,7 @@ import { ListingCard } from "@/components/listings/ListingCard";
 import { RentDetailSections } from "@/components/listings/rent-detail/RentDetailSections";
 import { useListing, useListings } from "@/lib/hooks/useListings";
 import { useAuthStore } from "@/lib/stores/authStore";
-import { trackInquiryCtaClick } from "@/lib/analytics/events";
+import { trackInquiryCtaClick } from "@/lib/observability";
 import { formatPrice, formatDate, buildWhatsAppUrl, cn, getStatusColor } from "@/lib/utils";
 import type { Listing } from "@/lib/api/types";
 

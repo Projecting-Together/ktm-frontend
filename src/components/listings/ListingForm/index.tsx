@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, Loader2, Check } from "lucide-react";
 import { listingFormSchema, type ListingFormData } from "@/lib/validations/listingSchema";
-import { trackListingPostCompleted } from "@/lib/analytics/events";
+import { trackListingPostCompleted } from "@/lib/observability";
 import { useCreateListing } from "@/lib/hooks/useListings";
 import { cn } from "@/lib/utils";
 import { Step1BasicInfo } from "./Step1BasicInfo";
