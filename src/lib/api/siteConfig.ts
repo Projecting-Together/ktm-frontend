@@ -1,7 +1,5 @@
 import type { SiteConfig } from "./types";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "https://api.ktmapartments.com/api/v1";
-const SITE_CONFIG_TIMEOUT_MS = 8_000;
+import { API_BASE, SITE_CONFIG_TIMEOUT_MS } from "@/shared/appConfig";
 
 function normalizeSiteConfig(raw: Record<string, unknown>): SiteConfig {
   const hero = raw.heroBannerUrl ?? raw.hero_banner_url;
