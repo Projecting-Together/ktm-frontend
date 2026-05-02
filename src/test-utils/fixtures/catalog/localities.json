@@ -1,0 +1,62 @@
+[
+  {
+    "id": "nbh-001",
+    "name": "Thamel",
+    "name_ne": "थमेल",
+    "slug": "thamel",
+    "description": "Kathmandu's vibrant tourist hub, popular with expats and young professionals.",
+    "lat": 27.7152,
+    "lng": 85.3123,
+    "listing_count": 142,
+    "avg_price": 32000,
+    "image_url": "https://images.ktmapartments.com/localities/thamel.jpg"
+  },
+  {
+    "id": "nbh-002",
+    "name": "Lazimpat",
+    "name_ne": "लाजिम्पाट",
+    "slug": "lazimpat",
+    "description": "Upscale diplomatic zone with embassies, restaurants, and premium apartments.",
+    "lat": 27.7176,
+    "lng": 85.3183,
+    "listing_count": 87,
+    "avg_price": 55000,
+    "image_url": "https://images.ktmapartments.com/localities/lazimpat.jpg"
+  },
+  {
+    "id": "nbh-003",
+    "name": "Patan",
+    "name_ne": "पाटन",
+    "slug": "patan",
+    "description": "Historic city of fine arts and crafts, peaceful residential areas.",
+    "lat": 27.6766,
+    "lng": 85.324,
+    "listing_count": 93,
+    "avg_price": 22000,
+    "image_url": "https://images.ktmapartments.com/localities/patan.jpg"
+  },
+  {
+    "id": "nbh-004",
+    "name": "Koteshwor",
+    "name_ne": "कोटेश्वर",
+    "slug": "koteshwor",
+    "description": "Fast-growing eastern suburb with modern apartments and good transport links.",
+    "lat": 27.6871,
+    "lng": 85.356,
+    "listing_count": 118,
+    "avg_price": 18000,
+    "image_url": "https://images.ktmapartments.com/localities/koteshwor.jpg"
+  },
+  {
+    "id": "nbh-005",
+    "name": "Bhaktapur",
+    "name_ne": "भक्तपुर",
+    "slug": "bhaktapur",
+    "description": "Ancient Newari city, UNESCO heritage site, affordable and culturally rich.",
+    "lat": 27.671,
+    "lng": 85.4298,
+    "listing_count": 54,
+    "avg_price": 14000,
+    "image_url": "https://images.ktmapartments.com/localities/bhaktapur.jpg"
+  }
+]

@@ -1,0 +1,32 @@
+{
+  "total_listings": 964,
+  "active_listings": 702,
+  "pending_listings": 43,
+  "total_users": 3589,
+  "new_users_today": 17,
+  "total_inquiries": 11348,
+  "inquiries_today": 69,
+  "total_views": 156432,
+  "top_localities": [
+    {
+      "name": "Thamel",
+      "count": 142
+    },
+    {
+      "name": "Lazimpat",
+      "count": 87
+    },
+    {
+      "name": "Patan",
+      "count": 93
+    },
+    {
+      "name": "Koteshwor",
+      "count": 118
+    },
+    {
+      "name": "Bhaktapur",
+      "count": 54
+    }
+  ]
+}

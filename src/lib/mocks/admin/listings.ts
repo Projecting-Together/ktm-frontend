@@ -1,32 +1,5 @@
 import type { AdminListing } from "@/lib/admin/types";
+import { adminListingsCatalog } from "@/test-utils/fixtures";
 
-// Keep admin facade fixtures deterministic for service tests.
-export const adminListings: AdminListing[] = [
-  {
-    id: "l1",
-    title: "Sunrise Residency Apartment",
-    type: "apartment",
-    status: "pending",
-    city: "Kathmandu",
-    priceNpr: 45000,
-    createdAt: "2026-04-24T08:10:00.000Z",
-  },
-  {
-    id: "l2",
-    title: "Patan Commercial Space",
-    type: "commercial",
-    status: "active",
-    city: "Patan",
-    priceNpr: 85000,
-    createdAt: "2026-04-24T07:10:00.000Z",
-  },
-  {
-    id: "l3",
-    title: "Bhaktapur Family House",
-    type: "house",
-    status: "rejected",
-    city: "Bhaktapur",
-    priceNpr: 60000,
-    createdAt: "2026-04-24T06:10:00.000Z",
-  },
-];
+// Keep admin facade fixtures deterministic for service tests (rows from fixtures JSON).
+export const adminListings: AdminListing[] = adminListingsCatalog;

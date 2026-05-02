@@ -1,0 +1,5 @@
+{
+  "uploadUrlTemplate": "https://r2.ktmapartments.com/upload/{filename}?token=mock",
+  "storageKeyTemplate": "listings/mock/{filename}",
+  "publicUrlTemplate": "https://images.ktmapartments.com/listings/mock/{filename}"
+}

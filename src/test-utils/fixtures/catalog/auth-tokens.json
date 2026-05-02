@@ -1,0 +1,12 @@
+{
+  "renter": {
+    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c3ItcmVudGVyLTAwMSIsImVtYWlsIjoicmFtLnNoYXJtYUBnbWFpbC5jb20iLCJyb2xlIjoicmVudGVyIiwic3RhdHVzIjoiYWN0aXZlIiwiaWF0IjoxNzEwMDAwMDAwLCJleHAiOjE3MTAwMDA5MDB9.mock_signature",
+    "refresh_token": "mock-refresh-renter",
+    "token_type": "bearer"
+  },
+  "owner": {
+    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c3Itb3duZXItMDAxIiwiZW1haWwiOiJzaXRhLnRoYXBhQGdtYWlsLmNvbSIsInJvbGUiOiJvd25lciIsInN0YXR1cyI6ImFjdGl2ZSIsImlhdCI6MTcxMDAwMDAwMCwiZXhwIjoxNzEwMDAwOTAwfQ.mock_signature",
+    "refresh_token": "mock-refresh-owner",
+    "token_type": "bearer"
+  }
+}

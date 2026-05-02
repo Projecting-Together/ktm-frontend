@@ -5,6 +5,10 @@ import {
   mockListingsPage1,
   mockRenter,
 } from "@/test-utils/mockData";
+import { mswScenarioKnobs } from "@/test-utils/fixtures";
+
+const SC = mswScenarioKnobs.messages;
+const NK = mswScenarioKnobs.numericKnobs;
 
 export type ScenarioState = "happy" | "empty" | "error" | "partial" | "permission" | "stress";
 
@@ -28,6 +32,8 @@ type AdminScenario = {
   analyticsBody?: { detail: string };
 };
 
+const partialListingItems = mockListingItems.slice(0, NK.partialListingSliceEnd);
+
 export const scenarioCatalog: {
   public: ScenarioMatrix<PublicScenario>;
   auth: ScenarioMatrix<AuthScenario>;
@@ -48,18 +54,18 @@ export const scenarioCatalog: {
     },
     error: {
       listingsStatus: 500,
-      listingsBody: { detail: "Internal server error" },
+      listingsBody: { detail: SC.internalServerError },
     },
     partial: {
       listings: {
         ...mockListingsPage1,
-        items: mockListingItems.slice(0, 2),
-        total: 2,
+        items: partialListingItems,
+        total: partialListingItems.length,
       },
     },
     permission: {
       listingsStatus: 403,
-      listingsBody: { detail: "Forbidden" },
+      listingsBody: { detail: SC.forbidden },
     },
     stress: {
       listings: {
@@ -78,11 +84,11 @@ export const scenarioCatalog: {
     },
     empty: {
       meStatus: 401,
-      meBody: { detail: "Not authenticated" },
+      meBody: { detail: SC.notAuthenticated },
     },
     error: {
       meStatus: 500,
-      meBody: { detail: "Auth service unavailable" },
+      meBody: { detail: SC.authUnavailable },
     },
     partial: {
       meStatus: 200,
@@ -92,7 +98,7 @@ export const scenarioCatalog: {
     },
     permission: {
       meStatus: 403,
-      meBody: { detail: "Forbidden" },
+      meBody: { detail: SC.forbidden },
     },
     stress: {
       meStatus: 200,
@@ -101,7 +107,7 @@ export const scenarioCatalog: {
         profile: mockRenter.profile
           ? {
               ...mockRenter.profile,
-              bio: `${mockRenter.profile.bio ?? ""} ${"x".repeat(700)}`.trim(),
+              bio: `${mockRenter.profile.bio ?? ""} ${"x".repeat(NK.stressBioRepeatLength)}`.trim(),
             }
           : mockRenter.profile,
       },
@@ -123,7 +129,7 @@ export const scenarioCatalog: {
     },
     error: {
       analyticsStatus: 500,
-      analyticsBody: { detail: "Admin analytics unavailable" },
+      analyticsBody: { detail: SC.adminAnalyticsUnavailable },
     },
     partial: {
       analytics: {
@@ -134,12 +140,12 @@ export const scenarioCatalog: {
     },
     permission: {
       analyticsStatus: 403,
-      analyticsBody: { detail: "Forbidden" },
+      analyticsBody: { detail: SC.forbidden },
     },
     stress: {
       analytics: {
         ...mockAdminAnalytics,
-        total_views: 9_999_999,
+        total_views: NK.stressAnalyticsTotalViews,
       },
       inquiries: mockInquiries.map((inquiry) => ({
         ...inquiry,

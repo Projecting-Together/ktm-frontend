@@ -1,0 +1,10 @@
+[
+  { "id": "am-001", "name": "WiFi", "amenity_type": "unit", "code": "wifi", "icon": "wifi" },
+  { "id": "am-002", "name": "Backup Power", "amenity_type": "building", "code": "backup_power", "icon": "zap" },
+  { "id": "am-003", "name": "Water Tank", "amenity_type": "building", "code": "water_tank", "icon": "droplets" },
+  { "id": "am-004", "name": "Security Guard", "amenity_type": "building", "code": "security_guard", "icon": "shield" },
+  { "id": "am-005", "name": "Parking", "amenity_type": "building", "code": "parking", "icon": "car" },
+  { "id": "am-006", "name": "CCTV", "amenity_type": "building", "code": "cctv", "icon": "camera" },
+  { "id": "am-007", "name": "Gym", "amenity_type": "building", "code": "gym", "icon": "dumbbell" },
+  { "id": "am-008", "name": "Lift", "amenity_type": "building", "code": "lift", "icon": "arrow-up" }
+]

@@ -1,0 +1,14 @@
+{
+  "messages": {
+    "internalServerError": "Internal server error",
+    "forbidden": "Forbidden",
+    "notAuthenticated": "Not authenticated",
+    "authUnavailable": "Auth service unavailable",
+    "adminAnalyticsUnavailable": "Admin analytics unavailable"
+  },
+  "numericKnobs": {
+    "partialListingSliceEnd": 2,
+    "stressBioRepeatLength": 700,
+    "stressAnalyticsTotalViews": 9999999
+  }
+}

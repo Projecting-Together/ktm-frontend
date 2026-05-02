@@ -18,6 +18,7 @@ import {
   mockAdmin,
   mockAuthTokens,
   mockOwnerAuthTokens,
+  mockAdminAuthTokens,
   mockInquiries,
   mockVisitRequests,
   mockFavorites,
@@ -25,15 +26,11 @@ import {
   mockAuditLogs,
   mockAmenities,
   mockRentListingVariants,
+  mswAuthLogins,
+  mswSyntheticIds,
+  mswUploadTemplates,
 } from "@/test-utils/mockData";
 import { adminListings } from "@/lib/mocks/admin/listings";
-
-const mockAdminAuthTokens = {
-  access_token:
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c3ItYWRtaW4tMDAxIiwiZW1haWwiOiJhZG1pbkBrdG1hcGFydG1lbnRzLmNvbSIsInJvbGUiOiJhZG1pbiIsInN0YXR1cyI6ImFjdGl2ZSIsImlhdCI6MTcxMDAwMDAwMCwiZXhwIjoxNzEwMDAwOTAwfQ.mock_signature",
-  refresh_token: "mock-refresh-admin",
-  token_type: "bearer" as const,
-};
 
 /** Next.js chunks & dev endpoints must not be mocked — prevents 404 / wrong MIME on `/_next/static/*`. */
 const passthroughNextAssets = http.all(
@@ -49,6 +46,25 @@ function pathname(request: Request) {
 }
 
 const mockListingsWithRentVariants = [...mockListings, ...mockRentListingVariants];
+
+function expandMswUploadTemplates(filename: string) {
+  const t = mswUploadTemplates;
+  return {
+    upload_url: t.uploadUrlTemplate.replaceAll("{filename}", filename),
+    storage_key: t.storageKeyTemplate.replaceAll("{filename}", filename),
+    public_url: t.publicUrlTemplate.replaceAll("{filename}", filename),
+  };
+}
+
+function resolveLoginTokens(email: string, password: string) {
+  for (const row of mswAuthLogins.loginAccounts) {
+    if (row.email !== email || row.password !== password) continue;
+    if (row.tokens === "renter") return mockAuthTokens;
+    if (row.tokens === "owner") return mockOwnerAuthTokens;
+    return mockAdminAuthTokens;
+  }
+  return null;
+}
 
 function getScenarioState() {
   return resolveScenarioState(process.env.NEXT_PUBLIC_MSW_SCENARIO_STATE);
@@ -118,15 +134,8 @@ export const handlers = [
     ({ request }) => pathname(request) === "/api/v1/auth/login",
     async ({ request }) => {
       const body = (await request.json()) as { email: string; password: string };
-      if (body.email === "ram.sharma@gmail.com" && body.password === "password123") {
-        return HttpResponse.json(mockAuthTokens);
-      }
-      if (body.email === "sita.thapa@gmail.com" && body.password === "password123") {
-        return HttpResponse.json(mockOwnerAuthTokens);
-      }
-      if (body.email === "admin@ktmapartments.com" && body.password === "password123") {
-        return HttpResponse.json(mockAdminAuthTokens);
-      }
+      const tokens = resolveLoginTokens(body.email, body.password);
+      if (tokens) return HttpResponse.json(tokens);
       return HttpResponse.json({ detail: "Invalid email or password" }, { status: 401 });
     }
   ),
@@ -135,7 +144,7 @@ export const handlers = [
     ({ request }) => pathname(request) === "/api/v1/auth/register",
     async ({ request }) => {
       const body = (await request.json()) as { email: string; password: string };
-      if (body.email === "existing@gmail.com") {
+      if (body.email === mswAuthLogins.registerConflictEmail) {
         return HttpResponse.json({ detail: "Email already registered" }, { status: 409 });
       }
       return HttpResponse.json(mockAuthTokens, { status: 201 });
@@ -305,7 +314,7 @@ export const handlers = [
       const body = (await request.json()) as Record<string, unknown>;
       const newListing = {
         ...mockListingsWithRentVariants[0],
-        id: "lst-new-001",
+        id: mswSyntheticIds.newListingId,
         slug: `new-listing-${Date.now()}`,
         title: (body.title as string) ?? "New Listing",
         status: "pending" as const,
@@ -357,11 +366,7 @@ export const handlers = [
     ({ request }) => pathname(request) === "/api/v1/media/presigned-url",
     async ({ request }) => {
       const body = (await request.json()) as { filename: string; content_type: string };
-      return HttpResponse.json({
-        upload_url: `https://r2.ktmapartments.com/upload/${body.filename}?token=mock`,
-        storage_key: `listings/mock/${body.filename}`,
-        public_url: `https://images.ktmapartments.com/listings/mock/${body.filename}`,
-      });
+      return HttpResponse.json(expandMswUploadTemplates(body.filename));
     }
   ),
 
@@ -369,7 +374,7 @@ export const handlers = [
     ({ request }) => pathname(request) === "/api/v1/media/confirm",
     async () =>
       HttpResponse.json({
-        id: "img-new-001",
+        id: mswSyntheticIds.newImageId,
       })
   ),
 
@@ -406,7 +411,7 @@ export const handlers = [
       const body = (await request.json()) as { listing_id: string; message: string; move_in_date?: string | null };
       const newInquiry = {
         ...mockInquiries[0],
-        id: "inq-new-001",
+        id: mswSyntheticIds.newInquiryId,
         listing_id: body.listing_id,
         message: body.message,
         move_in_date: body.move_in_date ?? null,
@@ -446,7 +451,7 @@ export const handlers = [
       const body = (await request.json()) as { listing_id: string; preferred_date: string; notes?: string };
       const newVisit = {
         ...mockVisitRequests[0],
-        id: "vis-new-001",
+        id: mswSyntheticIds.newVisitId,
         listing_id: body.listing_id,
         preferred_date: body.preferred_date,
         notes: body.notes ?? null,
@@ -495,7 +500,7 @@ export const handlers = [
       const listing = mockListingItems.find((l) => l.id === body.listing_id) ?? mockListingItems[0];
       return HttpResponse.json(
         {
-          user_id: "usr-renter-001",
+          user_id: mswSyntheticIds.favoriteDefaultUserId,
           listing_id: body.listing_id,
           created_at: new Date().toISOString(),
           listing,

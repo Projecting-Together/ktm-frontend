@@ -1,0 +1,8 @@
+{
+  "loginAccounts": [
+    { "email": "ram.sharma@gmail.com", "password": "password123", "tokens": "renter" },
+    { "email": "sita.thapa@gmail.com", "password": "password123", "tokens": "owner" },
+    { "email": "admin@ktmapartments.com", "password": "password123", "tokens": "admin" }
+  ],
+  "registerConflictEmail": "existing@gmail.com"
+}

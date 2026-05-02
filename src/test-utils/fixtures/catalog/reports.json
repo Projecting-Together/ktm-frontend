@@ -1,0 +1,11 @@
+[
+  {
+    "id": "rep-001",
+    "listing_id": "lst-004",
+    "reporter_id": "usr-renter-001",
+    "reason": "misleading",
+    "status": "open",
+    "resolution_note": null,
+    "created_at": "2025-01-19T10:00:00Z"
+  }
+]
