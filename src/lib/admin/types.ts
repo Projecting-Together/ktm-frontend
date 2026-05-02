@@ -1,12 +1,27 @@
-export type AdminListingType = "apartment" | "room" | "house" | "studio" | "commercial";
-export type AdminListingStatus = "pending" | "active" | "sold" | "rejected";
+import type { ListingStatus, ListingType } from "@/lib/api/types";
+
+/** Same codes as public listings (`ListingType`); avoid duplicating the union in admin-only types. */
+export type AdminListingType = ListingType;
+
+/** Admin table filters use a subset of full listing lifecycle (`ListingStatus`). */
+export const ADMIN_LISTING_STATUS_VALUES = ["pending", "active", "sold", "rejected"] as const satisfies readonly ListingStatus[];
+export type AdminListingStatus = (typeof ADMIN_LISTING_STATUS_VALUES)[number];
 export type AdminTransactionStatus = "paid" | "pending" | "failed" | "refunded";
 export type AdminPaymentMethod = "wallet" | "bank_transfer" | "cash";
 export type AdminUserRole = "user" | "agent" | "moderator" | "admin";
 export type AdminUserStatus = "active" | "inactive" | "suspended";
 
+/** Keys match `admin-dashboard.json` `kpis[].key`; single source for types + Zod. */
+export const ADMIN_DASHBOARD_KPI_KEYS = [
+  "totalListings",
+  "pendingListings",
+  "activeUsers",
+  "monthlyRevenue",
+] as const;
+export type AdminDashboardKpiKey = (typeof ADMIN_DASHBOARD_KPI_KEYS)[number];
+
 export interface AdminDashboardKpi {
-  key: "totalListings" | "pendingListings" | "activeUsers" | "monthlyRevenue";
+  key: AdminDashboardKpiKey;
   label: string;
   value: number;
   deltaPercent: number;

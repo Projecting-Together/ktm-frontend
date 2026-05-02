@@ -4,16 +4,20 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowUpRight, FileDown, LineChart } from "lucide-react";
 import { FilterToolbar } from "@/components/admin/FilterToolbar";
 import { StatCard } from "@/components/admin/StatCard";
-import { adminService } from "@/lib/admin/service";
+import { adminGetAnalyticsTimeseries } from "@/lib/api/client";
 
 export default function AdminAnalyticsPage() {
   const [dateRange, setDateRange] = useState<"last-7-days" | "last-30-days" | "last-90-days">("last-30-days");
   const [city, setCity] = useState("all-cities");
   const [listingType, setListingType] = useState("all-types");
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["admin", "analytics", dateRange, city, listingType],
-    queryFn: () => adminService.getAnalytics({ dateRange, city, listingType }),
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["admin", "analytics", "timeseries", dateRange, city, listingType],
+    queryFn: async () => {
+      const res = await adminGetAnalyticsTimeseries({ dateRange, city, listingType });
+      if (res.error) throw new Error(res.error.message);
+      return res.data ?? [];
+    },
   });
 
   const stats = useMemo(
@@ -43,6 +47,13 @@ export default function AdminAnalyticsPage() {
         <h1 className="text-2xl font-bold mb-1">Analytics Overview</h1>
         <p className="text-muted-foreground">Track platform performance with quick segmentation and export options.</p>
       </div>
+
+      {isError ? (
+        <section className="rounded-xl border border-rose-200 bg-rose-50 p-5 text-rose-700">
+          <h2 className="font-semibold">Analytics data unavailable</h2>
+          <p className="text-sm">Unable to load analytics right now. Please try again.</p>
+        </section>
+      ) : null}
 
       <FilterToolbar
         filters={

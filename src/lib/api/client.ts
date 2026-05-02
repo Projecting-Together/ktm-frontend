@@ -4,6 +4,7 @@
  * Access token: in-memory only (15-min expiry).
  * Refresh token: httpOnly cookie (30-day expiry, browser-managed).
  */
+import type { AdminAnalyticsPoint, AdminDashboardActivity, AdminDashboardKpi } from "@/lib/admin/types";
 import { buildListingQueryParams } from "./listing-query-params";
 import { API_BASE, API_FETCH_TIMEOUT_MS } from "@/shared/appConfig";
 import type {
@@ -12,9 +13,14 @@ import type {
   Inquiry, CreateInquiryPayload, VisitRequest, CreateVisitPayload,
   Favorite, PresignedUrlResponse, MediaConfirmPayload, ListingStats,
   AuditLog, AdminAnalyticsOverview, NewsArticle, NewsFilters, NewsListItem,
+  NewsWorkspaceArticle, NewsModerationQueueResponse, NewsModerationQueueItem,
 } from "./types";
 
-export type { Listing, ListingListItem, ListingFilters, MyListingsFilters, PaginatedResponse, Amenity, User, Inquiry, VisitRequest, Favorite, AuditLog, AdminAnalyticsOverview, NewsListItem, NewsArticle, NewsFilters };
+export type {
+  Listing, ListingListItem, ListingFilters, MyListingsFilters, PaginatedResponse, Amenity, User, Inquiry, VisitRequest, Favorite, AuditLog,
+  AdminAnalyticsOverview, NewsListItem, NewsArticle, NewsFilters, NewsWorkspaceArticle, NewsModerationQueueResponse,
+  NewsModerationQueueItem,
+};
 
 function mergeFetchSignals(userSignal: AbortSignal | undefined): AbortSignal {
   const timeoutSignal = AbortSignal.timeout(API_FETCH_TIMEOUT_MS);
@@ -150,6 +156,34 @@ export async function getNews(filters: NewsFilters = {}) {
 export async function getNewsDetail(slug: string) {
   return apiFetch<NewsArticle>(`/news/published/${slug}`, {}, false);
 }
+
+/** Authenticated — current user news workspace (owner draft or next publishable item for agents/admins). */
+export async function getNewsWorkspaceArticle() {
+  return apiFetch<NewsWorkspaceArticle>("/news/workspace", {}, true);
+}
+
+export async function postNewsWorkspaceSubmit() {
+  return apiFetch<NewsWorkspaceArticle>("/news/workspace/submit", { method: "POST" }, true);
+}
+
+export async function postNewsWorkspacePublish() {
+  return apiFetch<NewsWorkspaceArticle>("/news/workspace/publish", { method: "POST" }, true);
+}
+
+export async function getNewsModerationQueue() {
+  return apiFetch<NewsModerationQueueResponse>("/news/moderation/queue", {}, true);
+}
+
+export async function patchNewsModeration(
+  articleId: string,
+  payload: { status: "published" | "rejected" | "pending_review" | "draft"; rejection_reason?: string | null },
+) {
+  return apiFetch<NewsModerationQueueItem>(
+    `/news/moderation/${articleId}`,
+    { method: "PATCH", body: JSON.stringify(payload) },
+    true,
+  );
+}
 export async function createListing(payload: Partial<Listing>) {
   return apiFetch<Listing>("/listings", { method: "POST", body: JSON.stringify(payload) });
 }
@@ -225,3 +259,31 @@ export async function adminGetAuditLog(page = 1) {
   return apiFetch<PaginatedResponse<AuditLog>>(`/admin/audit-log?page=${page}`);
 }
 export async function adminGetAnalytics() { return apiFetch<AdminAnalyticsOverview>("/admin/analytics/overview"); }
+
+/** Query params align with future FastAPI (`date_range`, `listing_type`, …). MSW serves processed series from fixtures. */
+export interface AdminAnalyticsTimeseriesParams {
+  dateRange?: "last-7-days" | "last-30-days" | "last-90-days";
+  city?: string;
+  listingType?: string;
+  from?: string;
+  to?: string;
+}
+
+export async function adminGetAnalyticsTimeseries(params: AdminAnalyticsTimeseriesParams = {}) {
+  const q = new URLSearchParams();
+  if (params.dateRange) q.set("date_range", params.dateRange);
+  if (params.city) q.set("city", params.city);
+  if (params.listingType) q.set("listing_type", params.listingType);
+  if (params.from) q.set("from", params.from);
+  if (params.to) q.set("to", params.to);
+  const qs = q.toString();
+  return apiFetch<AdminAnalyticsPoint[]>(qs ? `/admin/analytics/timeseries?${qs}` : "/admin/analytics/timeseries", {}, true);
+}
+
+export async function adminFetchDashboardSummary() {
+  return apiFetch<{ kpis: AdminDashboardKpi[]; activities: AdminDashboardActivity[] }>(
+    "/admin/dashboard/summary",
+    {},
+    true,
+  );
+}

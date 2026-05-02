@@ -1,11 +1,14 @@
-import type {
-  ListingImage,
-  ListingListItem,
-  ListingLocation,
-  ListingStatus,
-  ListingType,
-  FurnishingType,
-  PricePeriod,
+import {
+  FURNISHING_TYPE_VALUES,
+  LISTING_TYPE_VALUES,
+  PRICE_PERIOD_VALUES,
+  type FurnishingType,
+  type ListingImage,
+  type ListingListItem,
+  type ListingLocation,
+  type ListingStatus,
+  type ListingType,
+  type PricePeriod,
 } from "@/lib/api/types";
 
 export type ListingDto = Partial<ListingListItem> & {
@@ -22,9 +25,9 @@ export interface ListingMapMarker {
 
 const DEFAULT_CURRENCY = "NPR";
 const DEFAULT_STATUS: ListingStatus = "active";
-const ALLOWED_PRICE_PERIODS: ReadonlySet<PricePeriod> = new Set(["monthly", "yearly", "daily"]);
-const ALLOWED_LISTING_TYPES: ReadonlySet<ListingType> = new Set(["apartment", "room", "house", "studio", "commercial"]);
-const ALLOWED_FURNISHING_TYPES: ReadonlySet<FurnishingType> = new Set(["fully", "semi", "unfurnished"]);
+const ALLOWED_PRICE_PERIODS: ReadonlySet<PricePeriod> = new Set(PRICE_PERIOD_VALUES);
+const ALLOWED_LISTING_TYPES: ReadonlySet<ListingType> = new Set(LISTING_TYPE_VALUES);
+const ALLOWED_FURNISHING_TYPES: ReadonlySet<FurnishingType> = new Set(FURNISHING_TYPE_VALUES);
 
 const trimText = (value: string | null | undefined): string => value?.trim() ?? "";
 

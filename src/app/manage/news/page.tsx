@@ -2,14 +2,28 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { getNewsPublishTransitionDecision, getNewsSubmitTransitionDecision } from "@/lib/hooks/useNews";
+import {
+  getNewsPublishTransitionDecision,
+  getNewsSubmitTransitionDecision,
+  useNewsWorkspace,
+  useNewsWorkspacePublish,
+  useNewsWorkspaceSubmit,
+} from "@/lib/hooks/useNews";
 import { useAuthStore } from "@/lib/stores/authStore";
 
 export default function ManageNewsPage() {
   const { user } = useAuthStore();
   const role = user?.role;
-  const [newsStatus, setNewsStatus] = useState<"draft" | "pending_review" | "published" | "rejected">("draft");
+  const workspaceEnabled = !!role && role !== "renter";
+
+  const articleQuery = useNewsWorkspace({ enabled: workspaceEnabled });
+  const submitMut = useNewsWorkspaceSubmit();
+  const publishMut = useNewsWorkspacePublish();
+
   const [feedback, setFeedback] = useState<{ kind: "success" | "error"; message: string } | null>(null);
+
+  const article = articleQuery.data;
+  const newsStatus = article?.status ?? "draft";
 
   const canSubmit = role === "owner";
   const canPublish = role === "agent" || role === "admin";
@@ -21,19 +35,38 @@ export default function ManageNewsPage() {
     return "Owner";
   }, [role]);
 
-  const onSubmitForReview = () => {
-    const decision = getNewsSubmitTransitionDecision(role, newsStatus);
-    setFeedback({ kind: decision.allowed ? "success" : "error", message: decision.message });
-    if (!decision.allowed) return;
-    setNewsStatus(decision.nextStatus);
+  const submitDecision = getNewsSubmitTransitionDecision(role, newsStatus);
+  const publishDecision = getNewsPublishTransitionDecision(role, newsStatus);
+
+  const onSubmitForReview = async () => {
+    setFeedback(null);
+    if (!submitDecision.allowed) {
+      setFeedback({ kind: "error", message: submitDecision.message });
+      return;
+    }
+    try {
+      await submitMut.mutateAsync();
+      setFeedback({ kind: "success", message: submitDecision.message });
+    } catch (e) {
+      setFeedback({ kind: "error", message: e instanceof Error ? e.message : "Submit failed." });
+    }
   };
 
-  const onPublishNow = () => {
-    const decision = getNewsPublishTransitionDecision(role, newsStatus);
-    setFeedback({ kind: decision.allowed ? "success" : "error", message: decision.message });
-    if (!decision.allowed) return;
-    setNewsStatus(decision.nextStatus);
+  const onPublishNow = async () => {
+    setFeedback(null);
+    if (!publishDecision.allowed) {
+      setFeedback({ kind: "error", message: publishDecision.message });
+      return;
+    }
+    try {
+      await publishMut.mutateAsync();
+      setFeedback({ kind: "success", message: publishDecision.message });
+    } catch (e) {
+      setFeedback({ kind: "error", message: e instanceof Error ? e.message : "Publish failed." });
+    }
   };
+
+  const pending = articleQuery.isLoading || submitMut.isPending || publishMut.isPending;
 
   return (
     <div className="space-y-6">
@@ -42,12 +75,26 @@ export default function ManageNewsPage() {
         <p className="text-muted-foreground">Prepare articles, route them for review, and coordinate publishing decisions by role.</p>
       </div>
 
-      <div className="rounded-xl border border-border bg-card p-5">
-        <p className="text-sm text-muted-foreground">
-          Active role: <span className="font-semibold text-foreground">{roleLabel}</span> • Current article state:{" "}
-          <span className="font-semibold text-foreground capitalize">{newsStatus}</span>
-        </p>
-      </div>
+      {!workspaceEnabled ? (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-5">
+          <p className="text-sm font-medium text-amber-800">Sign in as owner, agent, or admin to use the news workspace.</p>
+        </div>
+      ) : articleQuery.isError ? (
+        <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800">
+          {articleQuery.error instanceof Error ? articleQuery.error.message : "Could not load workspace."}
+        </div>
+      ) : null}
+
+      {workspaceEnabled && article ? (
+        <div className="rounded-xl border border-border bg-card p-5">
+          <p className="text-sm text-muted-foreground">
+            Active role: <span className="font-semibold text-foreground">{roleLabel}</span> • Article:{" "}
+            <span className="font-semibold text-foreground">{article.title}</span> • State:{" "}
+            <span className="font-semibold text-foreground capitalize">{newsStatus.replace("_", " ")}</span>
+          </p>
+          <p className="mt-2 text-xs text-muted-foreground">Slug: {article.slug}</p>
+        </div>
+      ) : null}
 
       {feedback ? (
         <div
@@ -68,8 +115,8 @@ export default function ManageNewsPage() {
           <p className="mt-2 text-sm text-muted-foreground">Owners can draft and submit stories for moderation.</p>
           <button
             type="button"
-            onClick={onSubmitForReview}
-            disabled={!canSubmit}
+            onClick={() => void onSubmitForReview()}
+            disabled={!canSubmit || pending || !article}
             className="mt-4 rounded-md border border-border px-3 py-1.5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-60"
           >
             Submit For Review
@@ -77,12 +124,12 @@ export default function ManageNewsPage() {
         </section>
 
         <section className="rounded-xl border border-border bg-card p-5">
-          <h2 className="font-semibold">Agent Review</h2>
-          <p className="mt-2 text-sm text-muted-foreground">Agents can publish approved posts and schedule releases.</p>
+          <h2 className="font-semibold">Trusted publisher</h2>
+          <p className="mt-2 text-sm text-muted-foreground">Agents and admins can publish items that are in pending review.</p>
           <button
             type="button"
-            onClick={onPublishNow}
-            disabled={!canPublish}
+            onClick={() => void onPublishNow()}
+            disabled={!canPublish || pending || !article}
             className="mt-4 rounded-md border border-border px-3 py-1.5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-60"
           >
             Publish Now
@@ -93,7 +140,7 @@ export default function ManageNewsPage() {
       <div className="rounded-xl border border-border bg-card p-5">
         <h2 className="font-semibold">Moderation Guidance</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          This scaffold aligns owner submission, agent publishing, and admin moderation workflows while API mutations are finalized.
+          Mutations go through the API layer (MSW in development). Final rules are enforced server-side when the backend ships.
         </p>
         <Link href="/admin/news" className="mt-3 inline-flex text-sm font-medium text-accent hover:underline">
           Open admin moderation queue

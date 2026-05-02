@@ -1,17 +1,19 @@
-import { PUBLISHING_ROLES, type PublishingRole } from "@/lib/contracts/publishing";
+import type { UserRole } from "@/lib/api/types";
+import { PUBLISHING_ROLE_VALUES, type PublishingRole } from "@/lib/contracts/publishing";
 
-export const CONTENT_STATUSES = [
+/** News CMS workflow states (frontend domain; keep in sync with admin/manage news UI). */
+export const CONTENT_STATUS_VALUES = [
   "draft",
   "pending_review",
   "published",
   "rejected",
 ] as const;
 
-export type ContentStatus = (typeof CONTENT_STATUSES)[number];
+export type ContentStatus = (typeof CONTENT_STATUS_VALUES)[number];
 
-export const PUBLISHER_ROLES = PUBLISHING_ROLES;
+export const PUBLISHER_ROLES = PUBLISHING_ROLE_VALUES;
 
-export function canPublishNews(role: PublishingRole): boolean {
+export function canPublishNews(role: UserRole): boolean {
   return role === "agent" || role === "admin";
 }
 

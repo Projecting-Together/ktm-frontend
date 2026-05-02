@@ -1,19 +1,28 @@
 import { z } from "zod";
-import type { AdminListing } from "@/lib/admin/types";
 import type {
-  AdminAnalyticsOverview,
-  Amenity,
-  AuditLog,
-  Favorite,
-  Inquiry,
-  Listing,
-  ListingImage,
-  Locality,
-  Report,
-  TokenPair,
-  User,
-  VisitRequest,
+  AdminAnalyticsPoint,
+  AdminDashboardActivity,
+  AdminDashboardKpi,
+  AdminListing,
+  AdminTransaction,
+  AdminUser,
+} from "@/lib/admin/types";
+import {
+  LISTING_TYPE_VALUES,
+  type AdminAnalyticsOverview,
+  type Amenity,
+  type AuditLog,
+  type Favorite,
+  type Inquiry,
+  type Listing,
+  type ListingImage,
+  type Locality,
+  type Report,
+  type TokenPair,
+  type User,
+  type VisitRequest,
 } from "@/lib/api/types";
+import { ADMIN_DASHBOARD_KPI_KEYS, ADMIN_LISTING_STATUS_VALUES } from "@/lib/admin/types";
 
 const localitySchema = z.object({
   id: z.string(),
@@ -99,8 +108,8 @@ export function parseListingImagesFlat(data: unknown): Array<ListingImage & { li
 const adminListingSchema = z.object({
   id: z.string(),
   title: z.string(),
-  type: z.enum(["apartment", "room", "house", "studio", "commercial"]),
-  status: z.enum(["pending", "active", "sold", "rejected"]),
+  type: z.enum(LISTING_TYPE_VALUES),
+  status: z.enum(ADMIN_LISTING_STATUS_VALUES),
   city: z.string(),
   priceNpr: z.number(),
   createdAt: z.string(),
@@ -108,4 +117,113 @@ const adminListingSchema = z.object({
 
 export function parseAdminListingsCatalog(data: unknown): AdminListing[] {
   return z.array(adminListingSchema).parse(data) as AdminListing[];
+}
+
+const adminUserUiSchema = z.object({
+  id: z.string(),
+  email: z.string(),
+  role: z.enum(["user", "agent", "moderator", "admin"]),
+  status: z.enum(["active", "inactive", "suspended"]),
+  joinedAt: z.string(),
+});
+
+const adminTransactionSchema = z.object({
+  id: z.string(),
+  userId: z.string(),
+  listingId: z.string(),
+  amountNpr: z.number(),
+  status: z.enum(["paid", "pending", "failed", "refunded"]),
+  paymentMethod: z.enum(["wallet", "bank_transfer", "cash"]),
+  createdAt: z.string(),
+});
+
+const adminAnalyticsPointSchema = z.object({
+  date: z.string(),
+  listings: z.number(),
+  transactions: z.number(),
+  users: z.number(),
+});
+
+const adminDashboardKpiSchema = z.object({
+  key: z.enum(ADMIN_DASHBOARD_KPI_KEYS),
+  label: z.string(),
+  value: z.number(),
+  deltaPercent: z.number(),
+});
+
+const adminDashboardActivitySchema = z.object({
+  id: z.string(),
+  actor: z.string(),
+  action: z.string(),
+  createdAt: z.string(),
+});
+
+const adminDashboardFacadeSchema = z.object({
+  kpis: z.array(adminDashboardKpiSchema),
+  activities: z.array(adminDashboardActivitySchema),
+});
+
+/** Admin UI user table (`/admin/users` facade), not `catalog/users.json` API users. */
+export function parseAdminUsersUiCatalog(data: unknown): AdminUser[] {
+  return z.array(adminUserUiSchema).parse(data) as AdminUser[];
+}
+
+export function parseAdminTransactionsCatalog(data: unknown): AdminTransaction[] {
+  return z.array(adminTransactionSchema).parse(data) as AdminTransaction[];
+}
+
+export function parseAdminAnalyticsSeriesCatalog(data: unknown): AdminAnalyticsPoint[] {
+  return z.array(adminAnalyticsPointSchema).parse(data) as AdminAnalyticsPoint[];
+}
+
+export function parseAdminDashboardFacade(data: unknown): {
+  kpis: AdminDashboardKpi[];
+  activities: AdminDashboardActivity[];
+} {
+  const o = adminDashboardFacadeSchema.parse(data);
+  return {
+    kpis: o.kpis as AdminDashboardKpi[],
+    activities: o.activities as AdminDashboardActivity[],
+  };
+}
+
+/** MSW news CMS rows — aligned with `frontend/src/msw/newsMockStore.ts`. */
+const newsContentStatusSchema = z.enum(["draft", "pending_review", "published", "rejected"]);
+
+const newsMswArticleRowSchema = z.object({
+  id: z.string(),
+  slug: z.string(),
+  title: z.string(),
+  summary: z.string().nullable(),
+  content: z.string().nullable(),
+  cover_image_url: z.string().nullable(),
+  status: newsContentStatusSchema,
+  author_user_id: z.string(),
+  rejection_reason: z.string().nullable(),
+  published_at: z.string().nullable(),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
+const newsMswCatalogSchema = z
+  .object({
+    workspace_article_id: z.string(),
+    workspace_publish_slug: z.string(),
+    published: z.array(newsMswArticleRowSchema),
+    workspace_initial: newsMswArticleRowSchema,
+  })
+  .superRefine((val, ctx) => {
+    if (val.workspace_initial.id !== val.workspace_article_id) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `workspace_initial.id (${val.workspace_initial.id}) must equal workspace_article_id (${val.workspace_article_id})`,
+      });
+    }
+  });
+
+export type NewsMswArticleRow = z.infer<typeof newsMswArticleRowSchema>;
+export type NewsMswCatalog = z.infer<typeof newsMswCatalogSchema>;
+
+export function parseNewsMswCatalog(data: unknown): NewsMswCatalog {
+  return newsMswCatalogSchema.parse(data);
 }

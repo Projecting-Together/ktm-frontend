@@ -1,5 +1,5 @@
 import {
-  CONTENT_STATUSES,
+  CONTENT_STATUS_VALUES,
   PUBLISHER_ROLES,
   canModerateNewsTransition,
   canPublishNews,
@@ -8,7 +8,7 @@ import {
 
 describe("news publishing contract", () => {
   it("defines expected content statuses", () => {
-    expect(CONTENT_STATUSES).toEqual([
+    expect(CONTENT_STATUS_VALUES).toEqual([
       "draft",
       "pending_review",
       "published",

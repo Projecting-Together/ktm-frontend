@@ -4,9 +4,9 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { toast } from "sonner";
 import type { CompareSnapshot } from "@/lib/compare/listingToCompareSnapshot";
+import { COMPARE_STORE_STORAGE_KEY } from "@shared/const";
 
 const MAX_COMPARE = 5;
-const STORAGE_KEY = "ktm-compare-v1";
 
 type CompareState = {
   entries: CompareSnapshot[];
@@ -50,7 +50,7 @@ export const useCompareStore = create<CompareState>()(
       openDrawer: () => set({ drawerOpen: true }),
     }),
     {
-      name: STORAGE_KEY,
+      name: COMPARE_STORE_STORAGE_KEY,
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({ entries: state.entries }),
     },

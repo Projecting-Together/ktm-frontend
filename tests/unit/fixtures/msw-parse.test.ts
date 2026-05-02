@@ -23,7 +23,7 @@ describe("MSW fixtures (JSON + Zod)", () => {
   });
 
   it("parses login accounts", () => {
-    expect(mswAuthLogins.loginAccounts).toHaveLength(3);
+    expect(mswAuthLogins.loginAccounts).toHaveLength(4);
     expect(mswAuthLogins.registerConflictEmail).toBe("existing@gmail.com");
   });
 

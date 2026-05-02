@@ -1,7 +1,12 @@
 "use client";
 
 import { create } from "zustand";
-import type { User, UserRole } from "@/lib/api/types";
+import {
+  LISTING_CREATOR_ROLE_VALUES,
+  MODERATION_ROLE_VALUES,
+  type User,
+  type UserRole,
+} from "@/lib/api/types";
 import { clearTokens, getCurrentUser, logout as apiLogout, upgradeCurrentUserToAgent } from "@/lib/api/client";
 
 interface AuthState {
@@ -64,13 +69,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   canCreateListing: () => {
     const user = get().user;
     if (!user) return false;
-    return ["renter", "owner", "agent", "admin"].includes(user.role);
+    return LISTING_CREATOR_ROLE_VALUES.some((r) => r === user.role);
   },
 
   canModerate: () => {
     const user = get().user;
     if (!user) return false;
-    return ["moderator", "admin"].includes(user.role);
+    return MODERATION_ROLE_VALUES.some((r) => r === user.role);
   },
 
   isAdmin: () => get().user?.role === "admin",

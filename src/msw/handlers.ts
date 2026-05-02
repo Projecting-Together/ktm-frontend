@@ -3,22 +3,21 @@
  * Requests use `NEXT_PUBLIC_API_URL` as origin + `/listings/`, etc. — pathname is always `/api/v1/...`.
  */
 import { http, HttpResponse, passthrough } from "msw";
-import type { ListingStats, PaginatedResponse, ListingListItem } from "@/lib/api/types";
+import type { ListingStats, PaginatedResponse, ListingListItem, NewsArticle, NewsListItem, UserRole } from "@/lib/api/types";
 import { scenarioCatalog } from "@/msw/mockScenarioData";
 import { resolveScenarioState } from "@/msw/mockScenarioSelector";
 import {
-  mockListingsPage1,
-  mockThamelListings,
-  mockPendingListings,
   mockListings,
   mockListingItems,
   mockLocalities,
   mockRenter,
   mockOwner,
   mockAdmin,
+  mockAgent,
   mockAuthTokens,
   mockOwnerAuthTokens,
   mockAdminAuthTokens,
+  mockAgentAuthTokens,
   mockInquiries,
   mockVisitRequests,
   mockFavorites,
@@ -30,7 +29,15 @@ import {
   mswSyntheticIds,
   mswUploadTemplates,
 } from "@/test-utils/mockData";
-import { adminListings } from "@/lib/mocks/admin/listings";
+import {
+  adminDashboardActivitiesCatalog,
+  adminDashboardKpisCatalog,
+  adminListingsCatalog as adminListings,
+} from "@/test-utils/fixtures";
+import { buildAdminAnalyticsTimeseries } from "@/msw/adminAnalyticsTimeseries";
+import { buildFilteredListingPageFromSearchParams } from "@/test-utils/public-listings-fixtures";
+import type { NewsArticleRow } from "@/msw/newsMockStore";
+import * as newsMockStore from "@/msw/newsMockStore";
 
 /** Next.js chunks & dev endpoints must not be mocked — prevents 404 / wrong MIME on `/_next/static/*`. */
 const passthroughNextAssets = http.all(
@@ -61,7 +68,8 @@ function resolveLoginTokens(email: string, password: string) {
     if (row.email !== email || row.password !== password) continue;
     if (row.tokens === "renter") return mockAuthTokens;
     if (row.tokens === "owner") return mockOwnerAuthTokens;
-    return mockAdminAuthTokens;
+    if (row.tokens === "agent") return mockAgentAuthTokens;
+    if (row.tokens === "admin") return mockAdminAuthTokens;
   }
   return null;
 }
@@ -85,46 +93,54 @@ function getAdminScenario() {
 function resolveMockUserIdFromAccessToken(token: string): string | null {
   if (token === mockOwnerAuthTokens.access_token) return mockOwner.id;
   if (token === mockAdminAuthTokens.access_token) return mockAdmin.id;
+  if (token === mockAgentAuthTokens.access_token) return mockAgent.id;
   if (token === mockAuthTokens.access_token) return mockRenter.id;
   return null;
 }
 
-function filterListingItems(request: Request) {
-  const url = new URL(request.url);
-  const status = url.searchParams.get("status");
-  const priceMax = url.searchParams.get("price_max") ?? url.searchParams.get("max_price");
-  const bedsMin = url.searchParams.get("beds") ?? url.searchParams.get("bedrooms");
-  const bedsMax = url.searchParams.get("max_bedrooms");
-  const bathsMin = url.searchParams.get("bathrooms");
-  const bathsMax = url.searchParams.get("max_bathrooms");
-  const furnishing = url.searchParams.get("furnishing");
-  const verified = url.searchParams.get("verified");
-  const city = url.searchParams.get("city");
+function resolveMockRoleFromAccessToken(token: string): UserRole | null {
+  if (token === mockOwnerAuthTokens.access_token) return mockOwner.role;
+  if (token === mockAdminAuthTokens.access_token) return mockAdmin.role;
+  if (token === mockAgentAuthTokens.access_token) return mockAgent.role;
+  if (token === mockAuthTokens.access_token) return mockRenter.role;
+  return null;
+}
 
-  if (status === "pending") return mockPendingListings;
-  /** Frontend sends `city` from `city_slug` (e.g. thamel for area filter demos). */
-  if (city?.toLowerCase() === "thamel") return mockThamelListings;
-
-  let filtered = [...mockListingItems];
-  if (priceMax) filtered = filtered.filter((l) => Number(l.price) <= Number(priceMax));
-  if (bedsMin) filtered = filtered.filter((l) => (l.bedrooms ?? 0) >= Number(bedsMin));
-  if (bedsMax) filtered = filtered.filter((l) => (l.bedrooms ?? 999) <= Number(bedsMax));
-  if (bathsMin) filtered = filtered.filter((l) => Number(l.bathrooms ?? 0) >= Number(bathsMin));
-  if (bathsMax) filtered = filtered.filter((l) => Number(l.bathrooms ?? 999) <= Number(bathsMax));
-  if (furnishing) filtered = filtered.filter((l) => l.furnishing === furnishing);
-  if (verified === "true") filtered = filtered.filter((l) => l.is_verified);
-  if (city) {
-    const q = city.trim().toLowerCase();
-    filtered = filtered.filter((l) =>
-      (l.location?.city ?? "").toLowerCase().includes(q),
-    );
-  }
-
+function newsRowToListItem(row: NewsArticleRow): NewsListItem {
   return {
-    ...mockListingsPage1,
-    items: filtered,
-    total: filtered.length,
+    id: row.id,
+    slug: row.slug,
+    title: row.title,
+    summary: row.summary,
+    cover_image_url: row.cover_image_url,
+    published_at: row.published_at,
+    is_published: row.status === "published",
   };
+}
+
+function newsRowToPublicArticle(row: NewsArticleRow): NewsArticle {
+  return {
+    ...newsRowToListItem(row),
+    content: row.content,
+  };
+}
+
+function requireAuth(request: Request): { ok: true; userId: string; role: UserRole } | { ok: false; response: Response } {
+  const auth = request.headers.get("Authorization");
+  if (!auth?.startsWith("Bearer ")) {
+    return { ok: false, response: HttpResponse.json({ detail: "Not authenticated" }, { status: 401 }) };
+  }
+  const token = auth.slice(7);
+  const userId = resolveMockUserIdFromAccessToken(token);
+  const role = resolveMockRoleFromAccessToken(token);
+  if (!userId || !role) {
+    return { ok: false, response: HttpResponse.json({ detail: "Not authenticated" }, { status: 401 }) };
+  }
+  return { ok: true, userId, role };
+}
+
+function filterListingItems(request: Request) {
+  return buildFilteredListingPageFromSearchParams(new URL(request.url).searchParams);
 }
 
 export const handlers = [
@@ -190,7 +206,159 @@ export const handlers = [
       const token = auth.slice(7);
       if (token === mockOwnerAuthTokens.access_token) return HttpResponse.json(mockOwner);
       if (token === mockAdminAuthTokens.access_token) return HttpResponse.json(mockAdmin);
+      if (token === mockAgentAuthTokens.access_token) return HttpResponse.json(mockAgent);
       return HttpResponse.json(mockRenter);
+    }
+  ),
+
+  // ── NEWS (in-memory MSW store — backend must enforce the same rules when implemented) ──
+  http.get(
+    ({ request }) => {
+      const p = pathname(request);
+      return p === "/api/v1/news/published" || p === "/api/v1/news/published/";
+    },
+    ({ request }) => {
+      const url = new URL(request.url);
+      const body = newsMockStore.listPublishedForPublic(url.searchParams);
+      return HttpResponse.json({
+        ...body,
+        items: body.items.map(newsRowToListItem),
+      });
+    }
+  ),
+
+  http.get(
+    ({ request }) => /^\/api\/v1\/news\/published\/[^/]+$/.test(pathname(request)),
+    ({ request }) => {
+      const segments = pathname(request).split("/");
+      const slug = segments[segments.length - 1] ?? "";
+      const row = newsMockStore.getPublishedBySlug(slug);
+      if (!row) return HttpResponse.json({ detail: "News not found" }, { status: 404 });
+      return HttpResponse.json(newsRowToPublicArticle(row));
+    }
+  ),
+
+  http.get(
+    ({ request }) => pathname(request) === "/api/v1/news/workspace",
+    ({ request }) => {
+      const auth = requireAuth(request);
+      if (!auth.ok) return auth.response;
+      const result = newsMockStore.getWorkspaceArticle(auth.userId, auth.role);
+      if (!result.ok) return HttpResponse.json({ detail: result.detail }, { status: result.status });
+      const row = result.article;
+      return HttpResponse.json({
+        id: row.id,
+        slug: row.slug,
+        title: row.title,
+        summary: row.summary,
+        content: row.content,
+        cover_image_url: row.cover_image_url,
+        status: row.status,
+        rejection_reason: row.rejection_reason,
+        published_at: row.published_at,
+        author_user_id: row.author_user_id,
+      });
+    }
+  ),
+
+  http.post(
+    ({ request }) => pathname(request) === "/api/v1/news/workspace/submit",
+    ({ request }) => {
+      const auth = requireAuth(request);
+      if (!auth.ok) return auth.response;
+      const result = newsMockStore.submitWorkspaceArticle(auth.userId, auth.role);
+      if (!result.ok) return HttpResponse.json({ detail: result.detail }, { status: result.status });
+      const row = result.article;
+      return HttpResponse.json({
+        id: row.id,
+        slug: row.slug,
+        title: row.title,
+        summary: row.summary,
+        content: row.content,
+        cover_image_url: row.cover_image_url,
+        status: row.status,
+        rejection_reason: row.rejection_reason,
+        published_at: row.published_at,
+        author_user_id: row.author_user_id,
+      });
+    }
+  ),
+
+  http.post(
+    ({ request }) => pathname(request) === "/api/v1/news/workspace/publish",
+    ({ request }) => {
+      const auth = requireAuth(request);
+      if (!auth.ok) return auth.response;
+      const result = newsMockStore.publishWorkspaceArticle(auth.userId, auth.role);
+      if (!result.ok) return HttpResponse.json({ detail: result.detail }, { status: result.status });
+      const row = result.article;
+      return HttpResponse.json({
+        id: row.id,
+        slug: row.slug,
+        title: row.title,
+        summary: row.summary,
+        content: row.content,
+        cover_image_url: row.cover_image_url,
+        status: row.status,
+        rejection_reason: row.rejection_reason,
+        published_at: row.published_at,
+        author_user_id: row.author_user_id,
+      });
+    }
+  ),
+
+  http.get(
+    ({ request }) => pathname(request) === "/api/v1/news/moderation/queue",
+    ({ request }) => {
+      const auth = requireAuth(request);
+      if (!auth.ok) return auth.response;
+      if (auth.role !== "admin") {
+        return HttpResponse.json({ detail: "Admin access required for moderation queue." }, { status: 403 });
+      }
+      const items = newsMockStore.listModerationQueue().map((row) => ({
+        id: row.id,
+        slug: row.slug,
+        title: row.title,
+        summary: row.summary,
+        content: row.content,
+        cover_image_url: row.cover_image_url,
+        status: row.status,
+        rejection_reason: row.rejection_reason,
+        published_at: row.published_at,
+        author_user_id: row.author_user_id,
+      }));
+      return HttpResponse.json({ items });
+    }
+  ),
+
+  http.patch(
+    ({ request }) => /^\/api\/v1\/news\/moderation\/[^/]+$/.test(pathname(request)),
+    async ({ request }) => {
+      const auth = requireAuth(request);
+      if (!auth.ok) return auth.response;
+      if (auth.role !== "admin") {
+        return HttpResponse.json({ detail: "Admin access required for moderation actions." }, { status: 403 });
+      }
+      const id = pathname(request).split("/")[5];
+      const body = (await request.json()) as { status: string; rejection_reason?: string | null };
+      const result = newsMockStore.patchModeration(id, {
+        status: body.status as NewsArticleRow["status"],
+        rejection_reason: body.rejection_reason,
+      });
+      if (!result.ok) return HttpResponse.json({ detail: result.detail }, { status: result.status });
+      const row = result.article;
+      return HttpResponse.json({
+        id: row.id,
+        slug: row.slug,
+        title: row.title,
+        summary: row.summary,
+        content: row.content,
+        cover_image_url: row.cover_image_url,
+        status: row.status,
+        rejection_reason: row.rejection_reason,
+        published_at: row.published_at,
+        author_user_id: row.author_user_id,
+      });
     }
   ),
 
@@ -516,6 +684,33 @@ export const handlers = [
   ),
 
   // ── ADMIN ─────────────────────────────────────────────────────────────────
+  http.get(
+    ({ request }) => pathname(request) === "/api/v1/admin/analytics/timeseries",
+    ({ request }) => {
+      const url = new URL(request.url);
+      const rawDr = url.searchParams.get("date_range");
+      const dateRange =
+        rawDr === "last-7-days" || rawDr === "last-30-days" || rawDr === "last-90-days" ? rawDr : undefined;
+      const body = buildAdminAnalyticsTimeseries({
+        dateRange,
+        city: url.searchParams.get("city") ?? undefined,
+        listingType: url.searchParams.get("listing_type") ?? undefined,
+        from: url.searchParams.get("from") ?? undefined,
+        to: url.searchParams.get("to") ?? undefined,
+      });
+      return HttpResponse.json(body);
+    }
+  ),
+
+  http.get(
+    ({ request }) => pathname(request) === "/api/v1/admin/dashboard/summary",
+    () =>
+      HttpResponse.json({
+        kpis: adminDashboardKpisCatalog.map((item) => ({ ...item })),
+        activities: adminDashboardActivitiesCatalog.map((item) => ({ ...item })),
+      })
+  ),
+
   http.get(
     ({ request }) => pathname(request).startsWith("/api/v1/admin/listings"),
     ({ request }) => {

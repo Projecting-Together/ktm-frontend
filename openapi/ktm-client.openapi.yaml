@@ -1,0 +1,94 @@
+openapi: 3.0.3
+info:
+  title: KTM Client API contract
+  version: "1.0.0"
+  description: |
+    Hand-maintained minimal contract for the Next.js client. Operations are added incrementally; this file
+    already centralizes shared domain enums and public listing search query param names.
+paths: {}
+components:
+  schemas:
+    UserRole:
+      type: string
+      enum: [renter, owner, agent, moderator, admin]
+    UserStatus:
+      type: string
+      enum: [active, suspended, pending_verification]
+    AmenityType:
+      type: string
+      enum: [building, unit, nearby]
+    ListingType:
+      type: string
+      enum: [apartment, room, house, studio, penthouse, commercial, land, video_shooting]
+    ListingPurpose:
+      type: string
+      enum: [rent, sale]
+    ListingStatus:
+      type: string
+      enum:
+        - draft
+        - pending
+        - pending_payment
+        - active
+        - expired
+        - rented
+        - sold
+        - rejected
+        - archived
+    FurnishingType:
+      type: string
+      enum: [fully, semi, unfurnished]
+    PricePeriod:
+      type: string
+      enum: [monthly, yearly, daily]
+    InquiryStatus:
+      type: string
+      enum: [pending, replied, closed]
+    VisitStatus:
+      type: string
+      enum: [pending, confirmed, cancelled, completed]
+    ReportReason:
+      type: string
+      enum: [spam, duplicate, misleading, inappropriate, fraud, other]
+    ReportStatus:
+      type: string
+      enum: [open, reviewing, resolved, dismissed]
+    NewsWorkspaceStatus:
+      type: string
+      enum: [draft, pending_review, published, rejected]
+    ListingSearchQueryParamKey:
+      type: string
+      description: Keys used for public listing search query strings (matches LISTING_FILTER_PARAM_KEYS).
+      enum:
+        - skip
+        - limit
+        - page
+        - listing_type
+        - purpose
+        - city
+        - district
+        - city_slug
+        - min_price
+        - max_price
+        - min_area_m2
+        - max_area_m2
+        - min_bedrooms
+        - max_bedrooms
+        - min_bathrooms
+        - max_bathrooms
+        - furnishing
+        - parking
+        - pets_allowed
+        - verified
+        - available_from
+        - amenities
+        - search
+        - sort_by
+        - sort_order
+        - min_lat
+        - max_lat
+        - min_lng
+        - max_lng
+        - lat
+        - lng
+        - radius_km

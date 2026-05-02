@@ -1,0 +1,5 @@
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c3ItYWdlbnQtMDAxIiwiZW1haWwiOiJiaWthc2guZ3J1bmdAa3RtcmVhbHR5LmNvbSIsInJvbGUiOiJhZ2VudCIsInN0YXR1cyI6ImFjdGl2ZSIsImlhdCI6MTcxMDAwMDAwMCwiZXhwIjoxNzEwMDAwOTAwfQ.mock_signature",
+  "refresh_token": "mock-refresh-agent",
+  "token_type": "bearer"
+}

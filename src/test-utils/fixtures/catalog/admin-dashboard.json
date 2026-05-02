@@ -1,0 +1,28 @@
+{
+  "kpis": [
+    { "key": "totalListings", "label": "Total Listings", "value": 128, "deltaPercent": 6.4 },
+    { "key": "pendingListings", "label": "Pending Review", "value": 14, "deltaPercent": -3.2 },
+    { "key": "activeUsers", "label": "Active Users", "value": 932, "deltaPercent": 8.1 },
+    { "key": "monthlyRevenue", "label": "Monthly Revenue (NPR)", "value": 2450000, "deltaPercent": 12.7 }
+  ],
+  "activities": [
+    {
+      "id": "act-1",
+      "actor": "moderator@ktm.test",
+      "action": "Approved listing l2",
+      "createdAt": "2026-04-24T08:10:00.000Z"
+    },
+    {
+      "id": "act-2",
+      "actor": "admin@ktm.test",
+      "action": "Suspended user u4",
+      "createdAt": "2026-04-24T07:35:00.000Z"
+    },
+    {
+      "id": "act-3",
+      "actor": "moderator@ktm.test",
+      "action": "Rejected listing l3",
+      "createdAt": "2026-04-24T06:55:00.000Z"
+    }
+  ]
+}

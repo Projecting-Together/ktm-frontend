@@ -1,6 +1,10 @@
 import type { ListingImage, User, UserProfile } from "@/lib/api/types";
+import adminAnalyticsSeriesJson from "./catalog/admin-analytics-series.json";
+import adminDashboardJson from "./catalog/admin-dashboard.json";
 import adminListingsJson from "./catalog/admin-listings.json";
 import adminAnalyticsJson from "./catalog/admin-analytics.json";
+import adminTransactionsJson from "./catalog/admin-transactions.json";
+import adminUsersUiJson from "./catalog/admin-users-ui.json";
 import amenitiesJson from "./catalog/amenities.json";
 import auditLogsJson from "./catalog/audit-logs.json";
 import authTokensJson from "./catalog/auth-tokens.json";
@@ -10,16 +14,22 @@ import listingImagesJson from "./catalog/listing-images.json";
 import listingsJson from "./catalog/listings.json";
 import localitiesJson from "./catalog/localities.json";
 import reportsJson from "./catalog/reports.json";
+import newsMswJson from "./catalog/news-msw.json";
 import usersJson from "./catalog/users.json";
 import visitRequestsJson from "./catalog/visit-requests.json";
 import adminAuthTokensMswJson from "./msw/admin-auth-tokens.json";
+import agentAuthTokensMswJson from "./msw/agent-auth-tokens.json";
 import authLoginsMswJson from "./msw/auth-logins.json";
 import syntheticIdsMswJson from "./msw/synthetic-ids.json";
 import uploadTemplatesMswJson from "./msw/upload-templates.json";
 import mswScenariosJson from "./scenarios/msw-scenarios.json";
 import {
+  parseAdminAnalyticsSeriesCatalog,
   parseAdminAnalyticsSnapshot,
+  parseAdminDashboardFacade,
   parseAdminListingsCatalog,
+  parseAdminTransactionsCatalog,
+  parseAdminUsersUiCatalog,
   parseAmenitiesCatalog,
   parseAuditLogsSnapshot,
   parseAuthTokensPair,
@@ -28,6 +38,7 @@ import {
   parseListingImagesFlat,
   parseListingsBundle,
   parseLocalitiesCatalog,
+  parseNewsMswCatalog,
   parseReportsSnapshot,
   parseUsersCatalog,
   parseVisitRequestsSeed,
@@ -88,8 +99,28 @@ export const mockReports = parseReportsSnapshot(reportsJson);
 /** Admin facade table (MSW `/api/v1/admin/listings`). */
 export const adminListingsCatalog = parseAdminListingsCatalog(adminListingsJson);
 
+/** Admin UI user rows (facade types), distinct from `catalog/users.json` API `User` catalog. */
+export const adminUiUsersCatalog = parseAdminUsersUiCatalog(adminUsersUiJson);
+
+export const adminTransactionsCatalog = parseAdminTransactionsCatalog(adminTransactionsJson);
+
+/** Time-series points for admin charts (`lib/admin/service` mock path). */
+export const adminAnalyticsSeriesCatalog = parseAdminAnalyticsSeriesCatalog(adminAnalyticsSeriesJson);
+
+const adminDashboardFacade = parseAdminDashboardFacade(adminDashboardJson);
+
+export const adminDashboardKpisCatalog = adminDashboardFacade.kpis;
+
+export const adminDashboardActivitiesCatalog = adminDashboardFacade.activities;
+
 /** MSW-only admin JWT pair (not in auth-tokens.json renter/owner bundle). */
 export const mockAdminAuthTokens = parseAdminAuthTokensFromMsw(adminAuthTokensMswJson);
+
+/** MSW-only agent JWT pair (aligned with `usr-agent-001` in catalog/users.json). */
+export const mockAgentAuthTokens = parseAdminAuthTokensFromMsw(agentAuthTokensMswJson);
+
+/** MSW news CMS seed (`catalog/news-msw.json`) — consumed by `src/msw/newsMockStore.ts`. */
+export const newsMswCatalog = parseNewsMswCatalog(newsMswJson);
 
 export const mswSyntheticIds = parseMswSyntheticIds(syntheticIdsMswJson);
 
@@ -110,3 +141,5 @@ export const visitRequestsSeed = parseVisitRequestsSeed(visitRequestsJson);
 export const favoritesSeed = parseFavoritesSeed(favoritesJson);
 
 export type CatalogListingImageRow = ListingImage & { listing_id: string };
+
+export type { NewsMswArticleRow, NewsMswCatalog } from "./parseFixtures";

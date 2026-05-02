@@ -1,5 +1,4 @@
 import type {
-  AdminAnalyticsPoint,
   AdminDashboardActivity,
   AdminDashboardKpi,
   AdminListing,
@@ -8,11 +7,12 @@ import type {
   AdminTransactionStatus,
   AdminUser,
 } from "@/lib/admin/types";
-import { adminAnalyticsSeries } from "@/lib/mocks/admin/analytics";
-import { adminDashboardActivities, adminDashboardKpis } from "@/lib/mocks/admin/dashboard";
-import { adminListings } from "@/lib/mocks/admin/listings";
-import { adminTransactions } from "@/lib/mocks/admin/transactions";
-import { adminUsers } from "@/lib/mocks/admin/users";
+import { adminFetchDashboardSummary } from "@/lib/api/client";
+import {
+  adminListingsCatalog as adminListings,
+  adminTransactionsCatalog as adminTransactions,
+  adminUiUsersCatalog as adminUsers,
+} from "@/test-utils/fixtures";
 
 interface PaginationParams {
   page?: number;
@@ -43,14 +43,6 @@ interface UserQueryParams extends PaginationParams {
   query?: string;
 }
 
-interface AnalyticsParams {
-  dateRange?: "last-7-days" | "last-30-days" | "last-90-days";
-  city?: string;
-  listingType?: string;
-  from?: string;
-  to?: string;
-}
-
 type AdminUserUpdatePatch = Partial<Omit<AdminUser, "id">>;
 
 const listingStore: AdminListing[] = adminListings.map((item) => ({ ...item }));
@@ -59,16 +51,6 @@ const userStore: AdminUser[] = adminUsers.map((item) => ({ ...item }));
 
 function normalizeQuery(value?: string): string {
   return value?.trim().toLowerCase() ?? "";
-}
-
-function toDateOnlyIso(value: Date): string {
-  return value.toISOString().slice(0, 10);
-}
-
-function subtractDaysIso(dateIso: string, days: number): string {
-  const anchor = new Date(`${dateIso}T00:00:00.000Z`);
-  anchor.setUTCDate(anchor.getUTCDate() - days);
-  return toDateOnlyIso(anchor);
 }
 
 function paginate<T>(items: T[], params: PaginationParams): PaginatedResult<T> {
@@ -224,61 +206,10 @@ async function forcePasswordReset(id: string): Promise<{ reset: boolean }> {
 }
 
 async function getDashboardSummary(): Promise<{ kpis: AdminDashboardKpi[]; activities: AdminDashboardActivity[] }> {
-  return {
-    kpis: adminDashboardKpis.map((item) => ({ ...item })),
-    activities: adminDashboardActivities.map((item) => ({ ...item })),
-  };
-}
-
-async function getAnalytics(params: AnalyticsParams = {}): Promise<AdminAnalyticsPoint[]> {
-  const latestSeriesDate = adminAnalyticsSeries.reduce((latest, point) => (point.date > latest ? point.date : latest), "1970-01-01");
-  const rangeDays: Record<NonNullable<AnalyticsParams["dateRange"]>, number> = {
-    "last-7-days": 7,
-    "last-30-days": 30,
-    "last-90-days": 90,
-  };
-  const effectiveTo = params.to ?? (params.dateRange ? latestSeriesDate : undefined);
-  const effectiveFrom =
-    params.from ??
-    (params.dateRange && effectiveTo ? subtractDaysIso(effectiveTo, rangeDays[params.dateRange] - 1) : undefined);
-  const cityFactor =
-    params.city && params.city !== "all-cities"
-      ? params.city === "kathmandu"
-        ? 1
-        : params.city === "lalitpur"
-          ? 0.7
-          : 0.5
-      : 1;
-  const listingTypeFactor =
-    params.listingType && params.listingType !== "all-types"
-      ? params.listingType === "apartment"
-        ? 1
-        : params.listingType === "house"
-          ? 0.85
-          : params.listingType === "room"
-            ? 0.65
-            : 0.55
-      : 1;
-  const scaleFactor = cityFactor * listingTypeFactor;
-
-  return adminAnalyticsSeries
-    .filter((item) => {
-      if (effectiveFrom && item.date < effectiveFrom) {
-        return false;
-      }
-
-      if (effectiveTo && item.date > effectiveTo) {
-        return false;
-      }
-
-      return true;
-    })
-    .map((item) => ({
-      ...item,
-      listings: Math.max(0, Math.round(item.listings * scaleFactor)),
-      transactions: Math.max(0, Math.round(item.transactions * scaleFactor)),
-      users: Math.max(0, Math.round(item.users * scaleFactor)),
-    }));
+  const res = await adminFetchDashboardSummary();
+  if (res.error) throw new Error(res.error.message);
+  if (!res.data) throw new Error("Dashboard summary response is empty");
+  return res.data;
 }
 
 export const adminService = {
@@ -292,5 +223,4 @@ export const adminService = {
   deleteUser,
   forcePasswordReset,
   getDashboardSummary,
-  getAnalytics,
 };

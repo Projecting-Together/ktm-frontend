@@ -1,6 +1,19 @@
-import { useQuery } from "@tanstack/react-query";
-import { getNews, getNewsDetail } from "@/lib/api/client";
-import type { NewsFilters } from "@/lib/api/types";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  getNews,
+  getNewsDetail,
+  getNewsModerationQueue,
+  getNewsWorkspaceArticle,
+  patchNewsModeration,
+  postNewsWorkspacePublish,
+  postNewsWorkspaceSubmit,
+} from "@/lib/api/client";
+import type { NewsFilters, NewsModerationQueueItem, UserRole } from "@/lib/api/types";
+import {
+  canPublishNews,
+  nextNewsStatusForSubmit,
+  type ContentStatus,
+} from "@/lib/contracts/news";
 
 export const newsKeys = {
   all: ["news"] as const,
@@ -8,6 +21,8 @@ export const newsKeys = {
   list: (filters: NewsFilters) => [...newsKeys.all, "list", filters] as const,
   details: () => [...newsKeys.all, "detail"] as const,
   detail: (slug: string) => [...newsKeys.all, "detail", slug] as const,
+  workspace: () => [...newsKeys.all, "workspace"] as const,
+  moderationQueue: () => [...newsKeys.all, "moderation", "queue"] as const,
 };
 
 export function useNews(filters: NewsFilters = {}) {
@@ -37,7 +52,89 @@ export function useNewsDetail(slug: string, options?: { enabled?: boolean }) {
   });
 }
 
-export type ManageNewsStatus = "draft" | "pending_review" | "published" | "rejected";
+/** Authenticated manage/news workspace (MSW or FastAPI). */
+export function useNewsWorkspace(options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: newsKeys.workspace(),
+    queryFn: async () => {
+      const res = await getNewsWorkspaceArticle();
+      if (res.error) throw new Error(res.error.message);
+      if (!res.data) throw new Error("News workspace response is empty");
+      return res.data;
+    },
+    enabled: options?.enabled ?? true,
+    staleTime: 30 * 1000,
+    retry: false,
+  });
+}
+
+export function useNewsModerationQueue(options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: newsKeys.moderationQueue(),
+    queryFn: async () => {
+      const res = await getNewsModerationQueue();
+      if (res.error) throw new Error(res.error.message);
+      if (!res.data) throw new Error("Moderation queue response is empty");
+      return res.data;
+    },
+    enabled: options?.enabled ?? true,
+    staleTime: 15 * 1000,
+    retry: false,
+  });
+}
+
+export function useNewsWorkspaceSubmit() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const res = await postNewsWorkspaceSubmit();
+      if (res.error) throw new Error(res.error.message);
+      return res.data!;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: newsKeys.workspace() });
+      qc.invalidateQueries({ queryKey: newsKeys.moderationQueue() });
+      qc.invalidateQueries({ queryKey: newsKeys.all });
+    },
+  });
+}
+
+export function useNewsWorkspacePublish() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const res = await postNewsWorkspacePublish();
+      if (res.error) throw new Error(res.error.message);
+      return res.data!;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: newsKeys.workspace() });
+      qc.invalidateQueries({ queryKey: newsKeys.moderationQueue() });
+      qc.invalidateQueries({ queryKey: newsKeys.all });
+    },
+  });
+}
+
+export function useNewsModerationPatch() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: { articleId: string; status: ContentStatus; rejection_reason?: string | null }) => {
+      const res = await patchNewsModeration(payload.articleId, {
+        status: payload.status,
+        rejection_reason: payload.rejection_reason,
+      });
+      if (res.error) throw new Error(res.error.message);
+      return res.data as NewsModerationQueueItem;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: newsKeys.moderationQueue() });
+      qc.invalidateQueries({ queryKey: newsKeys.workspace() });
+      qc.invalidateQueries({ queryKey: newsKeys.all });
+    },
+  });
+}
+
+export type ManageNewsStatus = ContentStatus;
 
 type TransitionDecision<TStatus extends string> = {
   allowed: boolean;
@@ -46,7 +143,7 @@ type TransitionDecision<TStatus extends string> = {
 };
 
 export function getNewsSubmitTransitionDecision(
-  role: string | null | undefined,
+  role: UserRole | null | undefined,
   currentStatus: ManageNewsStatus,
 ): TransitionDecision<ManageNewsStatus> {
   if (role !== "owner") {
@@ -67,16 +164,16 @@ export function getNewsSubmitTransitionDecision(
 
   return {
     allowed: true,
-    nextStatus: "pending_review",
+    nextStatus: nextNewsStatusForSubmit("owner"),
     message: "Owner draft submitted to moderation queue as pending review.",
   };
 }
 
 export function getNewsPublishTransitionDecision(
-  role: string | null | undefined,
+  role: UserRole | null | undefined,
   currentStatus: ManageNewsStatus,
 ): TransitionDecision<ManageNewsStatus> {
-  if (role !== "agent" && role !== "admin") {
+  if (!role || !canPublishNews(role)) {
     return {
       allowed: false,
       nextStatus: currentStatus,

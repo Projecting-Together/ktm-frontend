@@ -67,11 +67,4 @@ describe("admin service facade", () => {
     expect(secondRead.items[0].title).toBe("Sunrise Residency Apartment");
   });
 
-  it("applies dateRange relative to latest analytics series date", async () => {
-    const analytics = await adminService.getAnalytics({ dateRange: "last-7-days" });
-
-    expect(analytics).toHaveLength(5);
-    expect(analytics[0].date).toBe("2026-04-20");
-    expect(analytics[analytics.length - 1].date).toBe("2026-04-24");
-  });
 });

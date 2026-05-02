@@ -2,6 +2,7 @@
   "loginAccounts": [
     { "email": "ram.sharma@gmail.com", "password": "password123", "tokens": "renter" },
     { "email": "sita.thapa@gmail.com", "password": "password123", "tokens": "owner" },
+    { "email": "bikash.gurung@ktmrealty.com", "password": "password123", "tokens": "agent" },
     { "email": "admin@ktmapartments.com", "password": "password123", "tokens": "admin" }
   ],
   "registerConflictEmail": "existing@gmail.com"

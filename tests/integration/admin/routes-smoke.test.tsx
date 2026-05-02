@@ -3,7 +3,7 @@ import AdminLayout from "@/app/admin/layout";
 import AdminPage from "@/app/admin/page";
 import AdminAnalyticsPage from "@/app/admin/analytics/page";
 import AdminTransactionsPage from "@/app/admin/transactions/page";
-import { adminService } from "@/lib/admin/service";
+import { adminGetAnalyticsTimeseries } from "@/lib/api/client";
 
 const mockUseQuery = jest.fn();
 const mockInvalidateQueries = jest.fn();
@@ -25,11 +25,13 @@ jest.mock("@tanstack/react-query", () => ({
   useMutation: () => mockUseMutation(),
 }));
 
-jest.mock("@/lib/admin/service", () => ({
-  adminService: {
-    getAnalytics: jest.fn(),
-  },
-}));
+jest.mock("@/lib/api/client", () => {
+  const actual = jest.requireActual<typeof import("@/lib/api/client")>("@/lib/api/client");
+  return {
+    ...actual,
+    adminGetAnalyticsTimeseries: jest.fn(),
+  };
+});
 
 describe("admin routes smoke", () => {
   beforeEach(() => {
@@ -111,12 +113,15 @@ describe("admin routes smoke", () => {
   });
 
   it("charts and report export actions", () => {
-    const getAnalyticsMock = adminService.getAnalytics as jest.Mock;
-    getAnalyticsMock.mockResolvedValue([
-      { date: "2026-04-22", listings: 5, transactions: 4, users: 4 },
-      { date: "2026-04-23", listings: 8, transactions: 6, users: 9 },
-      { date: "2026-04-24", listings: 7, transactions: 5, users: 6 },
-    ]);
+    const timeseriesMock = adminGetAnalyticsTimeseries as jest.Mock;
+    timeseriesMock.mockResolvedValue({
+      data: [
+        { date: "2026-04-22", listings: 5, transactions: 4, users: 4 },
+        { date: "2026-04-23", listings: 8, transactions: 6, users: 9 },
+        { date: "2026-04-24", listings: 7, transactions: 5, users: 6 },
+      ],
+      error: null,
+    });
 
     mockUseQuery.mockImplementation(({ queryFn }: { queryFn: () => Promise<unknown> }) => {
       void queryFn();
@@ -138,7 +143,7 @@ describe("admin routes smoke", () => {
     expect(html).toContain(">Revenue Trend<");
     expect(html).toContain(">Export CSV<");
     expect(html).toContain(">Export PDF<");
-    expect(getAnalyticsMock).toHaveBeenCalledWith({
+    expect(timeseriesMock).toHaveBeenCalledWith({
       dateRange: "last-30-days",
       city: "all-cities",
       listingType: "all-types",

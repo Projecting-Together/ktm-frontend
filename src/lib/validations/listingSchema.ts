@@ -1,4 +1,10 @@
 import { z } from "zod";
+import {
+  FURNISHING_TYPE_VALUES,
+  LISTING_PURPOSE_VALUES,
+  LISTING_TYPE_VALUES,
+  PRICE_PERIOD_VALUES,
+} from "@/lib/api/types";
 
 // ─── Auth schemas ─────────────────────────────────────────────────────────────
 export const loginSchema = z.object({
@@ -30,17 +36,8 @@ const nepalPhoneSchema = z
 // ─── Listing creation — Step 1: Property Basics ───────────────────────────────
 export const step1Schema = z.object({
   title: z.string().min(10, "Title must be at least 10 characters").max(120, "Title too long"),
-  listing_type: z.enum([
-    "apartment",
-    "room",
-    "house",
-    "studio",
-    "penthouse",
-    "commercial",
-    "land",
-    "video_shooting",
-  ]),
-  purpose: z.enum(["rent", "sale"]).default("rent"),
+  listing_type: z.enum(LISTING_TYPE_VALUES),
+  purpose: z.enum(LISTING_PURPOSE_VALUES).default("rent"),
   address_line: z.string().min(5, "Enter a valid address"),
   locality_id: z.string().uuid("Select a locality").optional().nullable(),
   floor: z.number().int().min(-5).max(100).optional().nullable(),
@@ -52,7 +49,7 @@ export const step1Schema = z.object({
 export const step2Schema = z.object({
   bedrooms: z.number().int().min(0).max(20).optional().nullable(),
   bathrooms: z.number().min(0).max(20).optional().nullable(),
-  furnishing: z.enum(["fully", "semi", "unfurnished"]).optional(),
+  furnishing: z.enum(FURNISHING_TYPE_VALUES).optional(),
   parking: z.boolean().default(false),
   pets_allowed: z.boolean().default(false),
   smoking_allowed: z.boolean().default(false),
@@ -71,7 +68,7 @@ export const step4Schema = z.object({
     .positive("Enter a valid price")
     .max(5_000_000, "Price seems too high — check the value")
     .min(1_000, "Minimum price is NPR 1,000"),
-  price_period: z.enum(["monthly", "yearly", "daily"]).default("monthly"),
+  price_period: z.enum(PRICE_PERIOD_VALUES).default("monthly"),
   currency: z.string().default("NPR"),
   security_deposit: z.number().min(0).optional().nullable(),
   price_negotiable: z.boolean().default(false),

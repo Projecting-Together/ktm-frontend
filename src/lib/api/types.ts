@@ -1,10 +1,24 @@
 /**
  * KTM Apartments — API Type Definitions
  * Aligned with backend Pydantic schemas. UUIDs/datetimes as strings.
+ * Domain string enums are driven by `openapi/ktm-client.openapi.yaml` → `generated/openapi-types.ts`.
  */
 
-export type UserRole = "renter" | "owner" | "agent" | "moderator" | "admin";
-export type UserStatus = "active" | "suspended" | "pending_verification";
+import type { components } from "@/lib/api/generated/openapi-types";
+
+/** Canonical role codes (OpenAPI `UserRole`). */
+export type UserRole = components["schemas"]["UserRole"];
+export const USER_ROLE_VALUES = ["renter", "owner", "agent", "moderator", "admin"] as const satisfies readonly UserRole[];
+
+/** Roles allowed to create listings (moderator is staff moderation-only in current product rules). */
+export const LISTING_CREATOR_ROLE_VALUES = ["renter", "owner", "agent", "admin"] as const satisfies readonly UserRole[];
+
+/** Roles that may access moderation / admin-queue flows. */
+export const MODERATION_ROLE_VALUES = ["moderator", "admin"] as const satisfies readonly UserRole[];
+
+/** Canonical account status codes (OpenAPI `UserStatus`). */
+export type UserStatus = components["schemas"]["UserStatus"];
+export const USER_STATUS_VALUES = ["active", "suspended", "pending_verification"] as const satisfies readonly UserStatus[];
 
 export interface UserProfile {
   user_id: string;
@@ -49,7 +63,7 @@ export interface Locality {
   image_url?: string | null;
 }
 
-export type AmenityType = "building" | "unit" | "nearby";
+export type AmenityType = components["schemas"]["AmenityType"];
 
 export interface Amenity {
   id: string;
@@ -59,21 +73,41 @@ export interface Amenity {
   icon?: string | null;
 }
 
-export type ListingType = "apartment" | "room" | "house" | "studio" | "penthouse" | "commercial" | "land" | "video_shooting";
-export type ListingPurpose = "rent" | "sale";
-/** Aligns with backend listing lifecycle (`pending_payment`, `expired`, …) and UI aliases (`archived`). */
-export type ListingStatus =
-  | "draft"
-  | "pending"
-  | "pending_payment"
-  | "active"
-  | "expired"
-  | "rented"
-  | "sold"
-  | "rejected"
-  | "archived";
-export type FurnishingType = "fully" | "semi" | "unfurnished";
-export type PricePeriod = "monthly" | "yearly" | "daily";
+/** Canonical listing type codes (OpenAPI `ListingType`); use for Zod `z.enum` and filter option lists. */
+export type ListingType = components["schemas"]["ListingType"];
+export const LISTING_TYPE_VALUES = [
+  "apartment",
+  "room",
+  "house",
+  "studio",
+  "penthouse",
+  "commercial",
+  "land",
+  "video_shooting",
+] as const satisfies readonly ListingType[];
+
+export type ListingPurpose = components["schemas"]["ListingPurpose"];
+export const LISTING_PURPOSE_VALUES = ["rent", "sale"] as const satisfies readonly ListingPurpose[];
+
+/** Canonical listing lifecycle statuses (OpenAPI `ListingStatus`); labels live in `formatListingStatusLabel` / UI maps. */
+export type ListingStatus = components["schemas"]["ListingStatus"];
+export const LISTING_STATUS_VALUES = [
+  "draft",
+  "pending",
+  "pending_payment",
+  "active",
+  "expired",
+  "rented",
+  "sold",
+  "rejected",
+  "archived",
+] as const satisfies readonly ListingStatus[];
+
+export type FurnishingType = components["schemas"]["FurnishingType"];
+export const FURNISHING_TYPE_VALUES = ["fully", "semi", "unfurnished"] as const satisfies readonly FurnishingType[];
+
+export type PricePeriod = components["schemas"]["PricePeriod"];
+export const PRICE_PERIOD_VALUES = ["monthly", "yearly", "daily"] as const satisfies readonly PricePeriod[];
 
 export interface ListingLocation {
   location_id: string;
@@ -230,6 +264,42 @@ export interface ListingFilters {
   max_area_m2?: number;
 }
 
+/** Keys passed through listing search URL sync / API query building (stable order). */
+export const LISTING_FILTER_PARAM_KEYS = [
+  "skip",
+  "limit",
+  "page",
+  "listing_type",
+  "purpose",
+  "city",
+  "district",
+  "city_slug",
+  "min_price",
+  "max_price",
+  "min_area_m2",
+  "max_area_m2",
+  "min_bedrooms",
+  "max_bedrooms",
+  "min_bathrooms",
+  "max_bathrooms",
+  "furnishing",
+  "parking",
+  "pets_allowed",
+  "verified",
+  "available_from",
+  "amenities",
+  "search",
+  "sort_by",
+  "sort_order",
+  "min_lat",
+  "max_lat",
+  "min_lng",
+  "max_lng",
+  "lat",
+  "lng",
+  "radius_km",
+] as const satisfies ReadonlyArray<components["schemas"]["ListingSearchQueryParamKey"]>;
+
 /** Authenticated `GET /listings/user/my-listings` query params. */
 export interface MyListingsFilters {
   skip?: number;
@@ -238,7 +308,7 @@ export interface MyListingsFilters {
   status?: ListingStatus;
 }
 
-export type InquiryStatus = "pending" | "replied" | "closed";
+export type InquiryStatus = components["schemas"]["InquiryStatus"];
 
 export interface Inquiry {
   id: string;
@@ -261,7 +331,7 @@ export interface CreateInquiryPayload {
   move_in_date?: string | null;
 }
 
-export type VisitStatus = "pending" | "confirmed" | "cancelled" | "completed";
+export type VisitStatus = components["schemas"]["VisitStatus"];
 
 export interface VisitRequest {
   id: string;
@@ -288,8 +358,8 @@ export interface Favorite {
   listing?: ListingListItem | null;
 }
 
-export type ReportReason = "spam" | "duplicate" | "misleading" | "inappropriate" | "fraud" | "other";
-export type ReportStatus = "open" | "reviewing" | "resolved" | "dismissed";
+export type ReportReason = components["schemas"]["ReportReason"];
+export type ReportStatus = components["schemas"]["ReportStatus"];
 
 export interface Report {
   id: string;
@@ -358,6 +428,32 @@ export interface NewsFilters {
   limit?: number;
   search?: string;
   category?: string;
+}
+
+/** CMS workflow state for authenticated news APIs (matches `ContentStatus` in contracts/news). */
+export type NewsWorkspaceStatus = components["schemas"]["NewsWorkspaceStatus"];
+
+/** Authenticated workspace article (`GET /news/workspace`). */
+export interface NewsWorkspaceArticle {
+  id: string;
+  slug: string;
+  title: string;
+  summary?: string | null;
+  content?: string | null;
+  cover_image_url?: string | null;
+  status: NewsWorkspaceStatus;
+  rejection_reason?: string | null;
+  published_at?: string | null;
+  author_user_id?: string;
+}
+
+/** Admin moderation queue row (`GET /news/moderation/queue`). */
+export interface NewsModerationQueueItem extends NewsWorkspaceArticle {
+  author_user_id: string;
+}
+
+export interface NewsModerationQueueResponse {
+  items: NewsModerationQueueItem[];
 }
 
 export interface ApiError {

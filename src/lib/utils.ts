@@ -1,6 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import type { ListingListItem, Listing } from "@/lib/api/types";
+import type { ListingListItem, Listing, ListingStatus } from "@/lib/api/types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -86,57 +86,53 @@ export function buildWhatsAppUrl(phone: string, message: string): string {
   return `https://wa.me/${intl}?text=${encodeURIComponent(message)}`;
 }
 
-export const AMENITY_ICONS: Record<string, string> = {
-  lift: "🛗", backup_power: "⚡", cctv: "📷", security_guard: "💂",
-  gym: "🏋️", parking: "🅿️", water_tank: "💧", solar: "☀️",
-  internet: "🌐", gas_pipeline: "🔥", terrace: "🌿", balcony: "🏠",
+const LISTING_STATUS_TAILWIND: Record<ListingStatus, string> = {
+  active: "bg-emerald-100 text-emerald-700",
+  pending: "bg-amber-100 text-amber-700",
+  pending_payment: "bg-amber-100 text-amber-800",
+  draft: "bg-gray-100 text-gray-600",
+  rented: "bg-blue-100 text-blue-700",
+  sold: "bg-purple-100 text-purple-700",
+  rejected: "bg-red-100 text-red-700",
+  archived: "bg-gray-100 text-gray-500",
+  expired: "bg-gray-100 text-gray-500",
 };
 
-export const KTM_NEIGHBORHOODS = [
-  { slug: "thamel", name: "Thamel", name_ne: "थमेल" },
-  { slug: "lazimpat", name: "Lazimpat", name_ne: "लाजिम्पाट" },
-  { slug: "patan", name: "Patan", name_ne: "पाटन" },
-  { slug: "bhaktapur", name: "Bhaktapur", name_ne: "भक्तपुर" },
-  { slug: "koteshwor", name: "Koteshwor", name_ne: "कोटेश्वर" },
-  { slug: "baneshwor", name: "Baneshwor", name_ne: "बानेश्वर" },
-  { slug: "baluwatar", name: "Baluwatar", name_ne: "बालुवाटार" },
-  { slug: "maharajgunj", name: "Maharajgunj", name_ne: "महाराजगंज" },
-  { slug: "jawalakhel", name: "Jawalakhel", name_ne: "जावलाखेल" },
-  { slug: "kupondole", name: "Kupondole", name_ne: "कुपण्डोल" },
-];
+/** Legacy / UI-only status strings not in API `ListingStatus`. */
+const EXTRA_STATUS_TAILWIND: Record<string, string> = {
+  deactivated: "bg-slate-100 text-slate-600",
+  inactive: "bg-gray-100 text-gray-600",
+};
 
 export function getStatusColor(status: string): string {
-  const map: Record<string, string> = {
-    active: "bg-emerald-100 text-emerald-700",
-    pending: "bg-amber-100 text-amber-700",
-    pending_payment: "bg-amber-100 text-amber-800",
-    draft: "bg-gray-100 text-gray-600",
-    rented: "bg-blue-100 text-blue-700",
-    sold: "bg-purple-100 text-purple-700",
-    rejected: "bg-red-100 text-red-700",
-    archived: "bg-gray-100 text-gray-500",
-    expired: "bg-gray-100 text-gray-500",
-    deactivated: "bg-slate-100 text-slate-600",
-    inactive: "bg-gray-100 text-gray-600",
-  };
-  return map[status] ?? "bg-gray-100 text-gray-600";
+  if (Object.prototype.hasOwnProperty.call(LISTING_STATUS_TAILWIND, status)) {
+    return LISTING_STATUS_TAILWIND[status as ListingStatus];
+  }
+  return EXTRA_STATUS_TAILWIND[status] ?? "bg-gray-100 text-gray-600";
 }
+
+const LISTING_STATUS_LABELS: Record<ListingStatus, string> = {
+  pending_payment: "Pending payment",
+  active: "Active",
+  expired: "Expired",
+  rented: "Rented",
+  sold: "Sold",
+  draft: "Draft",
+  pending: "Pending",
+  archived: "Archived",
+  rejected: "Rejected",
+};
+
+const EXTRA_STATUS_LABELS: Record<string, string> = {
+  deactivated: "Deactivated",
+  inactive: "Inactive",
+};
 
 /** Human-readable label for API listing status (includes backend lifecycle values). */
 export function formatListingStatusLabel(status: string): string {
-  const map: Record<string, string> = {
-    pending_payment: "Pending payment",
-    active: "Active",
-    expired: "Expired",
-    deactivated: "Deactivated",
-    inactive: "Inactive",
-    rented: "Rented",
-    sold: "Sold",
-    draft: "Draft",
-    pending: "Pending",
-    archived: "Archived",
-    rejected: "Rejected",
-  };
-  if (map[status]) return map[status];
+  if (Object.prototype.hasOwnProperty.call(LISTING_STATUS_LABELS, status)) {
+    return LISTING_STATUS_LABELS[status as ListingStatus];
+  }
+  if (EXTRA_STATUS_LABELS[status]) return EXTRA_STATUS_LABELS[status];
   return status.charAt(0).toUpperCase() + status.slice(1).replace(/_/g, " ");
 }

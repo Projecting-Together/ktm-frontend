@@ -1,5 +1,8 @@
-type ListingPurpose = "rent" | "sale";
-type PurposeMode = "rent" | "buy";
+import type { ListingPurpose } from "@/lib/api/types";
+
+/** GA-style labels: maps API `ListingPurpose` `sale` to `buy` in payloads. */
+const PURPOSE_MODE_VALUES = ["rent", "buy"] as const;
+type PurposeMode = (typeof PURPOSE_MODE_VALUES)[number];
 
 type TelemetryPayload = Record<string, string | number | boolean | null | undefined>;
 

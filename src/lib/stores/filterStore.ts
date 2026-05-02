@@ -1,7 +1,7 @@
 "use client";
 
 import { create } from "zustand";
-import type { ListingFilters, ListingType } from "@/lib/api/types";
+import { LISTING_FILTER_PARAM_KEYS, type ListingFilters, type ListingType } from "@/lib/api/types";
 
 type SearchFilters = ListingFilters;
 
@@ -32,41 +32,6 @@ const DEFAULT_FILTERS: SearchFilters = {
   sort_by: "created_at",
   sort_order: "desc",
 };
-
-const API_FILTER_KEYS = [
-  "skip",
-  "limit",
-  "page",
-  "listing_type",
-  "purpose",
-  "city",
-  "district",
-  "city_slug",
-  "min_price",
-  "max_price",
-  "min_area_m2",
-  "max_area_m2",
-  "min_bedrooms",
-  "max_bedrooms",
-  "min_bathrooms",
-  "max_bathrooms",
-  "furnishing",
-  "parking",
-  "pets_allowed",
-  "verified",
-  "available_from",
-  "amenities",
-  "search",
-  "sort_by",
-  "sort_order",
-  "min_lat",
-  "max_lat",
-  "min_lng",
-  "max_lng",
-  "lat",
-  "lng",
-  "radius_km",
-] as const satisfies ReadonlyArray<keyof SearchFilters>;
 
 function normalizePriceRange(min?: number, max?: number): Pick<SearchFilters, "min_price" | "max_price"> {
   const minPrice = Number.isFinite(min) ? min : undefined;
@@ -267,7 +232,7 @@ export const useFilterStore = create<FilterState & FilterActions>((set, get) => 
 // Selector: extract only the API-relevant filters (strip UI state)
 export function selectApiFilters(state: FilterState): ListingFilters {
   const filters: ListingFilters = {};
-  for (const key of API_FILTER_KEYS) {
+  for (const key of LISTING_FILTER_PARAM_KEYS) {
     const value = state[key];
     if (value !== undefined) {
       (filters as Record<string, unknown>)[key] = value;
