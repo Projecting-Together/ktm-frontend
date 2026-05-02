@@ -13,6 +13,7 @@ import { adaptListingsForSearch } from "@/lib/contracts/adapters";
 import { trackPurposeModeChange } from "@/lib/analytics/events";
 import type { ListingFilters } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
+import { SEARCH_MAP_LOADING_MESSAGE, SORT_OPTIONS } from "@/shared/ui/search";
 
 const SearchMapDynamic = dynamic(
   () => import("@/components/map/SearchMap").then((m) => m.SearchMap),
@@ -20,18 +21,11 @@ const SearchMapDynamic = dynamic(
     ssr: false,
     loading: () => (
       <div className="flex min-h-[min(70vh,560px)] w-full items-center justify-center rounded-xl border border-border bg-muted/30 text-sm text-muted-foreground">
-        Loading map…
+        {SEARCH_MAP_LOADING_MESSAGE}
       </div>
     ),
   },
 );
-
-const SORT_OPTIONS = [
-  { value: "created_at:desc", label: "Newest first" },
-  { value: "price:asc", label: "Price: low to high" },
-  { value: "price:desc", label: "Price: high to low" },
-  { value: "area_m2:desc", label: "Largest first" },
-];
 
 const NUMERIC_URL_FILTER_KEYS = new Set([
   "page",
@@ -235,17 +229,12 @@ export default function SearchPageClient() {
 
   return (
     <div className="container py-6">
-      <div className="mb-4 md:hidden">
-        <SearchBar size="sm" defaultValue={store.search ?? ""}
-          onSearch={handleSearch} />
-      </div>
-
-      <div className="mb-5 flex items-center justify-between gap-3">
-        <div className="min-w-0 flex-1">
+      <div className="mb-5 space-y-4">
+        <div className="flex flex-wrap items-center gap-3">
           <div
             role="group"
             aria-label="Listing purpose"
-            className="mb-3 inline-flex rounded-lg border border-border bg-card p-0.5"
+            className="inline-flex shrink-0 rounded-lg border border-border bg-card p-0.5"
           >
             {([
               { value: "rent", label: "Rent" },
@@ -277,33 +266,27 @@ export default function SearchPageClient() {
               </button>
             ))}
           </div>
-          <h1 className="flex items-center gap-2 text-xl font-bold">
-            {isPending ? (
-              <>
-                <Loader2 className="h-5 w-5 shrink-0 animate-spin text-accent" aria-hidden />
-                Searching…
-              </>
-            ) : (
-              `${total.toLocaleString()} Properties`
-            )}
-          </h1>
-          {showSlowLoadHint && isFetching && !isError && (
-            <p className="mt-1 text-sm text-muted-foreground">
-              Still loading — the API may be slow, or your connection may be unstable. Requests time out after about 25 seconds; then you&apos;ll see an error with a retry option.
-            </p>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
+          <div className="min-w-[12rem] flex-1 basis-[min(100%,18rem)]">
+            <SearchBar
+              size="sm"
+              className="w-full"
+              defaultValue={store.search ?? ""}
+              onSearch={handleSearch}
+            />
+          </div>
           <button
             type="button"
             onClick={store.toggleFilterPanel}
-            className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium hover:bg-muted md:hidden"
+            className="flex shrink-0 items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium hover:bg-muted md:hidden"
           >
             <SlidersHorizontal className="h-4 w-4" /> Filters
           </button>
           <SortDropdown
             value={`${store.sort_by ?? "created_at"}:${store.sort_order ?? "desc"}`}
-            onChange={(val) => { const [by, ord] = val.split(":"); store.setFilters({ sort_by: by, sort_order: ord as "asc"|"desc" }); }}
+            onChange={(val) => {
+              const [by, ord] = val.split(":");
+              store.setFilters({ sort_by: by, sort_order: ord as "asc" | "desc" });
+            }}
           />
           <div
             className="flex shrink-0 items-center rounded-lg border border-border bg-card"
@@ -327,6 +310,23 @@ export default function SearchPageClient() {
               </button>
             ))}
           </div>
+        </div>
+        <div className="min-w-0">
+          <h1 className="flex items-center gap-2 text-xl font-bold">
+            {isPending ? (
+              <>
+                <Loader2 className="h-5 w-5 shrink-0 animate-spin text-accent" aria-hidden />
+                Searching…
+              </>
+            ) : (
+              `${total.toLocaleString()} Properties`
+            )}
+          </h1>
+          {showSlowLoadHint && isFetching && !isError && (
+            <p className="mt-1 text-sm text-muted-foreground">
+              Still loading — the API may be slow, or your connection may be unstable. Requests time out after about 25 seconds; then you&apos;ll see an error with a retry option.
+            </p>
+          )}
         </div>
       </div>
 

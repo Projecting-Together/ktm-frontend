@@ -7,6 +7,7 @@ import { FilterToolbar } from "@/components/admin/FilterToolbar";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { adminService } from "@/lib/admin/service";
 import type { AdminUser, AdminUserRole, AdminUserStatus } from "@/lib/admin/types";
+import { ADMIN_PAGE_USERS, ADMIN_USERS_TABLE } from "@/shared/ui/admin/tableCopy";
 
 const USER_ROLES: AdminUserRole[] = ["user", "agent", "moderator", "admin"];
 const USER_STATUSES: Array<AdminUserStatus | ""> = ["", "active", "inactive", "suspended"];
@@ -91,12 +92,12 @@ export default function AdminUsersPage() {
     () => [
       {
         key: "email",
-        header: "User",
+        header: ADMIN_USERS_TABLE.columnUser,
         cell: (row) => <span className="font-medium">{row.email}</span>,
       },
       {
         key: "role",
-        header: "Role",
+        header: ADMIN_USERS_TABLE.columnRole,
         cell: (row) => (
           <select
             aria-label={`Change role for user ${row.id}`}
@@ -124,17 +125,17 @@ export default function AdminUsersPage() {
       },
       {
         key: "status",
-        header: "Status",
+        header: ADMIN_USERS_TABLE.columnStatus,
         cell: (row) => <StatusBadge status={toBadgeStatus(row.status)} label={row.status} className="capitalize" />,
       },
       {
         key: "joinedAt",
-        header: "Joined",
+        header: ADMIN_USERS_TABLE.columnJoined,
         cell: (row) => new Date(row.joinedAt).toLocaleDateString("en-US"),
       },
       {
         key: "actions",
-        header: "Actions",
+        header: ADMIN_USERS_TABLE.columnActions,
         cell: (row) => {
           const isActive = row.status === "active";
 
@@ -230,8 +231,8 @@ export default function AdminUsersPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-bold mb-1">User Management</h1>
-        <p className="text-muted-foreground">Manage account roles, status, and recovery actions.</p>
+        <h1 className="text-2xl font-bold mb-1">{ADMIN_PAGE_USERS.title}</h1>
+        <p className="text-muted-foreground">{ADMIN_PAGE_USERS.subtitle}</p>
       </div>
 
       <FilterToolbar
@@ -239,7 +240,7 @@ export default function AdminUsersPage() {
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search by email or id"
+            placeholder={ADMIN_PAGE_USERS.searchPlaceholder}
             className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
           />
         }

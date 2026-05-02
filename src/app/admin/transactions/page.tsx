@@ -7,6 +7,7 @@ import { FilterToolbar } from "@/components/admin/FilterToolbar";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { adminService } from "@/lib/admin/service";
 import type { AdminTransaction, AdminTransactionStatus } from "@/lib/admin/types";
+import { ADMIN_PAGE_TRANSACTIONS, ADMIN_TRANSACTIONS_TABLE } from "@/shared/ui/admin/tableCopy";
 
 const TRANSACTION_STATUSES: Array<AdminTransactionStatus | ""> = ["", "paid", "pending", "failed", "refunded"];
 const STATUS_UPDATE_OPTIONS: AdminTransactionStatus[] = ["paid", "pending", "failed", "refunded"];
@@ -86,7 +87,7 @@ export default function AdminTransactionsPage() {
   const columns: DataTableColumn<AdminTransaction>[] = [
     {
       key: "id",
-      header: "Transaction",
+      header: ADMIN_TRANSACTIONS_TABLE.columnTransaction,
       cell: (row) => (
         <div>
           <p className="font-medium">{row.id}</p>
@@ -96,32 +97,32 @@ export default function AdminTransactionsPage() {
     },
     {
       key: "listingId",
-      header: "Listing",
+      header: ADMIN_TRANSACTIONS_TABLE.columnListing,
       cell: (row) => row.listingId,
     },
     {
       key: "amountNpr",
-      header: "Amount",
+      header: ADMIN_TRANSACTIONS_TABLE.columnAmount,
       cell: (row) => `NPR ${row.amountNpr.toLocaleString("en-US")}`,
     },
     {
       key: "paymentMethod",
-      header: "Method",
+      header: ADMIN_TRANSACTIONS_TABLE.columnMethod,
       cell: (row) => <span className="capitalize">{row.paymentMethod.replaceAll("_", " ")}</span>,
     },
     {
       key: "status",
-      header: "Status",
+      header: ADMIN_TRANSACTIONS_TABLE.columnStatus,
       cell: (row) => <StatusBadge status={toBadgeStatus(row.status)} label={row.status} className="capitalize" />,
     },
     {
       key: "createdAt",
-      header: "Created",
+      header: ADMIN_TRANSACTIONS_TABLE.columnCreated,
       cell: (row) => new Date(row.createdAt).toLocaleDateString("en-US"),
     },
     {
       key: "actions",
-      header: "Update Status",
+      header: ADMIN_TRANSACTIONS_TABLE.columnUpdateStatus,
       cell: (row) => (
         <label className="flex items-center gap-2">
           <span className="sr-only">{`Update status for transaction ${row.id}`}</span>
@@ -147,8 +148,8 @@ export default function AdminTransactionsPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-bold mb-1">Transactions</h1>
-        <p className="text-muted-foreground">Track payment activity, update statuses, and export filtered records.</p>
+        <h1 className="text-2xl font-bold mb-1">{ADMIN_PAGE_TRANSACTIONS.title}</h1>
+        <p className="text-muted-foreground">{ADMIN_PAGE_TRANSACTIONS.subtitle}</p>
       </div>
 
       <FilterToolbar
@@ -156,7 +157,7 @@ export default function AdminTransactionsPage() {
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search by transaction, listing, user, or method"
+            placeholder={ADMIN_PAGE_TRANSACTIONS.searchPlaceholder}
             className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
           />
         }

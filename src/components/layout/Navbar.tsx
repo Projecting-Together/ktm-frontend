@@ -9,13 +9,7 @@ import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/lib/stores/authStore";
 import { resolveListingCapabilities } from "@/lib/capabilities/listingCapabilities";
 import { ProUpgradeModal } from "@/components/listings/ProUpgradeModal";
-
-const NAV_LINKS = [
-  { href: "/listings", label: "Listings" },
-  { href: "/news", label: "News" },
-  { href: "/about", label: "About" },
-  { href: "/contact", label: "Contact" },
-];
+import { PRIMARY_NAV_LINKS } from "@/shared/ui/publicNav";
 
 type PostListingButtonProps = {
   onCreate: (href: string) => Promise<void>;
@@ -119,7 +113,7 @@ export function Navbar() {
 
         {/* Desktop nav */}
         <div className="hidden items-center gap-6 md:flex">
-          {NAV_LINKS.map((link) => (
+          {PRIMARY_NAV_LINKS.map((link) => (
             <Link
               key={link.href}
               href={link.href}
@@ -210,7 +204,7 @@ export function Navbar() {
       {mobileOpen && (
         <div id="mobile-nav-menu" className="border-t border-border bg-card px-4 pb-4 md:hidden">
           <div className="flex flex-col gap-1 pt-3">
-            {NAV_LINKS.map((link) => (
+            {PRIMARY_NAV_LINKS.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}

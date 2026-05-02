@@ -2,17 +2,18 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type { LucideIcon } from "lucide-react";
 import { Home, Search, Heart, Plus, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/lib/stores/authStore";
+import { MOBILE_NAV_ITEMS } from "@/shared/ui/publicNav";
 
-const NAV_ITEMS = [
-  { href: "/", icon: Home, label: "Home", exact: true },
-  { href: "/listings", icon: Search, label: "Search" },
-  { href: "/manage/listings/new", icon: Plus, label: "Post", accent: true },
-  { href: "/dashboard/favorites", icon: Heart, label: "Saved" },
-  { href: "/dashboard", icon: User, label: "Profile" },
-];
+const MOBILE_NAV_ICONS: LucideIcon[] = [Home, Search, Plus, Heart, User];
+
+const NAV_ITEMS = MOBILE_NAV_ITEMS.map((item, index) => ({
+  ...item,
+  icon: MOBILE_NAV_ICONS[index]!,
+}));
 
 export function MobileNav() {
   const pathname = usePathname();
@@ -31,7 +32,7 @@ export function MobileNav() {
           const loginHref = item.href.startsWith("/manage") ? "/login" : "/login";
           return (
             <Link
-              key={item.href}
+              key={item.id}
               href={loginHref}
               className="flex flex-col items-center gap-0.5 px-3 py-1 text-muted-foreground"
             >
@@ -43,7 +44,7 @@ export function MobileNav() {
 
         return (
           <Link
-            key={item.href}
+            key={item.id}
             href={item.href}
             className={cn(
               "flex flex-col items-center gap-0.5 px-3 py-1 transition-colors",

@@ -9,9 +9,11 @@ import { FilterToolbar } from "@/components/admin/FilterToolbar";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { adminService } from "@/lib/admin/service";
 import type { AdminListing, AdminListingStatus, AdminListingType } from "@/lib/admin/types";
+import { LISTING_TYPE_VALUES } from "@/lib/api/types";
+import { ADMIN_LISTINGS_TABLE, ADMIN_PAGE_LISTINGS } from "@/shared/ui/admin/tableCopy";
 
 const LISTING_STATUSES: Array<AdminListingStatus | ""> = ["", "pending", "active", "sold", "rejected"];
-const LISTING_TYPES: Array<AdminListingType | ""> = ["", "apartment", "room", "house", "studio", "commercial"];
+const LISTING_TYPES: Array<AdminListingType | ""> = ["", ...LISTING_TYPE_VALUES];
 
 function toBadgeStatus(status: AdminListingStatus): "pending" | "active" | "rejected" | "inactive" {
   if (status === "sold") {
@@ -116,7 +118,7 @@ export default function AdminListingsPage() {
       header: (
         <input
           type="checkbox"
-          aria-label="Select all listings"
+          aria-label={ADMIN_LISTINGS_TABLE.selectAllAria}
           checked={allVisibleSelected}
           onChange={toggleSelectAllVisible}
         />
@@ -133,7 +135,7 @@ export default function AdminListingsPage() {
     },
     {
       key: "title",
-      header: "Listing",
+      header: ADMIN_LISTINGS_TABLE.columnListing,
       cell: (row) => (
         <div>
           <p className="font-medium">{row.title}</p>
@@ -143,50 +145,50 @@ export default function AdminListingsPage() {
     },
     {
       key: "type",
-      header: "Type",
+      header: ADMIN_LISTINGS_TABLE.columnType,
       cell: (row) => <span className="capitalize">{row.type}</span>,
     },
     {
       key: "status",
-      header: "Status",
+      header: ADMIN_LISTINGS_TABLE.columnStatus,
       cell: (row) => <StatusBadge status={toBadgeStatus(row.status)} label={row.status === "sold" ? "Sold" : undefined} />,
     },
     {
       key: "createdAt",
-      header: "Created",
+      header: ADMIN_LISTINGS_TABLE.columnCreated,
       cell: (row) => new Date(row.createdAt).toLocaleDateString("en-US"),
     },
     {
       key: "actions",
-      header: "Actions",
+      header: ADMIN_LISTINGS_TABLE.columnActions,
       cell: (row) => (
         <div className="flex flex-wrap items-center gap-2">
           <Link href={`/listings/${row.id}`} className="rounded border border-border px-2 py-1 text-xs">
-            View
+            {ADMIN_LISTINGS_TABLE.actionView}
           </Link>
           <button type="button" className="rounded border border-border px-2 py-1 text-xs">
-            Edit
+            {ADMIN_LISTINGS_TABLE.actionEdit}
           </button>
           <button
             type="button"
             className="rounded border border-border px-2 py-1 text-xs"
             onClick={() => deleteMutation.mutate([row.id])}
           >
-            Delete
+            {ADMIN_LISTINGS_TABLE.actionDelete}
           </button>
           <button
             type="button"
             className="rounded bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-700"
             onClick={() => approveMutation.mutate([row.id])}
           >
-            Approve
+            {ADMIN_LISTINGS_TABLE.actionApprove}
           </button>
           <button
             type="button"
             className="rounded bg-rose-100 px-2 py-1 text-xs font-medium text-rose-700"
             onClick={() => rejectMutation.mutate(row.id)}
           >
-            Reject
+            {ADMIN_LISTINGS_TABLE.actionReject}
           </button>
         </div>
       ),
@@ -196,8 +198,8 @@ export default function AdminListingsPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-bold mb-1">Listing Management</h1>
-        <p className="text-muted-foreground">Search, review, and moderate listings from one place.</p>
+        <h1 className="text-2xl font-bold mb-1">{ADMIN_PAGE_LISTINGS.title}</h1>
+        <p className="text-muted-foreground">{ADMIN_PAGE_LISTINGS.subtitle}</p>
       </div>
 
       <FilterToolbar
@@ -205,7 +207,7 @@ export default function AdminListingsPage() {
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search by title, id, or city"
+            placeholder={ADMIN_PAGE_LISTINGS.searchPlaceholder}
             className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
           />
         }
