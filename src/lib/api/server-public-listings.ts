@@ -2,10 +2,12 @@ import "server-only";
 import type { ApiResponse, Listing, ListingFilters, ListingListItem, PaginatedResponse } from "./types";
 import { buildListingQueryParams } from "./listing-query-params";
 import { LISTING_PUBLIC_LIST_TAG, listingPublicDetailTag } from "@/lib/cache/listing-tags";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "https://api.ktmapartments.com/api/v1";
-
-const API_FETCH_TIMEOUT_MS = 25_000;
+import {
+  getMockPublicListingsResponse,
+  getMockPublicListingDetail,
+  isServerListingMocksEnabled,
+} from "@/test-utils/public-listings-fixtures";
+import { API_BASE, API_FETCH_TIMEOUT_MS } from "@/shared/appConfig";
 
 async function readJson<T>(res: Response): Promise<ApiResponse<T>> {
   if (!res.ok) {
@@ -26,6 +28,11 @@ export async function fetchPublicListings(
   filters: ListingFilters,
   nextCache: { revalidate: number }
 ): Promise<ApiResponse<PaginatedResponse<ListingListItem>>> {
+  if (isServerListingMocksEnabled()) {
+    void nextCache;
+    return getMockPublicListingsResponse(filters);
+  }
+
   const q = buildListingQueryParams(filters).toString();
   const path = q ? `/listings/?${q}` : "/listings/";
   const res = await fetch(`${API_BASE}${path}`, {
@@ -46,6 +53,11 @@ export async function fetchPublicListingDetail(
   slugOrId: string,
   nextCache: { revalidate: number }
 ): Promise<ApiResponse<Listing>> {
+  if (isServerListingMocksEnabled()) {
+    void nextCache;
+    return getMockPublicListingDetail(slugOrId);
+  }
+
   const res = await fetch(`${API_BASE}/listings/${encodeURIComponent(slugOrId)}`, {
     method: "GET",
     headers: { "Content-Type": "application/json" },
