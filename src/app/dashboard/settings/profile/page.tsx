@@ -21,8 +21,6 @@ export default function SettingsProfilePage() {
           last_name: user?.profile?.last_name ?? "",
           bio: user?.profile?.bio ?? "",
           phone: user?.profile?.phone ?? "",
-          whatsapp: user?.profile?.whatsapp ?? "",
-          viber: user?.profile?.viber ?? "",
           avatar_url: user?.profile?.avatar_url ?? "",
         },
       }),
@@ -34,8 +32,6 @@ export default function SettingsProfilePage() {
     lastName: mappedProfile.lastName,
     bio: mappedProfile.bio,
     phone: mappedProfile.phone,
-    whatsapp: mappedProfile.whatsapp,
-    viber: mappedProfile.viber,
   }));
 
   useEffect(() => {
@@ -44,8 +40,6 @@ export default function SettingsProfilePage() {
       lastName: mappedProfile.lastName,
       bio: mappedProfile.bio,
       phone: mappedProfile.phone,
-      whatsapp: mappedProfile.whatsapp,
-      viber: mappedProfile.viber,
     });
   }, [mappedProfile]);
 
@@ -92,31 +86,12 @@ export default function SettingsProfilePage() {
           />
         </label>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <label className="space-y-1 text-sm">
-            <span className="text-muted-foreground">Phone</span>
-            <input
-              className="w-full rounded-lg border border-border bg-background px-3 py-2"
-              value={form.phone}
-              onChange={(event) => setForm((prev) => ({ ...prev, phone: event.target.value }))}
-            />
-          </label>
-          <label className="space-y-1 text-sm">
-            <span className="text-muted-foreground">WhatsApp</span>
-            <input
-              className="w-full rounded-lg border border-border bg-background px-3 py-2"
-              value={form.whatsapp}
-              onChange={(event) => setForm((prev) => ({ ...prev, whatsapp: event.target.value }))}
-            />
-          </label>
-        </div>
-
         <label className="block space-y-1 text-sm">
-          <span className="text-muted-foreground">Viber</span>
+          <span className="text-muted-foreground">Phone</span>
           <input
             className="w-full rounded-lg border border-border bg-background px-3 py-2"
-            value={form.viber}
-            onChange={(event) => setForm((prev) => ({ ...prev, viber: event.target.value }))}
+            value={form.phone}
+            onChange={(event) => setForm((prev) => ({ ...prev, phone: event.target.value }))}
           />
         </label>
 

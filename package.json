@@ -25,7 +25,7 @@
     "test:perf": "playwright test -c playwright.perf.config.ts && node tooling/scripts/summarize-perf.mjs",
     "test:perf:real": "node tooling/scripts/run-perf-real.mjs && node tooling/scripts/summarize-perf.mjs",
     "test:boundaries": "node tooling/scripts/validate-test-boundaries.mjs",
-    "test:ci": "npm run check && npm run validate:fixtures && npm run test && npm run test:boundaries",
+    "test:ci": "npm run check && npm run openapi:check && npm run validate:fixtures && npm run test && npm run test:boundaries",
     "test:all": "pnpm test:coverage && pnpm test:e2e"
   },
   "dependencies": {

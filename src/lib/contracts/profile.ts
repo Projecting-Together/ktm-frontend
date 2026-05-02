@@ -11,8 +11,6 @@ export interface ProfileDto {
     phone?: string | null;
     avatar_url?: string | null;
     bio?: string | null;
-    whatsapp?: string | null;
-    viber?: string | null;
   } | null;
   stats?: {
     active_listings?: number;
@@ -31,8 +29,6 @@ export interface ProfileModel {
   avatarUrl: string | null;
   bio: string;
   phone: string;
-  whatsapp: string;
-  viber: string;
   activeListings: number;
 }
 
@@ -63,8 +59,6 @@ export function mapProfileDto(dto: ProfileDto): ProfileModel {
     avatarUrl: dto.profile?.avatar_url ?? null,
     bio: normalize(dto.profile?.bio),
     phone: normalize(dto.profile?.phone),
-    whatsapp: normalize(dto.profile?.whatsapp),
-    viber: normalize(dto.profile?.viber),
     activeListings: dto.stats?.active_listings ?? 0,
   };
 }

@@ -66,9 +66,11 @@ export default function ListingDetailClient({ listing: initialListing, slugOrId 
       ? images[activeImg]?.webp_url ?? images[activeImg]?.image_url ?? null
       : null;
 
-  const whatsappUrl = listing.owner?.whatsapp_number
-    ? buildWhatsAppUrl(listing.owner.whatsapp_number, `Hi, I am interested in: ${listing.title} - ktmapartments.com/listings/${listing.slug}`)
-    : null;
+  const ownerPhone = listing.owner?.phone?.trim();
+  const whatsappUrl =
+    ownerPhone && listing.show_whatsapp !== false
+      ? buildWhatsAppUrl(ownerPhone, `Hi, I am interested in: ${listing.title} - ktmapartments.com/listings/${listing.slug}`)
+      : null;
   const inquiryCtaText = listing.purpose === "sale" ? "Send Inquiry to Seller" : "Send Inquiry";
   const listingsHref = listing.purpose === "sale" ? "/listings?purpose=sale" : "/listings";
   const relatedListings =

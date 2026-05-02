@@ -27,8 +27,6 @@ export interface UserProfile {
   phone?: string | null;
   avatar_url?: string | null;
   bio?: string | null;
-  whatsapp?: string | null;
-  viber?: string | null;
 }
 
 export interface User {
@@ -201,7 +199,7 @@ export interface Listing {
   location?: ListingLocation | null;
   images: ListingImage[];
   amenities: Amenity[];
-  owner?: (UserProfile & { email?: string; role?: UserRole; is_verified?: boolean; whatsapp_number?: string }) | null;
+  owner?: (UserProfile & { email?: string; role?: UserRole; is_verified?: boolean }) | null;
 }
 
 export interface ListingStats {

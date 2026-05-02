@@ -61,8 +61,6 @@ describe("mapProfileDto", () => {
       profile: {
         phone: null,
         bio: null,
-        whatsapp: null,
-        viber: null,
         avatar_url: null,
       },
       stats: {
@@ -72,8 +70,6 @@ describe("mapProfileDto", () => {
 
     expect(result.phone).toBe("");
     expect(result.bio).toBe("");
-    expect(result.whatsapp).toBe("");
-    expect(result.viber).toBe("");
     expect(result.avatarUrl).toBeNull();
     expect(result.activeListings).toBe(3);
   });

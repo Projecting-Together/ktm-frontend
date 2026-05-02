@@ -3,10 +3,886 @@ info:
   title: KTM Client API contract
   version: "1.0.0"
   description: |
-    Hand-maintained minimal contract for the Next.js client. Operations are added incrementally; this file
-    already centralizes shared domain enums and public listing search query param names.
-paths: {}
+    Contract derived from the Next.js client (`src/lib/api/client.ts`, `siteConfig.ts`, `server-public-listings.ts`).
+    Server base URL is `NEXT_PUBLIC_API_URL`, default `https://api.ktmapartments.com/api/v1` — paths below are relative to that origin.
+
+    **Auth:** Endpoints marked `security: []` do not send `Authorization`. Others expect `Bearer` access token unless noted.
+
+    **Source of truth for full field lists:** `src/lib/api/types.ts`. This file focuses on routes, methods, and stable shapes for codegen (`pnpm openapi:generate`).
+
+servers:
+  - url: https://api.ktmapartments.com/api/v1
+    description: Default production API prefix (override via NEXT_PUBLIC_API_URL)
+
+tags:
+  - name: Auth
+  - name: SiteConfig
+  - name: Listings
+  - name: News
+  - name: Media
+  - name: Amenities
+  - name: Localities
+  - name: Inquiries
+  - name: Visits
+  - name: Favorites
+  - name: Admin
+
+security:
+  - bearerAuth: []
+
+paths:
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register (client sends email + password only)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "201":
+          description: Created — returns token pair (client persists access token in memory)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenPair"
+        "409":
+          description: Email already registered
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenPair"
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Logout (revoke refresh; client clears access token)
+      responses:
+        "204":
+          description: No content
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Refresh access token (refresh token in httpOnly cookie)
+      security: []
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenPair"
+
+  /auth/verify-email:
+    post:
+      tags: [Auth]
+      summary: Verify email with token from mail
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyEmailRequest"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [message]
+                properties:
+                  message:
+                    type: string
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Current user
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /auth/upgrade-agent:
+    post:
+      tags: [Auth]
+      summary: Upgrade current user to agent (product-specific)
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /site-config:
+    get:
+      tags: [SiteConfig]
+      summary: Public marketing banners (no auth)
+      security: []
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SiteConfig"
+
+  /listings:
+    get:
+      tags: [Listings]
+      summary: Search / list public listings
+      description: |
+        Client may call `GET /listings`, `GET /listings/`, or `GET /listings/?…` with listing filters.
+        Query keys align with `ListingSearchQueryParamKey` / `buildListingQueryParams` (skip, limit, page,
+        listing_type, purpose, city, district, price and area ranges, amenities, sort, optional geo params).
+      security: []
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedListingListItem"
+    post:
+      tags: [Listings]
+      summary: Create listing (authenticated)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ListingCreatePayload"
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Listing"
+
+  /listings/user/my-listings:
+    get:
+      tags: [Listings]
+      summary: Current user listings
+      parameters:
+        - name: skip
+          in: query
+          schema: { type: integer }
+        - name: limit
+          in: query
+          schema: { type: integer }
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/ListingStatus"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedListingListItem"
+
+  /listings/{slugOrId}:
+    get:
+      tags: [Listings]
+      summary: Listing detail by slug or uuid
+      security: []
+      parameters:
+        - name: slugOrId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Listing"
+
+    patch:
+      tags: [Listings]
+      summary: Update listing
+      parameters:
+        - name: slugOrId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ListingPatchPayload"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Listing"
+
+    delete:
+      tags: [Listings]
+      summary: Delete listing
+      parameters:
+        - name: slugOrId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "204":
+          description: Deleted
+
+  /listings/{id}/publish:
+    post:
+      tags: [Listings]
+      summary: Publish listing
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Listing"
+
+  /listings/{id}/mark-rented:
+    post:
+      tags: [Listings]
+      summary: Mark listing as rented
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Listing"
+
+  /listings/{id}/stats:
+    get:
+      tags: [Listings]
+      summary: Listing engagement stats
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListingStats"
+
+  /listings/{listingId}/media/reorder:
+    patch:
+      tags: [Listings]
+      summary: Reorder listing media by id list
+      parameters:
+        - name: listingId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MediaReorderRequest"
+      responses:
+        "204":
+          description: OK
+
+  /news/published:
+    get:
+      tags: [News]
+      summary: Published news list
+      security: []
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer }
+        - name: limit
+          in: query
+          schema: { type: integer }
+        - name: search
+          in: query
+          schema: { type: string }
+        - name: category
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedNewsListItem"
+
+  /news/published/{slug}:
+    get:
+      tags: [News]
+      summary: Published news article
+      security: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NewsArticle"
+
+  /news/workspace:
+    get:
+      tags: [News]
+      summary: Authenticated workspace article
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NewsWorkspaceArticle"
+
+  /news/workspace/submit:
+    post:
+      tags: [News]
+      summary: Submit workspace article for review
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NewsWorkspaceArticle"
+
+  /news/workspace/publish:
+    post:
+      tags: [News]
+      summary: Publish from workspace (role-gated)
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NewsWorkspaceArticle"
+
+  /news/moderation/queue:
+    get:
+      tags: [News]
+      summary: Moderation queue
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NewsModerationQueueResponse"
+
+  /news/moderation/{articleId}:
+    patch:
+      tags: [News]
+      summary: Moderate article
+      parameters:
+        - name: articleId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewsModerationPatch"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NewsModerationQueueItem"
+
+  /media/presigned-url:
+    post:
+      tags: [Media]
+      summary: Presigned upload URL for listing image
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PresignedUrlRequest"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PresignedUrlResponse"
+
+  /media/confirm:
+    post:
+      tags: [Media]
+      summary: Confirm upload completed
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MediaConfirmPayload"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [id]
+                properties:
+                  id:
+                    type: string
+
+  /media/{mediaId}:
+    delete:
+      tags: [Media]
+      summary: Delete media asset
+      parameters:
+        - name: mediaId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "204":
+          description: Deleted
+
+  /amenities/:
+    get:
+      tags: [Amenities]
+      summary: Amenity catalog
+      security: []
+      parameters:
+        - name: skip
+          in: query
+          schema: { type: integer, default: 0 }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 100 }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Amenity"
+
+  /localities:
+    get:
+      tags: [Localities]
+      summary: Locality catalog (MSW today; wire to FastAPI when ready)
+      security: []
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Locality"
+
+  /localities/{slug}:
+    get:
+      tags: [Localities]
+      summary: Single locality by slug
+      security: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Locality"
+
+  /inquiries:
+    post:
+      tags: [Inquiries]
+      summary: Create inquiry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateInquiryPayload"
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Inquiry"
+
+  /inquiries/sent:
+    get:
+      tags: [Inquiries]
+      summary: Inquiries sent by current user
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Inquiry"
+
+  /inquiries/received:
+    get:
+      tags: [Inquiries]
+      summary: Inquiries received (owner)
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Inquiry"
+
+  /inquiries/{id}/reply:
+    patch:
+      tags: [Inquiries]
+      summary: Owner reply to inquiry
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [owner_reply]
+              properties:
+                owner_reply:
+                  type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Inquiry"
+
+  /visits:
+    post:
+      tags: [Visits]
+      summary: Request a visit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateVisitPayload"
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VisitRequest"
+
+  /visits/my:
+    get:
+      tags: [Visits]
+      summary: Visit requests by current user
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/VisitRequest"
+
+  /visits/received:
+    get:
+      tags: [Visits]
+      summary: Visit requests for owner listings
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/VisitRequest"
+
+  /visits/{id}/confirm:
+    patch:
+      tags: [Visits]
+      summary: Confirm visit date
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [confirmed_date]
+              properties:
+                confirmed_date:
+                  type: string
+                  description: ISO date/datetime
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VisitRequest"
+
+  /favorites:
+    get:
+      tags: [Favorites]
+      summary: Current user favorites
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Favorite"
+    post:
+      tags: [Favorites]
+      summary: Add favorite
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [listing_id]
+              properties:
+                listing_id:
+                  type: string
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Favorite"
+
+  /favorites/{listingId}:
+    delete:
+      tags: [Favorites]
+      summary: Remove favorite
+      parameters:
+        - name: listingId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "204":
+          description: Removed
+
+  /admin/listings:
+    get:
+      tags: [Admin]
+      summary: Admin listings (client uses status=pending)
+      parameters:
+        - name: status
+          in: query
+          schema: { type: string }
+        - name: page
+          in: query
+          schema: { type: integer }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedListingListItem"
+
+  /admin/listings/{id}/approve:
+    patch:
+      tags: [Admin]
+      summary: Approve listing
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Listing"
+
+  /admin/listings/{id}/reject:
+    patch:
+      tags: [Admin]
+      summary: Reject listing
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason:
+                  type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Listing"
+
+  /admin/users:
+    get:
+      tags: [Admin]
+      summary: Paginated users
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedUser"
+
+  /admin/users/{id}/suspend:
+    patch:
+      tags: [Admin]
+      summary: Suspend user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason:
+                  type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /admin/audit-log:
+    get:
+      tags: [Admin]
+      summary: Audit log
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedAuditLog"
+
+  /admin/analytics/overview:
+    get:
+      tags: [Admin]
+      summary: Admin KPI overview
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminAnalyticsOverview"
+
+  /admin/analytics/timeseries:
+    get:
+      tags: [Admin]
+      summary: Time series for charts
+      parameters:
+        - name: date_range
+          in: query
+          schema:
+            type: string
+            enum: [last-7-days, last-30-days, last-90-days]
+        - name: city
+          in: query
+          schema: { type: string }
+        - name: listing_type
+          in: query
+          schema: { type: string }
+        - name: from
+          in: query
+          schema: { type: string }
+        - name: to
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AdminAnalyticsPoint"
+
+  /admin/dashboard/summary:
+    get:
+      tags: [Admin]
+      summary: Dashboard KPIs + activity feed
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminDashboardSummary"
+
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
   schemas:
     UserRole:
       type: string
@@ -92,3 +968,505 @@ components:
         - lat
         - lng
         - radius_km
+
+    RegisterRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+    VerifyEmailRequest:
+      type: object
+      required: [token]
+      properties:
+        token:
+          type: string
+
+    TokenPair:
+      type: object
+      required: [access_token, refresh_token, token_type]
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+        token_type:
+          type: string
+          default: bearer
+
+    UserProfile:
+      type: object
+      properties:
+        user_id:
+          type: string
+        first_name: { type: string, nullable: true }
+        last_name: { type: string, nullable: true }
+        phone: { type: string, nullable: true }
+        avatar_url: { type: string, nullable: true }
+        bio: { type: string, nullable: true }
+
+    User:
+      type: object
+      required: [id, email, role, status, is_verified, created_at]
+      properties:
+        id: { type: string }
+        email: { type: string, format: email }
+        role:
+          $ref: "#/components/schemas/UserRole"
+        status:
+          $ref: "#/components/schemas/UserStatus"
+        is_verified: { type: boolean }
+        created_at: { type: string, format: date-time }
+        profile:
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/UserProfile"
+
+    SiteConfig:
+      type: object
+      properties:
+        heroBannerUrl: { type: string, nullable: true }
+        ctaBannerUrl: { type: string, nullable: true }
+
+    PaginatedMeta:
+      type: object
+      required: [total, page, page_size, total_pages, has_next, has_prev]
+      properties:
+        total: { type: integer }
+        page: { type: integer }
+        page_size: { type: integer }
+        total_pages: { type: integer }
+        has_next: { type: boolean }
+        has_prev: { type: boolean }
+
+    PaginatedListingListItem:
+      allOf:
+        - type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/ListingListItem"
+        - $ref: "#/components/schemas/PaginatedMeta"
+
+    PaginatedNewsListItem:
+      allOf:
+        - type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/NewsListItem"
+        - $ref: "#/components/schemas/PaginatedMeta"
+
+    PaginatedUser:
+      allOf:
+        - type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/User"
+        - $ref: "#/components/schemas/PaginatedMeta"
+
+    PaginatedAuditLog:
+      allOf:
+        - type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/AuditLog"
+        - $ref: "#/components/schemas/PaginatedMeta"
+
+    ListingListItem:
+      type: object
+      description: Card / search row — see types.ts for full optional set
+      required: [id, slug, title, currency, images, created_at, status]
+      properties:
+        id: { type: string }
+        slug: { type: string }
+        title: { type: string }
+        purpose:
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/ListingPurpose"
+        price: { nullable: true }
+        price_period:
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/PricePeriod"
+        currency: { type: string }
+        bedrooms: { type: integer, nullable: true }
+        bathrooms: { nullable: true }
+        area_m2: { type: number, nullable: true }
+        listing_type:
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/ListingType"
+        furnishing:
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/FurnishingType"
+        status:
+          $ref: "#/components/schemas/ListingStatus"
+        is_verified: { type: boolean, nullable: true }
+        is_moderated: { type: boolean, nullable: true }
+        is_sponsored: { type: boolean, nullable: true }
+        sponsored_weight: { type: number, nullable: true }
+        sponsored_until: { type: string, format: date-time, nullable: true }
+        pets_allowed: { type: boolean, nullable: true }
+        parking: { type: boolean, nullable: true }
+        location:
+          nullable: true
+        images:
+          type: array
+          items:
+            $ref: "#/components/schemas/ListingImage"
+        created_at: { type: string, format: date-time }
+
+    Listing:
+      type: object
+      description: Full listing — see types.ts; nested owner/location/amenities when API returns them
+      required: [id, slug, owner_user_id, title, currency, status, created_at, updated_at, images, amenities]
+      properties:
+        id: { type: string }
+        slug: { type: string }
+        owner_user_id: { type: string }
+        locality_id: { type: string, nullable: true }
+        title: { type: string }
+        description: { type: string, nullable: true }
+        listing_type:
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/ListingType"
+        purpose:
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/ListingPurpose"
+        price: { nullable: true }
+        price_period:
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/PricePeriod"
+        currency: { type: string }
+        furnishing:
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/FurnishingType"
+        status:
+          $ref: "#/components/schemas/ListingStatus"
+        bedrooms: { type: integer, nullable: true }
+        bathrooms: { nullable: true }
+        floor: { type: integer, nullable: true }
+        total_floors: { type: integer, nullable: true }
+        area_m2: { type: number, nullable: true }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+        images:
+          type: array
+          items:
+            $ref: "#/components/schemas/ListingImage"
+        amenities:
+          type: array
+          items:
+            $ref: "#/components/schemas/Amenity"
+
+    ListingCreatePayload:
+      type: object
+      additionalProperties: true
+      description: Partial listing — matches client createListing(payload)
+
+    ListingPatchPayload:
+      type: object
+      additionalProperties: true
+
+    ListingImage:
+      type: object
+      required: [id, listing_id, image_url, sort_order, is_primary, is_cover]
+      properties:
+        id: { type: string }
+        listing_id: { type: string }
+        image_url: { type: string }
+        webp_url: { type: string, nullable: true }
+        storage_key: { type: string }
+        alt_text: { type: string, nullable: true }
+        sort_order: { type: integer }
+        is_primary: { type: boolean }
+        is_cover: { type: boolean }
+        upload_status:
+          type: string
+          enum: [pending, processing, complete, failed]
+        created_at: { type: string, format: date-time }
+
+    ListingStats:
+      type: object
+      required: [listing_id, views, inquiries, favorites, visits_requested]
+      properties:
+        listing_id: { type: string }
+        views: { type: integer }
+        inquiries: { type: integer }
+        favorites: { type: integer }
+        visits_requested: { type: integer }
+
+    Amenity:
+      type: object
+      required: [id, name]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        amenity_type:
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/AmenityType"
+        code: { type: string, nullable: true }
+        icon: { type: string, nullable: true }
+
+    Locality:
+      type: object
+      required: [id, name, slug]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        name_ne: { type: string, nullable: true }
+        slug: { type: string }
+        lat: { type: number, nullable: true }
+        lng: { type: number, nullable: true }
+
+    NewsListItem:
+      type: object
+      required: [id, slug, title, is_published]
+      properties:
+        id: { type: string }
+        slug: { type: string }
+        title: { type: string }
+        summary: { type: string, nullable: true }
+        cover_image_url: { type: string, nullable: true }
+        published_at: { type: string, format: date-time, nullable: true }
+        is_published: { type: boolean }
+
+    NewsArticle:
+      allOf:
+        - $ref: "#/components/schemas/NewsListItem"
+        - type: object
+          properties:
+            content: { type: string, nullable: true }
+
+    NewsWorkspaceArticle:
+      allOf:
+        - $ref: "#/components/schemas/NewsArticle"
+        - type: object
+          required: [status]
+          properties:
+            status:
+              $ref: "#/components/schemas/NewsWorkspaceStatus"
+            rejection_reason: { type: string, nullable: true }
+            author_user_id: { type: string }
+
+    NewsModerationQueueItem:
+      allOf:
+        - $ref: "#/components/schemas/NewsWorkspaceArticle"
+        - type: object
+          required: [author_user_id]
+          properties:
+            author_user_id: { type: string }
+
+    NewsModerationQueueResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/NewsModerationQueueItem"
+
+    NewsModerationPatch:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [published, rejected, pending_review, draft]
+        rejection_reason: { type: string, nullable: true }
+
+    PresignedUrlRequest:
+      type: object
+      required: [listing_id, filename, content_type]
+      properties:
+        listing_id: { type: string }
+        filename: { type: string }
+        content_type: { type: string }
+
+    PresignedUrlResponse:
+      type: object
+      required: [upload_url, storage_key, public_url]
+      properties:
+        upload_url: { type: string }
+        storage_key: { type: string }
+        public_url: { type: string }
+
+    MediaConfirmPayload:
+      type: object
+      required: [listing_id, storage_key]
+      properties:
+        listing_id: { type: string }
+        storage_key: { type: string }
+        sort_order: { type: integer }
+        is_cover: { type: boolean }
+
+    MediaReorderRequest:
+      type: object
+      required: [order]
+      properties:
+        order:
+          type: array
+          items:
+            type: string
+          description: Ordered listing_image ids
+
+    CreateInquiryPayload:
+      type: object
+      required: [listing_id, message]
+      properties:
+        listing_id: { type: string }
+        message: { type: string }
+        move_in_date: { type: string, nullable: true }
+
+    Inquiry:
+      type: object
+      required: [id, listing_id, sender_id, owner_id, message, status, created_at, updated_at]
+      properties:
+        id: { type: string }
+        listing_id: { type: string }
+        sender_id: { type: string }
+        owner_id: { type: string }
+        message: { type: string }
+        status:
+          $ref: "#/components/schemas/InquiryStatus"
+        owner_reply: { type: string, nullable: true }
+        move_in_date: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    CreateVisitPayload:
+      type: object
+      required: [listing_id, preferred_date]
+      properties:
+        listing_id: { type: string }
+        preferred_date: { type: string }
+        notes: { type: string }
+
+    VisitRequest:
+      type: object
+      required: [id, listing_id, requester_id, preferred_date, status, created_at]
+      properties:
+        id: { type: string }
+        listing_id: { type: string }
+        requester_id: { type: string }
+        preferred_date: { type: string }
+        status:
+          $ref: "#/components/schemas/VisitStatus"
+        confirmed_date: { type: string, nullable: true }
+        notes: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+
+    Favorite:
+      type: object
+      required: [user_id, listing_id, created_at]
+      properties:
+        user_id: { type: string }
+        listing_id: { type: string }
+        created_at: { type: string, format: date-time }
+
+    AuditLog:
+      type: object
+      required: [id, actor_id, action, target_type, created_at]
+      properties:
+        id: { type: string }
+        actor_id: { type: string }
+        action: { type: string }
+        target_type: { type: string }
+        target_id: { type: string, nullable: true }
+        before_state:
+          type: object
+          additionalProperties: true
+          nullable: true
+        after_state:
+          type: object
+          additionalProperties: true
+          nullable: true
+        ip_address: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+
+    AdminAnalyticsOverview:
+      type: object
+      properties:
+        total_listings: { type: integer }
+        active_listings: { type: integer }
+        pending_listings: { type: integer }
+        total_users: { type: integer }
+        new_users_today: { type: integer }
+        total_inquiries: { type: integer }
+        inquiries_today: { type: integer }
+        total_views: { type: integer }
+        top_localities:
+          type: array
+          items:
+            type: object
+            properties:
+              name: { type: string }
+              count: { type: integer }
+
+    AdminAnalyticsPoint:
+      type: object
+      required: [date, listings, transactions, users]
+      properties:
+        date: { type: string }
+        listings: { type: integer }
+        transactions: { type: integer }
+        users: { type: integer }
+
+    AdminDashboardSummary:
+      type: object
+      required: [kpis, activities]
+      properties:
+        kpis:
+          type: array
+          items:
+            type: object
+            required: [key, label, value, deltaPercent]
+            properties:
+              key:
+                type: string
+                enum: [totalListings, pendingListings, activeUsers, monthlyRevenue]
+              label: { type: string }
+              value: { type: number }
+              deltaPercent: { type: number }
+        activities:
+          type: array
+          items:
+            type: object
+            required: [id, actor, action, createdAt]
+            properties:
+              id: { type: string }
+              actor: { type: string }
+              action: { type: string }
+              createdAt: { type: string }
