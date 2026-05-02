@@ -122,6 +122,7 @@ export default function SearchPageClient() {
   );
   const currentPurpose = store.purpose === "sale" ? "sale" : "rent";
   const hasHydratedFromUrl = useRef(false);
+  const syncUrlRef = useRef<() => void>(() => undefined);
 
   // Hydrate store from URL on mount
   useEffect(() => {
@@ -189,9 +190,16 @@ export default function SearchPageClient() {
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
   }, [store, router, pathname]);
 
+  // Keep the ref pointing at the latest syncUrl without including it in filter-change deps.
+  // This breaks the render-loop where a new syncUrl reference on every render would
+  // cause the effect below to fire on every render and spam router.replace.
+  useEffect(() => {
+    syncUrlRef.current = syncUrl;
+  }, [syncUrl]);
+
   useEffect(() => {
     if (!hasHydratedFromUrl.current) return;
-    syncUrl();
+    syncUrlRef.current();
   }, [
     store.search, store.listing_type, store.purpose, store.min_price, store.max_price,
     store.min_bedrooms, store.max_bedrooms, store.min_bathrooms, store.max_bathrooms,
@@ -199,14 +207,9 @@ export default function SearchPageClient() {
     store.amenities, store.available_from, store.sort_by, store.sort_order, store.page,
     store.city_slug, store.min_area_m2, store.max_area_m2,
     store.min_lat, store.max_lat, store.min_lng, store.max_lng, store.lat, store.lng, store.radius_km,
-    syncUrl,
   ]);
 
-  const filters = selectApiFilters(store);
-  const listingFilters = {
-    ...filters,
-    purpose: currentPurpose,
-  };
+  const listingFilters = selectApiFilters(store);
   const { data, isPending, isError, error, refetch, isFetching } = useListings(listingFilters);
   const listings = adaptListingsForSearch(data?.items);
   const total = data?.total ?? 0;
@@ -244,15 +247,14 @@ export default function SearchPageClient() {
                 key={option.value}
                 type="button"
                 onClick={() => {
-                  const nextPurpose = option.value === "sale" ? "sale" : "rent";
-                  if (currentPurpose !== nextPurpose) {
+                  if (currentPurpose !== option.value) {
                     trackPurposeModeChange({
-                      nextPurpose,
+                      nextPurpose: option.value,
                       previousPurpose: currentPurpose,
                       source: "search_page_toggle",
                     });
                   }
-                  store.setFilter("purpose", option.value === "sale" ? "sale" : undefined);
+                  store.setFilter("purpose", option.value);
                 }}
                 className={cn(
                   "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",

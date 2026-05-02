@@ -31,6 +31,7 @@ const DEFAULT_FILTERS: SearchFilters = {
   limit: 20,
   sort_by: "created_at",
   sort_order: "desc",
+  purpose: "rent",
 };
 
 function normalizePriceRange(min?: number, max?: number): Pick<SearchFilters, "min_price" | "max_price"> {
@@ -179,7 +180,6 @@ export const useFilterStore = create<FilterState & FilterActions>((set, get) => 
       view: state.view,
       // Explicitly clear all optional filters (Zustand merges, so we must set to undefined)
       listing_type: undefined,
-      purpose: undefined,
       min_price: undefined,
       max_price: undefined,
       city_slug: undefined,

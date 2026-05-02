@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SlidersHorizontal, RotateCcw, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -48,6 +48,35 @@ export function FilterPanel({ mode = "sidebar" }: FilterPanelProps) {
   const store = useFilterStore();
   const [moreFiltersOpen, setMoreFiltersOpen] = useState(false);
 
+  // Local draft state for sliders — visual-only while dragging.
+  // Committed to the store (and URL) only on pointer-up to prevent
+  // rapid router.replace calls that reset page scroll position.
+  const [draftPrice, setDraftPrice] = useState<[number, number]>([
+    store.min_price ?? PRICE_MIN,
+    store.max_price ?? PRICE_MAX,
+  ]);
+  const [draftBed, setDraftBed] = useState<[number, number]>([
+    store.min_bedrooms ?? BED_MIN,
+    store.max_bedrooms ?? BED_MAX,
+  ]);
+  const [draftBath, setDraftBath] = useState<[number, number]>([
+    store.min_bathrooms ?? BATH_MIN,
+    store.max_bathrooms ?? BATH_MAX,
+  ]);
+
+  // Keep draft in sync when store resets or an external change arrives (e.g. URL hydration).
+  useEffect(() => {
+    setDraftPrice([store.min_price ?? PRICE_MIN, store.max_price ?? PRICE_MAX]);
+  }, [store.min_price, store.max_price]);
+
+  useEffect(() => {
+    setDraftBed([store.min_bedrooms ?? BED_MIN, store.max_bedrooms ?? BED_MAX]);
+  }, [store.min_bedrooms, store.max_bedrooms]);
+
+  useEffect(() => {
+    setDraftBath([store.min_bathrooms ?? BATH_MIN, store.max_bathrooms ?? BATH_MAX]);
+  }, [store.min_bathrooms, store.max_bathrooms]);
+
   const parseAreaValue = (raw: string): number | undefined => {
     if (!raw) return undefined;
     const parsed = Number(raw);
@@ -86,21 +115,6 @@ export function FilterPanel({ mode = "sidebar" }: FilterPanelProps) {
     store.verified,
     activeAmenities.length > 0,
   ].filter(Boolean).length;
-
-  const minPrice = store.min_price ?? PRICE_MIN;
-  const maxPrice = store.max_price ?? PRICE_MAX;
-  const minPercent = ((minPrice - PRICE_MIN) / (PRICE_MAX - PRICE_MIN)) * 100;
-  const maxPercent = ((maxPrice - PRICE_MIN) / (PRICE_MAX - PRICE_MIN)) * 100;
-
-  const minBed = store.min_bedrooms ?? BED_MIN;
-  const maxBed = store.max_bedrooms ?? BED_MAX;
-  const minBedPercent = ((minBed - BED_MIN) / (BED_MAX - BED_MIN)) * 100;
-  const maxBedPercent = ((maxBed - BED_MIN) / (BED_MAX - BED_MIN)) * 100;
-
-  const minBath = store.min_bathrooms ?? BATH_MIN;
-  const maxBath = store.max_bathrooms ?? BATH_MAX;
-  const minBathPercent = ((minBath - BATH_MIN) / (BATH_MAX - BATH_MIN)) * 100;
-  const maxBathPercent = ((maxBath - BATH_MIN) / (BATH_MAX - BATH_MIN)) * 100;
 
   const areaRangeLabel = formatAreaRangeLabel(store.min_area_m2, store.max_area_m2);
 
@@ -166,7 +180,10 @@ export function FilterPanel({ mode = "sidebar" }: FilterPanelProps) {
           <div className="absolute left-0 right-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-muted" />
           <div
             className="absolute top-1/2 h-1 -translate-y-1/2 rounded-full bg-accent"
-            style={{ left: `${minPercent}%`, right: `${100 - maxPercent}%` }}
+            style={{
+              left: `${((draftPrice[0] - PRICE_MIN) / (PRICE_MAX - PRICE_MIN)) * 100}%`,
+              right: `${100 - ((draftPrice[1] - PRICE_MIN) / (PRICE_MAX - PRICE_MIN)) * 100}%`,
+            }}
           />
           <input
             type="range"
@@ -174,11 +191,12 @@ export function FilterPanel({ mode = "sidebar" }: FilterPanelProps) {
             min={PRICE_MIN}
             max={PRICE_MAX}
             step={PRICE_STEP}
-            value={minPrice}
+            value={draftPrice[0]}
             onChange={(e) => {
-              const next = Math.min(Number(e.target.value), maxPrice - PRICE_STEP);
-              store.setPriceRange(next, maxPrice);
+              const next = Math.min(Number(e.target.value), draftPrice[1] - PRICE_STEP);
+              setDraftPrice([next, draftPrice[1]]);
             }}
+            onPointerUp={() => store.setPriceRange(draftPrice[0], draftPrice[1])}
             className={cn(
               "pointer-events-none absolute left-0 top-1/2 h-6 w-full -translate-y-1/2 appearance-none bg-transparent",
               "[&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-accent [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow",
@@ -191,11 +209,12 @@ export function FilterPanel({ mode = "sidebar" }: FilterPanelProps) {
             min={PRICE_MIN}
             max={PRICE_MAX}
             step={PRICE_STEP}
-            value={maxPrice}
+            value={draftPrice[1]}
             onChange={(e) => {
-              const next = Math.max(Number(e.target.value), minPrice + PRICE_STEP);
-              store.setPriceRange(minPrice, next);
+              const next = Math.max(Number(e.target.value), draftPrice[0] + PRICE_STEP);
+              setDraftPrice([draftPrice[0], next]);
             }}
+            onPointerUp={() => store.setPriceRange(draftPrice[0], draftPrice[1])}
             className={cn(
               "pointer-events-none absolute left-0 top-1/2 h-6 w-full -translate-y-1/2 appearance-none bg-transparent",
               "[&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-accent [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow",
@@ -288,7 +307,10 @@ export function FilterPanel({ mode = "sidebar" }: FilterPanelProps) {
           <div className="absolute left-0 right-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-muted" />
           <div
             className="absolute top-1/2 h-1 -translate-y-1/2 rounded-full bg-accent"
-            style={{ left: `${minBedPercent}%`, right: `${100 - maxBedPercent}%` }}
+            style={{
+              left: `${((draftBed[0] - BED_MIN) / (BED_MAX - BED_MIN)) * 100}%`,
+              right: `${100 - ((draftBed[1] - BED_MIN) / (BED_MAX - BED_MIN)) * 100}%`,
+            }}
           />
           <input
             type="range"
@@ -296,11 +318,12 @@ export function FilterPanel({ mode = "sidebar" }: FilterPanelProps) {
             min={BED_MIN}
             max={BED_MAX}
             step={1}
-            value={minBed}
+            value={draftBed[0]}
             onChange={(e) => {
-              const next = Math.min(Number(e.target.value), maxBed);
-              store.setBedroomRange(next, maxBed);
+              const next = Math.min(Number(e.target.value), draftBed[1]);
+              setDraftBed([next, draftBed[1]]);
             }}
+            onPointerUp={() => store.setBedroomRange(draftBed[0], draftBed[1])}
             className={cn(
               "pointer-events-none absolute left-0 top-1/2 h-6 w-full -translate-y-1/2 appearance-none bg-transparent",
               "[&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-accent [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow",
@@ -313,11 +336,12 @@ export function FilterPanel({ mode = "sidebar" }: FilterPanelProps) {
             min={BED_MIN}
             max={BED_MAX}
             step={1}
-            value={maxBed}
+            value={draftBed[1]}
             onChange={(e) => {
-              const next = Math.max(Number(e.target.value), minBed);
-              store.setBedroomRange(minBed, next);
+              const next = Math.max(Number(e.target.value), draftBed[0]);
+              setDraftBed([draftBed[0], next]);
             }}
+            onPointerUp={() => store.setBedroomRange(draftBed[0], draftBed[1])}
             className={cn(
               "pointer-events-none absolute left-0 top-1/2 h-6 w-full -translate-y-1/2 appearance-none bg-transparent",
               "[&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-accent [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow",
@@ -335,7 +359,7 @@ export function FilterPanel({ mode = "sidebar" }: FilterPanelProps) {
             step={1}
             value={store.min_bedrooms ?? ""}
             onChange={(e) =>
-              store.setBedroomRange(parseBedValue(e.target.value), store.max_bedrooms ?? maxBed)
+              store.setBedroomRange(parseBedValue(e.target.value), store.max_bedrooms ?? BED_MAX)
             }
             className="h-8 w-full rounded-lg border border-border bg-background px-2 text-xs focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
           />
@@ -349,7 +373,7 @@ export function FilterPanel({ mode = "sidebar" }: FilterPanelProps) {
             step={1}
             value={store.max_bedrooms ?? ""}
             onChange={(e) =>
-              store.setBedroomRange(store.min_bedrooms ?? minBed, parseBedValue(e.target.value))
+              store.setBedroomRange(store.min_bedrooms ?? BED_MIN, parseBedValue(e.target.value))
             }
             className="h-8 w-full rounded-lg border border-border bg-background px-2 text-xs focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
           />
@@ -365,7 +389,10 @@ export function FilterPanel({ mode = "sidebar" }: FilterPanelProps) {
           <div className="absolute left-0 right-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-muted" />
           <div
             className="absolute top-1/2 h-1 -translate-y-1/2 rounded-full bg-accent"
-            style={{ left: `${minBathPercent}%`, right: `${100 - maxBathPercent}%` }}
+            style={{
+              left: `${((draftBath[0] - BATH_MIN) / (BATH_MAX - BATH_MIN)) * 100}%`,
+              right: `${100 - ((draftBath[1] - BATH_MIN) / (BATH_MAX - BATH_MIN)) * 100}%`,
+            }}
           />
           <input
             type="range"
@@ -373,12 +400,12 @@ export function FilterPanel({ mode = "sidebar" }: FilterPanelProps) {
             min={BATH_MIN}
             max={BATH_MAX}
             step={BATH_STEP}
-            value={minBath}
+            value={draftBath[0]}
             onChange={(e) => {
-              const raw = Number(e.target.value);
-              const next = Math.min(raw, maxBath);
-              store.setBathroomRange(next, maxBath);
+              const next = Math.min(Number(e.target.value), draftBath[1]);
+              setDraftBath([next, draftBath[1]]);
             }}
+            onPointerUp={() => store.setBathroomRange(draftBath[0], draftBath[1])}
             className={cn(
               "pointer-events-none absolute left-0 top-1/2 h-6 w-full -translate-y-1/2 appearance-none bg-transparent",
               "[&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-accent [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow",
@@ -391,12 +418,12 @@ export function FilterPanel({ mode = "sidebar" }: FilterPanelProps) {
             min={BATH_MIN}
             max={BATH_MAX}
             step={BATH_STEP}
-            value={maxBath}
+            value={draftBath[1]}
             onChange={(e) => {
-              const raw = Number(e.target.value);
-              const next = Math.max(raw, minBath);
-              store.setBathroomRange(minBath, next);
+              const next = Math.max(Number(e.target.value), draftBath[0]);
+              setDraftBath([draftBath[0], next]);
             }}
+            onPointerUp={() => store.setBathroomRange(draftBath[0], draftBath[1])}
             className={cn(
               "pointer-events-none absolute left-0 top-1/2 h-6 w-full -translate-y-1/2 appearance-none bg-transparent",
               "[&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-accent [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow",
@@ -414,7 +441,7 @@ export function FilterPanel({ mode = "sidebar" }: FilterPanelProps) {
             step={BATH_STEP}
             value={store.min_bathrooms ?? ""}
             onChange={(e) =>
-              store.setBathroomRange(parseBathValue(e.target.value), store.max_bathrooms ?? maxBath)
+              store.setBathroomRange(parseBathValue(e.target.value), store.max_bathrooms ?? BATH_MAX)
             }
             className="h-8 w-full rounded-lg border border-border bg-background px-2 text-xs focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
           />
@@ -428,7 +455,7 @@ export function FilterPanel({ mode = "sidebar" }: FilterPanelProps) {
             step={BATH_STEP}
             value={store.max_bathrooms ?? ""}
             onChange={(e) =>
-              store.setBathroomRange(store.min_bathrooms ?? minBath, parseBathValue(e.target.value))
+              store.setBathroomRange(store.min_bathrooms ?? BATH_MIN, parseBathValue(e.target.value))
             }
             className="h-8 w-full rounded-lg border border-border bg-background px-2 text-xs focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
           />
