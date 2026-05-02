@@ -1,6 +1,5 @@
 import type { ListingListItem } from "@/lib/api/types";
 import { mapAuthUserDto, type AuthUserDto } from "@/lib/contracts/auth";
-import { nextStatusForSubmit, type MarketListingStatus } from "@/lib/contracts/marketListing";
 import { canPublishNews } from "@/lib/contracts/news";
 import type { PublishingRole } from "@/lib/contracts/publishing";
 import { mapProfileDto, type ProfileDto } from "@/lib/contracts/profile";
@@ -110,8 +109,4 @@ export function adaptProfile(dto: ProfileDto): ProfileModel {
 
 export function adaptNewsPublishPermission(role: PublishingRole): boolean {
   return canPublishNews(role);
-}
-
-export function adaptMarketListingSubmitStatus(role: PublishingRole): MarketListingStatus {
-  return nextStatusForSubmit(role);
 }

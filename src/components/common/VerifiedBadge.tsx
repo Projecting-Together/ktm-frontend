@@ -25,7 +25,7 @@ export function VerifiedBadge({ size = "md", className, showLabel = true, ariaLa
     <span
       aria-label={ariaLabel}
       className={cn(
-        "inline-flex items-center rounded-full bg-verified/15 font-semibold text-verified",
+        "inline-flex items-center rounded-full bg-verified font-semibold text-white",
         showLabel ? sizeClasses[size] : "justify-center p-1",
         className
       )}

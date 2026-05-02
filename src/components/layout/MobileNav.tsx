@@ -8,7 +8,7 @@ import { useAuthStore } from "@/lib/stores/authStore";
 
 const NAV_ITEMS = [
   { href: "/", icon: Home, label: "Home", exact: true },
-  { href: "/apartments", icon: Search, label: "Search" },
+  { href: "/listings", icon: Search, label: "Search" },
   { href: "/manage/listings/new", icon: Plus, label: "Post", accent: true },
   { href: "/dashboard/favorites", icon: Heart, label: "Saved" },
   { href: "/dashboard", icon: User, label: "Profile" },

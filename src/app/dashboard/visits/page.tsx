@@ -27,7 +27,7 @@ export default function VisitsPage() {
           <Calendar className="h-12 w-12 text-muted-foreground/30 mb-4" />
           <h3 className="font-semibold">No visit requests yet</h3>
           <p className="mt-1 text-sm text-muted-foreground">Schedule a visit from any property detail page.</p>
-          <Link href="/apartments" className="btn-primary mt-4">Browse Apartments</Link>
+          <Link href="/listings" className="btn-primary mt-4">Browse listings</Link>
         </div>
       ) : (
         <div className="space-y-3">

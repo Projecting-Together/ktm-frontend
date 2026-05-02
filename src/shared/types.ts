@@ -44,7 +44,8 @@ export interface SearchFilters {
   maxBathrooms: number;
   minSquareFeet: number;
   maxSquareFeet: number;
-  neighborhood?: string;
+  /** Area/city filter key aligned with listings search (`city_slug` in app URLs). */
+  city_slug?: string;
   furnished?: boolean;
   petFriendly?: boolean;
   parking?: number;

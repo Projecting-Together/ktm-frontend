@@ -7,7 +7,10 @@ import {
   Heart, Share2, Flag, ChevronLeft, ChevronRight, ShieldCheck,
   Wifi, Car, Zap, Droplets
 } from "lucide-react";
+import { AddToCompareButton } from "@/components/compare/AddToCompareButton";
+import { listingDetailToCompareSnapshot } from "@/lib/compare/listingToCompareSnapshot";
 import { VerifiedBadge } from "@/components/common/VerifiedBadge";
+import { ModeratedBadge } from "@/components/common/ModeratedBadge";
 import { ListingCoverImage } from "@/components/listings/ListingCoverImage";
 import { useToggleFavorite, useIsFavorite } from "@/lib/hooks/useFavorites";
 import { ListingCard } from "@/components/listings/ListingCard";
@@ -64,10 +67,10 @@ export default function ListingDetailClient({ listing: initialListing, slugOrId 
       : null;
 
   const whatsappUrl = listing.owner?.whatsapp_number
-    ? buildWhatsAppUrl(listing.owner.whatsapp_number, `Hi, I am interested in: ${listing.title} - ktmapartments.com/apartments/${listing.slug}`)
+    ? buildWhatsAppUrl(listing.owner.whatsapp_number, `Hi, I am interested in: ${listing.title} - ktmapartments.com/listings/${listing.slug}`)
     : null;
   const inquiryCtaText = listing.purpose === "sale" ? "Send Inquiry to Seller" : "Send Inquiry";
-  const apartmentsHref = listing.purpose === "sale" ? "/apartments?purpose=sale" : "/apartments";
+  const listingsHref = listing.purpose === "sale" ? "/listings?purpose=sale" : "/listings";
   const relatedListings =
     relatedListingsQuery.data?.items?.filter((candidate) => candidate.id !== listing.id).slice(0, 3) ?? [];
   const relatedSectionTitle = listingPurpose === "sale" ? "Related Sale Listings" : "Related Rent Listings";
@@ -78,7 +81,7 @@ export default function ListingDetailClient({ listing: initialListing, slugOrId 
       <nav className="mb-4 flex items-center gap-1 text-sm text-muted-foreground">
         <Link href="/" className="hover:text-accent">Home</Link>
         <span>/</span>
-        <Link href={apartmentsHref} className="hover:text-accent">Apartments</Link>
+        <Link href={listingsHref} className="hover:text-accent">Listings</Link>
         <span>/</span>
         <span className="text-foreground line-clamp-1">{listing.title}</span>
       </nav>
@@ -98,7 +101,14 @@ export default function ListingDetailClient({ listing: initialListing, slugOrId 
                 sizes="(max-width: 1024px) 100vw, 66vw"
                 priority
               />
-              {listing.is_verified && <div className="absolute left-4 top-4"><VerifiedBadge size="md" showLabel={false} ariaLabel="Verified owner" /></div>}
+              {(listing.is_verified || listing.is_moderated) && (
+                <div className="absolute left-4 top-4 flex flex-col gap-2">
+                  {listing.is_verified && (
+                    <VerifiedBadge size="md" showLabel={false} ariaLabel="Verified owner" />
+                  )}
+                  {listing.is_moderated && <ModeratedBadge size="md" />}
+                </div>
+              )}
               {listing.status !== "active" && (
                 <div className="absolute right-4 top-4">
                   <span className={cn("rounded-full px-3 py-1 text-xs font-semibold capitalize", getStatusColor(listing.status))}>{listing.status}</span>
@@ -146,17 +156,18 @@ export default function ListingDetailClient({ listing: initialListing, slugOrId 
                 <h1 className="text-2xl font-bold leading-tight">{listing.title}</h1>
                 <p className="mt-1.5 flex items-center gap-1.5 text-muted-foreground">
                   <MapPin className="h-4 w-4 shrink-0 text-accent" />
-                  {listing.location?.neighborhood?.name && <span>{listing.location.neighborhood.name}, </span>}
+                  {listing.location?.locality?.name && <span>{listing.location.locality.name}, </span>}
                   {listing.location?.city ?? "Kathmandu"}
                 </p>
               </div>
               <div className="flex items-center gap-2 shrink-0">
+                <AddToCompareButton snapshot={listingDetailToCompareSnapshot(listing)} size="md" />
                 <button onClick={() => isAuthenticated ? toggleFavorite(listing.id) : (window.location.href = "/login")}
                   className={cn("flex h-9 w-9 items-center justify-center rounded-full border border-border transition-colors hover:border-accent",
                     isFavorite && "border-accent bg-accent/10")}>
                   <Heart className={cn("h-4 w-4", isFavorite && "fill-accent text-accent")} />
                 </button>
-                <button className="flex h-9 w-9 items-center justify-center rounded-full border border-border transition-colors hover:border-accent">
+                <button type="button" className="flex h-9 w-9 items-center justify-center rounded-full border border-border transition-colors hover:border-accent">
                   <Share2 className="h-4 w-4" />
                 </button>
               </div>

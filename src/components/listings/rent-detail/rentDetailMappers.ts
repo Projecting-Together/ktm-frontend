@@ -73,6 +73,16 @@ function toBinaryStatus(
   return provided ? providedLabel : "Not available";
 }
 
+function toneFromChipStatus(status: string): RentStatusRow["tone"] {
+  if (status === "Not available") {
+    return "negative";
+  }
+  if (status === MISSING_DETAIL_TEXT) {
+    return "warning";
+  }
+  return "positive";
+}
+
 export function toSqmLabel(areaM2?: number | null): string {
   if (areaM2 == null || !Number.isFinite(areaM2) || areaM2 <= 0) {
     return MISSING_DETAIL_TEXT;
@@ -105,7 +115,7 @@ export function toUtilityRows(listing: Listing): RentStatusRow[] {
 
   return rows.map((row) => ({
     ...row,
-    tone: row.status === MISSING_DETAIL_TEXT ? "warning" : "positive",
+    tone: toneFromChipStatus(row.status),
   }));
 }
 
@@ -116,6 +126,10 @@ export function toUnitUtilityRows(listing: Listing): RentStatusRow[] {
   const hasAirConditioning = hasAnyAmenitySignal(amenitySignals, ["ac", "a c", "air conditioning"]);
   const hasHeating = hasAnyAmenitySignal(amenitySignals, ["heating", "heater", "room heater"]);
   const furnishingStatus = listing.furnishing ? String(listing.furnishing) : MISSING_DETAIL_TEXT;
+
+  const parkingStatus = toBinaryStatus(listing.parking, "Available");
+  const petsStatus = toBinaryStatus(listing.pets_allowed, "Allowed");
+  const smokingStatus = toBinaryStatus(listing.smoking_allowed, "Allowed");
 
   return [
     {
@@ -142,6 +156,21 @@ export function toUnitUtilityRows(listing: Listing): RentStatusRow[] {
       label: "Heating",
       status: hasHeating ? "Included" : MISSING_DETAIL_TEXT,
       tone: hasHeating ? "positive" : "warning",
+    },
+    {
+      label: "Parking",
+      status: parkingStatus,
+      tone: toneFromChipStatus(parkingStatus),
+    },
+    {
+      label: "Pets",
+      status: petsStatus,
+      tone: toneFromChipStatus(petsStatus),
+    },
+    {
+      label: "Smoking",
+      status: smokingStatus,
+      tone: toneFromChipStatus(smokingStatus),
     },
   ];
 }

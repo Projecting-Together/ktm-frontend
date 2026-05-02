@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { ListingForm } from "@/components/listings/ListingForm";
-import { AgentUpgradeModal } from "@/components/listings/AgentUpgradeModal";
+import { ProUpgradeModal } from "@/components/listings/ProUpgradeModal";
 import { resolveListingCapabilities } from "@/lib/capabilities/listingCapabilities";
 import { useAuthStore } from "@/lib/stores/authStore";
 import type { User } from "@/lib/api/types";
@@ -60,7 +60,7 @@ export function NewListingRouteGate({ initialPurpose }: NewListingRouteGateProps
     try {
       setIsUpgrading(true);
       await upgradeToAgent();
-      toast.success("Your account has been upgraded to agent.");
+      toast.success("Your account has been upgraded to Pro.");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Upgrade failed. Please try again.";
       toast.error(message);
@@ -89,7 +89,7 @@ export function NewListingRouteGate({ initialPurpose }: NewListingRouteGateProps
     return (
       <>
         <div className="rounded-lg border border-border bg-card p-6 text-sm text-muted-foreground">
-          You have reached your free listing limit. Upgrade to an agent account to continue creating listings.
+          You have reached your free listing limit. Upgrade to Pro to continue creating listings.
         </div>
         {didDeclineUpgrade ? (
           <div className="mt-3 rounded-lg border border-border bg-card p-4 text-sm text-muted-foreground">
@@ -97,7 +97,7 @@ export function NewListingRouteGate({ initialPurpose }: NewListingRouteGateProps
             settings when you are ready to publish another listing.
           </div>
         ) : (
-          <AgentUpgradeModal
+          <ProUpgradeModal
             open
             isLoading={isUpgrading}
             onCancel={() => setDidDeclineUpgrade(true)}

@@ -12,7 +12,7 @@ const VALUES = [
   },
   {
     title: "Local Focus",
-    description: "Our platform is built specifically for Kathmandu neighborhoods, pricing patterns, and housing preferences.",
+    description: "Our platform is built specifically for Kathmandu Valley areas, pricing patterns, and housing preferences.",
   },
   {
     title: "Useful Tools",

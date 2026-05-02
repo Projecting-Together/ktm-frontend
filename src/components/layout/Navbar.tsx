@@ -8,13 +8,13 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/lib/stores/authStore";
 import { resolveListingCapabilities } from "@/lib/capabilities/listingCapabilities";
-import { AgentUpgradeModal } from "@/components/listings/AgentUpgradeModal";
+import { ProUpgradeModal } from "@/components/listings/ProUpgradeModal";
 
 const NAV_LINKS = [
-  { href: "/apartments", label: "Apartments" },
-  { href: "/agents", label: "Agents" },
+  { href: "/listings", label: "Listings" },
   { href: "/news", label: "News" },
-  { href: "/market-listing", label: "Market Listing" },
+  { href: "/about", label: "About" },
+  { href: "/contact", label: "Contact" },
 ];
 
 type PostListingButtonProps = {
@@ -274,7 +274,7 @@ export function Navbar() {
           </div>
         </div>
       )}
-      <AgentUpgradeModal
+      <ProUpgradeModal
         open={showUpgradeModal}
         isLoading={isUpgrading}
         onCancel={() => setShowUpgradeModal(false)}

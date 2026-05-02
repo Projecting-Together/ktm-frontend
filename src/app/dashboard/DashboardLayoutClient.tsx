@@ -11,7 +11,7 @@ const NAV = [
   { href: "/dashboard/recently-viewed", icon: Eye, label: "Recently Viewed" },
   { href: "/dashboard/inquiries", icon: MessageCircle, label: "Inquiries" },
   { href: "/dashboard/visits", icon: Calendar, label: "Visit Requests" },
-  { href: "/dashboard/compare", icon: GitCompare, label: "Compare" },
+  { href: "/compare", icon: GitCompare, label: "Compare" },
   { href: "/dashboard/settings", icon: Settings, label: "Settings" },
 ];
 

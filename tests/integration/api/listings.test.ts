@@ -105,7 +105,7 @@ describe("Listings API client", () => {
   it("getListings filters by bedrooms", async () => {
     const filtered = { ...mockListingsPage1, items: mockListingItems.filter(l => l.bedrooms === 2) };
     mockGetListings.mockResolvedValueOnce({ data: filtered, error: null });
-    const result = await apiClient.getListings({ bedrooms: 2 });
+    const result = await apiClient.getListings({ min_bedrooms: 2 });
     result.data?.items.forEach(item => expect(item.bedrooms).toBe(2));
   });
 

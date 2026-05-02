@@ -15,7 +15,7 @@ async function openMobileFilterDrawerIfPresent(page: import("@playwright/test").
 
 test.describe("Search & Filter Interactions", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("/apartments", { waitUntil: "domcontentloaded" });
+    await page.goto("/listings", { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("load");
   });
 
@@ -105,7 +105,7 @@ test.describe("Search & Filter Interactions", () => {
   });
 
   test("purpose URL on load controls Rent/Buy active state", async ({ page }) => {
-    await page.goto("/apartments?purpose=sale", { waitUntil: "domcontentloaded" });
+    await page.goto("/listings?purpose=sale", { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("load");
 
     const purposeGroup = page.getByRole("group", { name: /listing purpose/i });
@@ -118,7 +118,7 @@ test.describe("Search & Filter Interactions", () => {
   });
 
   test("purpose defaults to Rent when URL purpose is absent", async ({ page }) => {
-    await page.goto("/apartments", { waitUntil: "domcontentloaded" });
+    await page.goto("/listings", { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("load");
 
     const purposeGroup = page.getByRole("group", { name: /listing purpose/i });
@@ -131,14 +131,14 @@ test.describe("Search & Filter Interactions", () => {
   });
 
   test("buy mode stays active after applying listing-type filters", async ({ page }) => {
-    await page.goto("/apartments?purpose=sale", { waitUntil: "domcontentloaded" });
+    await page.goto("/listings?purpose=sale", { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("load");
     await openMobileFilterDrawerIfPresent(page);
     await filterPanel(page).getByRole("button", { name: /^apartment$/i }).first().click();
 
     await page.waitForURL((url) => {
       return (
-        url.pathname === "/apartments" &&
+        url.pathname === "/listings" &&
         url.searchParams.get("purpose") === "sale" &&
         url.searchParams.get("listing_type") === "apartment"
       );

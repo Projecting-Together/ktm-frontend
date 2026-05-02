@@ -93,7 +93,7 @@ export default function InquiriesPage() {
           <MessageCircle className="h-12 w-12 text-muted-foreground/30 mb-4" />
           <h3 className="font-semibold">No inquiries yet</h3>
           <p className="mt-1 text-sm text-muted-foreground">Find a listing you like and send an inquiry to the owner.</p>
-          <Link href="/apartments" className="btn-primary mt-4">Browse Apartments</Link>
+          <Link href="/listings" className="btn-primary mt-4">Browse listings</Link>
         </div>
       ) : (
         <div className="space-y-3">
@@ -144,13 +144,13 @@ export default function InquiriesPage() {
                       <div key={inq.id} className="rounded-lg bg-muted/50 p-3">
                         <div className="flex items-start justify-between gap-4">
                           <div className="min-w-0 flex-1">
-                            <Link href={`/apartments/${inq.listing_id}`} className="text-xs font-semibold hover:text-accent">
+                            <Link href={`/listings/${inq.listing_id}`} className="text-xs font-semibold hover:text-accent">
                               View Property
                             </Link>
                             <p className="mt-1 text-sm text-muted-foreground line-clamp-2">{inq.message}</p>
                             {inq.owner_reply && (
                               <div className="mt-3 rounded-lg bg-muted p-3 text-sm">
-                                <p className="mb-1 text-xs font-semibold text-accent">Owner replied:</p>
+                                <p className="mb-1 text-xs font-semibold text-accent">{formatOwnerLabel(inq)} replied:</p>
                                 <p className="text-muted-foreground">{inq.owner_reply}</p>
                               </div>
                             )}

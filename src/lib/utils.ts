@@ -55,7 +55,7 @@ export function getListingCoverImage(listing: Pick<ListingListItem | Listing, "i
 export function getListingLocation(listing: Pick<ListingListItem, "location">): string {
   const loc = listing.location;
   if (!loc) return "Kathmandu";
-  const parts = [loc.neighborhood?.name, loc.city].filter(Boolean);
+  const parts = [loc.locality?.name, loc.city].filter(Boolean);
   return parts.join(", ") || "Kathmandu";
 }
 
@@ -73,7 +73,7 @@ export function buildSearchUrl(filters: Record<string, unknown>): string {
     else params.set(key, String(val));
   }
   const qs = params.toString();
-  return qs ? `/apartments?${qs}` : "/apartments";
+  return qs ? `/listings?${qs}` : "/listings";
 }
 
 export function slugify(text: string): string {
@@ -109,11 +109,34 @@ export function getStatusColor(status: string): string {
   const map: Record<string, string> = {
     active: "bg-emerald-100 text-emerald-700",
     pending: "bg-amber-100 text-amber-700",
+    pending_payment: "bg-amber-100 text-amber-800",
     draft: "bg-gray-100 text-gray-600",
     rented: "bg-blue-100 text-blue-700",
     sold: "bg-purple-100 text-purple-700",
     rejected: "bg-red-100 text-red-700",
     archived: "bg-gray-100 text-gray-500",
+    expired: "bg-gray-100 text-gray-500",
+    deactivated: "bg-slate-100 text-slate-600",
+    inactive: "bg-gray-100 text-gray-600",
   };
   return map[status] ?? "bg-gray-100 text-gray-600";
+}
+
+/** Human-readable label for API listing status (includes backend lifecycle values). */
+export function formatListingStatusLabel(status: string): string {
+  const map: Record<string, string> = {
+    pending_payment: "Pending payment",
+    active: "Active",
+    expired: "Expired",
+    deactivated: "Deactivated",
+    inactive: "Inactive",
+    rented: "Rented",
+    sold: "Sold",
+    draft: "Draft",
+    pending: "Pending",
+    archived: "Archived",
+    rejected: "Rejected",
+  };
+  if (map[status]) return map[status];
+  return status.charAt(0).toUpperCase() + status.slice(1).replace(/_/g, " ");
 }

@@ -4,7 +4,7 @@ import { getNews } from "@/lib/api/client";
 
 export const metadata: Metadata = {
   title: "Latest News | KTM Apartments",
-  description: "Read housing, rental, and neighborhood updates from KTM Apartments.",
+  description: "Read housing, rental, and market updates from KTM Apartments.",
 };
 
 export const revalidate = 60;

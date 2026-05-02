@@ -51,11 +51,11 @@ describe("Navbar listing entry capability gating", () => {
     render(<Navbar />);
     fireEvent.click(screen.getByRole("button", { name: /post listing/i }));
 
-    expect(screen.getByText(/upgrade to agent/i)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Upgrade to Pro" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /cancel/i }));
 
     await waitFor(() => {
-      expect(screen.queryByText(/upgrade to agent/i)).not.toBeInTheDocument();
+      expect(screen.queryByRole("heading", { name: "Upgrade to Pro" })).not.toBeInTheDocument();
     });
     expect(mockPush).not.toHaveBeenCalled();
   });
@@ -105,7 +105,7 @@ describe("Navbar listing entry capability gating", () => {
     fireEvent.click(screen.getByRole("button", { name: /post listing/i }));
 
     expect(mockPush).toHaveBeenCalledWith("/manage/listings/new?purpose=sale");
-    expect(screen.queryByText(/upgrade to agent/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Upgrade to Pro" })).not.toBeInTheDocument();
   });
 
   it("keeps default listing route when purpose context is invalid", () => {
@@ -127,7 +127,7 @@ describe("Navbar listing entry capability gating", () => {
     fireEvent.click(screen.getByRole("button", { name: /post listing/i }));
 
     expect(mockPush).toHaveBeenCalledWith("/manage/listings/new");
-    expect(screen.queryByText(/upgrade to agent/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Upgrade to Pro" })).not.toBeInTheDocument();
   });
 
   it("allows renter users to enter listing flow below cap", () => {

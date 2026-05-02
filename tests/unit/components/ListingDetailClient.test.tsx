@@ -36,9 +36,9 @@ describe("ListingDetailClient", () => {
     const saleListing = mockListings[4];
     render(<ListingDetailClient listing={saleListing} />);
     expect(screen.getByRole("link", { name: /send inquiry to seller/i })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /^apartments$/i })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /^listings$/i })).toHaveAttribute(
       "href",
-      "/apartments?purpose=sale",
+      "/listings?purpose=sale",
     );
   });
 
@@ -46,7 +46,7 @@ describe("ListingDetailClient", () => {
     const rentListing = mockListings[0];
     render(<ListingDetailClient listing={rentListing} />);
     expect(screen.getByRole("link", { name: /send inquiry$/i })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /^apartments$/i })).toHaveAttribute("href", "/apartments");
+    expect(screen.getByRole("link", { name: /^listings$/i })).toHaveAttribute("href", "/listings");
   });
 
   it("shows rent detail section heading for rent listings", () => {

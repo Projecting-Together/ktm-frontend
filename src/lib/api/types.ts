@@ -33,7 +33,8 @@ export interface TokenPair {
   token_type: string;
 }
 
-export interface Neighborhood {
+/** Kathmandu area / locality catalog entry (e.g. Thamel, Lazimpat). */
+export interface Locality {
   id: string;
   name: string;
   name_ne?: string | null;
@@ -60,7 +61,17 @@ export interface Amenity {
 
 export type ListingType = "apartment" | "room" | "house" | "studio" | "penthouse" | "commercial" | "land" | "video_shooting";
 export type ListingPurpose = "rent" | "sale";
-export type ListingStatus = "draft" | "pending" | "active" | "rented" | "sold" | "rejected" | "archived";
+/** Aligns with backend listing lifecycle (`pending_payment`, `expired`, …) and UI aliases (`archived`). */
+export type ListingStatus =
+  | "draft"
+  | "pending"
+  | "pending_payment"
+  | "active"
+  | "expired"
+  | "rented"
+  | "sold"
+  | "rejected"
+  | "archived";
 export type FurnishingType = "fully" | "semi" | "unfurnished";
 export type PricePeriod = "monthly" | "yearly" | "daily";
 
@@ -75,7 +86,7 @@ export interface ListingLocation {
   ward_no?: number | null;
   latitude?: string | number | null;
   longitude?: string | number | null;
-  neighborhood?: Neighborhood | null;
+  locality?: Locality | null;
 }
 
 export interface ListingImage {
@@ -122,7 +133,7 @@ export interface Listing {
   id: string;
   slug: string;
   owner_user_id: string;
-  neighborhood_id?: string | null;
+  locality_id?: string | null;
   title: string;
   description?: string | null;
   listing_type?: ListingType | null;
@@ -187,8 +198,14 @@ export interface ListingFilters {
   district?: string;
   min_price?: number;
   max_price?: number;
-  bedrooms?: number;
-  bathrooms?: number;
+  /** Minimum bedroom count (maps to API `bedrooms` query param). */
+  min_bedrooms?: number;
+  /** Maximum bedroom count (API `max_bedrooms`). */
+  max_bedrooms?: number;
+  /** Minimum bathroom count (maps to API `bathrooms` query param). */
+  min_bathrooms?: number;
+  /** Maximum bathroom count (API `max_bathrooms`). */
+  max_bathrooms?: number;
   furnishing?: string;
   parking?: boolean;
   pets_allowed?: boolean;
@@ -207,9 +224,18 @@ export interface ListingFilters {
   lat?: number;
   lng?: number;
   radius_km?: number;
-  neighborhood_slug?: string;
+  /** Public search: URL/store key; sent to API as `city` (substring match). */
+  city_slug?: string;
   min_area_m2?: number;
   max_area_m2?: number;
+}
+
+/** Authenticated `GET /listings/user/my-listings` query params. */
+export interface MyListingsFilters {
+  skip?: number;
+  limit?: number;
+  /** Backend stores `expired`; alias `archived` is accepted server-side. */
+  status?: ListingStatus;
 }
 
 export type InquiryStatus = "pending" | "replied" | "closed";
@@ -310,7 +336,7 @@ export interface AdminAnalyticsOverview {
   total_inquiries: number;
   inquiries_today: number;
   total_views: number;
-  top_neighborhoods: Array<{ neighborhood: string; count: number }>;
+  top_localities: Array<{ name: string; count: number }>;
 }
 
 export interface NewsListItem {
@@ -334,38 +360,6 @@ export interface NewsFilters {
   category?: string;
 }
 
-export type MarketListingStatus = "draft" | "pending_review" | "published" | "rejected";
-export type MarketListingPropertyType = "apartment" | "house" | "commercial" | "land" | "video_shooting";
-export type MarketListingCurrency = "NPR" | "USD";
-
-export interface MarketListing {
-  id: string;
-  title: string;
-  slug: string;
-  description: string;
-  price: number;
-  currency: MarketListingCurrency;
-  location: string;
-  property_type: MarketListingPropertyType;
-  status: MarketListingStatus;
-  is_sponsored?: boolean;
-  sponsored_weight?: number;
-  sponsored_until?: string | null;
-  published_at?: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface MarketListingFilters {
-  page?: number;
-  limit?: number;
-  status?: MarketListingStatus;
-  property_type?: MarketListingPropertyType;
-  search?: string;
-  min_price?: number;
-  max_price?: number;
-}
-
 export interface ApiError {
   message: string;
   code?: string;
@@ -376,4 +370,10 @@ export interface ApiError {
 export interface ApiResponse<T> {
   data: T | null;
   error: ApiError | null;
+}
+
+/** Public marketing/config from `GET .../site-config` (camelCase or snake_case from API). */
+export interface SiteConfig {
+  heroBannerUrl?: string | null;
+  ctaBannerUrl?: string | null;
 }

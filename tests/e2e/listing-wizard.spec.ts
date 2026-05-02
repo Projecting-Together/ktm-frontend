@@ -63,14 +63,14 @@ test.describe("Listing Creation Wizard (Authenticated Owner)", () => {
     await apartmentBtn.click();
     await page.getByPlaceholder(/bright 2-bedroom apartment in thamel/i).fill("Modern 2BHK in Thamel");
     await page.getByPlaceholder(/describe your property/i).fill(
-      "A beautifully furnished apartment in the heart of Thamel with mountain views, natural light, secure parking, and reliable backup power. The home includes a modern kitchen, spacious living room, two well-ventilated bedrooms, and two bathrooms with premium fittings. It is close to shops, schools, hospitals, gyms, and public transport, and the building has secure entry, steady water supply, and a responsive caretaker. The flat is ideal for families and professionals seeking comfort, convenience, and a peaceful neighborhood."
+      "A beautifully furnished apartment in the heart of Thamel with mountain views, natural light, secure parking, and reliable backup power. The home includes a modern kitchen, spacious living room, two well-ventilated bedrooms, and two bathrooms with premium fittings. It is close to shops, schools, hospitals, gyms, and public transport, and the building has secure entry, steady water supply, and a responsive caretaker. The flat is ideal for families and professionals seeking comfort, convenience, and a peaceful area."
     );
     const nextBtn = page.getByRole("button", { name: /next/i });
     await expect(nextBtn).toBeVisible();
     await nextBtn.click();
     // Should advance to step 2
     await expect(page.getByText(/step 2 of 8/i)).toBeVisible();
-    await expect(page.getByText(/neighborhood/i)).toHaveCount(0);
+    await expect(page.getByText(/locality/i)).toHaveCount(0);
   });
 
   test("Step 1 — preselects purpose as sale from query parameter", async ({ page }) => {
@@ -138,7 +138,7 @@ test.describe("Listing Creation Wizard (Authenticated Owner)", () => {
     });
     await page.goto("/manage/listings/new", { waitUntil: "domcontentloaded" });
     await expect(page).toHaveURL(/\/manage\/listings\/new/);
-    const upgradeModalTitle = page.getByRole("heading", { name: /upgrade to agent/i });
+    const upgradeModalTitle = page.getByRole("heading", { name: /upgrade to pro/i });
     await expect(upgradeModalTitle).toBeVisible();
     await page.getByRole("button", { name: /cancel/i }).click();
     await expect(page).toHaveURL(/\/manage\/listings\/new$/);

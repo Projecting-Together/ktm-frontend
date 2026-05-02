@@ -28,11 +28,13 @@ describe("Public navigation links", () => {
     });
   });
 
-  it("shows News and Market Listing links in the top navigation", () => {
+  it("shows Listings, News, About, and Contact links in the top navigation", () => {
     render(<Navbar />);
 
+    expect(screen.getByRole("link", { name: "Listings" })).toHaveAttribute("href", "/listings");
     expect(screen.getByRole("link", { name: "News" })).toHaveAttribute("href", "/news");
-    expect(screen.getByRole("link", { name: "Market Listing" })).toHaveAttribute("href", "/market-listing");
+    expect(screen.getByRole("link", { name: "About" })).toHaveAttribute("href", "/about");
+    expect(screen.getByRole("link", { name: "Contact" })).toHaveAttribute("href", "/contact");
   });
 
   it("highlights the active top navigation link for current route", () => {
@@ -42,10 +44,11 @@ describe("Public navigation links", () => {
     expect(screen.getByRole("link", { name: "News" })).toHaveClass("text-accent");
   });
 
-  it("shows aligned legal and company links in footer", () => {
+  it("shows aligned explore, company, and legal links in footer", () => {
     render(<Footer />);
 
-    expect(screen.getByRole("link", { name: "Market Listing" })).toHaveAttribute("href", "/market-listing");
+    expect(screen.getByRole("link", { name: "Listings" })).toHaveAttribute("href", "/listings");
+    expect(screen.getByRole("link", { name: "News" })).toHaveAttribute("href", "/news");
     expect(screen.getByRole("link", { name: "About" })).toHaveAttribute("href", "/about");
     expect(screen.getByRole("link", { name: "Contact" })).toHaveAttribute("href", "/contact");
     expect(screen.getByRole("link", { name: "Privacy" })).toHaveAttribute("href", "/privacy");

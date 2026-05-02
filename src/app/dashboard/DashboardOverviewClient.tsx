@@ -4,44 +4,30 @@ import { Heart, MessageCircle, Calendar, Eye, Clock3 } from "lucide-react";
 import { useFavorites } from "@/lib/hooks/useFavorites";
 import { useAuthStore } from "@/lib/stores/authStore";
 import { useQuery } from "@tanstack/react-query";
-import { getListings } from "@/lib/api/client";
+import { getMyListings } from "@/lib/api/client";
 
 export default function DashboardOverviewClient() {
   const { user } = useAuthStore();
   const { data: favorites } = useFavorites();
-  const { data: listingData } = useQuery({
-    queryKey: ["dashboard", "listings", "expired-metric"],
+  const { data: expiredTotal } = useQuery({
+    queryKey: ["dashboard", "listings", "my-expired-total"],
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
     queryFn: async () => {
-      const pageSize = 100;
-      let page = 1;
-      let archivedCount = 0;
-      let totalPages = 1;
-
-      do {
-        const res = await getListings({ limit: pageSize, page });
-        if (res.error) throw new Error(res.error.message);
-        const pageData = res.data;
-        if (!pageData) break;
-
-        archivedCount += pageData.items.filter((listing) => listing.status === "archived").length;
-        totalPages = pageData.total_pages || 1;
-        page += 1;
-      } while (page <= totalPages);
-
-      return archivedCount;
+      const res = await getMyListings({ status: "archived", skip: 0, limit: 1 });
+      if (res.error) return 0;
+      return res.data?.total ?? 0;
     },
   });
 
-  // Backend does not expose an explicit "expired" status; archived listings are the closest stable proxy.
-  const expiredListingsCount = listingData ?? 0;
+  // Server maps `archived` to stored `expired`; total is owner-scoped via my-listings.
+  const expiredListingsCount = expiredTotal ?? 0;
 
   const stats = [
     { label: "Saved Listings", value: favorites?.length ?? 0, icon: Heart, href: "/dashboard/favorites" },
     { label: "Active Inquiries", value: 0, icon: MessageCircle, href: "/dashboard/inquiries" },
     { label: "Visit Requests", value: 0, icon: Calendar, href: "/dashboard/visits" },
-    { label: "Expired Listings", value: expiredListingsCount, icon: Clock3, href: "/dashboard/favorites" },
+    { label: "Expired Listings", value: expiredListingsCount, icon: Clock3, href: "/manage/listings?status=archived" },
     { label: "Recently Viewed", value: 0, icon: Eye, href: "/dashboard/recently-viewed" },
   ];
 
@@ -73,8 +59,8 @@ export default function DashboardOverviewClient() {
       <div className="mt-8 rounded-xl border border-dashed border-border p-8 text-center">
         <p className="text-4xl mb-3">🏠</p>
         <h3 className="font-semibold">Start your search</h3>
-        <p className="mt-1 text-sm text-muted-foreground">Browse thousands of verified apartments across Kathmandu.</p>
-        <Link href="/apartments" className="btn-primary mt-4 inline-flex">Browse Apartments</Link>
+        <p className="mt-1 text-sm text-muted-foreground">Browse thousands of verified listings across Kathmandu.</p>
+        <Link href="/listings" className="btn-primary mt-4 inline-flex">Browse listings</Link>
       </div>
     </div>
   );

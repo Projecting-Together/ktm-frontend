@@ -12,7 +12,7 @@ import type {
   ListingImage,
   ListingListItem,
   ListingLocation,
-  Neighborhood,
+  Locality,
   Amenity,
   Inquiry,
   VisitRequest,
@@ -25,9 +25,9 @@ import type {
 } from "@/lib/api/types";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// NEIGHBORHOODS  (10 Kathmandu neighborhoods)
+// LOCALITIES  (Kathmandu area catalog: Thamel, Lazimpat, …)
 // ─────────────────────────────────────────────────────────────────────────────
-export const mockNeighborhoods: Neighborhood[] = [
+export const mockLocalities: Locality[] = [
   {
     id: "nbh-001",
     name: "Thamel",
@@ -38,7 +38,7 @@ export const mockNeighborhoods: Neighborhood[] = [
     lng: 85.3123,
     listing_count: 142,
     avg_price: 32000,
-    image_url: "https://images.ktmapartments.com/neighborhoods/thamel.jpg",
+    image_url: "https://images.ktmapartments.com/localities/thamel.jpg",
   },
   {
     id: "nbh-002",
@@ -50,7 +50,7 @@ export const mockNeighborhoods: Neighborhood[] = [
     lng: 85.3183,
     listing_count: 87,
     avg_price: 55000,
-    image_url: "https://images.ktmapartments.com/neighborhoods/lazimpat.jpg",
+    image_url: "https://images.ktmapartments.com/localities/lazimpat.jpg",
   },
   {
     id: "nbh-003",
@@ -62,7 +62,7 @@ export const mockNeighborhoods: Neighborhood[] = [
     lng: 85.3240,
     listing_count: 93,
     avg_price: 22000,
-    image_url: "https://images.ktmapartments.com/neighborhoods/patan.jpg",
+    image_url: "https://images.ktmapartments.com/localities/patan.jpg",
   },
   {
     id: "nbh-004",
@@ -74,7 +74,7 @@ export const mockNeighborhoods: Neighborhood[] = [
     lng: 85.3560,
     listing_count: 118,
     avg_price: 18000,
-    image_url: "https://images.ktmapartments.com/neighborhoods/koteshwor.jpg",
+    image_url: "https://images.ktmapartments.com/localities/koteshwor.jpg",
   },
   {
     id: "nbh-005",
@@ -86,7 +86,7 @@ export const mockNeighborhoods: Neighborhood[] = [
     lng: 85.4298,
     listing_count: 54,
     avg_price: 14000,
-    image_url: "https://images.ktmapartments.com/neighborhoods/bhaktapur.jpg",
+    image_url: "https://images.ktmapartments.com/localities/bhaktapur.jpg",
   },
 ];
 
@@ -224,7 +224,7 @@ function makeImages(listingId: string, count: number): ListingImage[] {
 // LISTING LOCATIONS helper
 // ─────────────────────────────────────────────────────────────────────────────
 /**
- * Small deterministic offset from the neighborhood center so map markers are not stacked
+ * Small deterministic offset from the locality center so map markers are not stacked
  * on one pixel (SearchMap / Leaflet need `location.latitude` & `location.longitude`).
  */
 function listingLatLngOffset(listingId: string): { dLat: number; dLng: number } {
@@ -241,12 +241,12 @@ function listingLatLngOffset(listingId: string): { dLat: number; dLng: number } 
 
 function makeLocation(
   listingId: string,
-  neighborhood: Neighborhood,
+  locality: Locality,
   addressLine: string,
   overrides?: Partial<Pick<ListingLocation, "city" | "district" | "municipality">>,
 ): ListingLocation {
-  const baseLat = neighborhood.lat ?? 27.7172;
-  const baseLng = neighborhood.lng ?? 85.324;
+  const baseLat = locality.lat ?? 27.7172;
+  const baseLng = locality.lng ?? 85.324;
   const { dLat, dLng } = listingLatLngOffset(listingId);
   return {
     location_id: `loc-${listingId}`,
@@ -256,7 +256,7 @@ function makeLocation(
     municipality: overrides?.municipality ?? "Kathmandu Metropolitan City",
     district: overrides?.district ?? "Kathmandu",
     province: "Bagmati",
-    neighborhood,
+    locality,
     latitude: baseLat + dLat,
     longitude: baseLng + dLng,
   };
@@ -270,7 +270,7 @@ export const mockListings: Listing[] = [
   {
     id: "lst-001",
     owner_user_id: "usr-owner-001",
-    neighborhood_id: "nbh-001",
+    locality_id: "nbh-001",
     slug: "modern-2bhk-thamel-lst-001",
     title: "Modern 2BHK Apartment in the Heart of Thamel",
     description:
@@ -294,7 +294,7 @@ export const mockListings: Listing[] = [
     pets_allowed: false,
     smoking_allowed: false,
     available_from: "2025-02-01",
-    location: makeLocation("lst-001", mockNeighborhoods[0], "Thamel Marg, Ward 26"),
+    location: makeLocation("lst-001", mockLocalities[0], "Thamel Marg, Ward 26"),
     owner: {
       user_id: "usr-owner-001",
       first_name: "Sita",
@@ -314,7 +314,7 @@ export const mockListings: Listing[] = [
   {
     id: "lst-002",
     owner_user_id: "usr-owner-001",
-    neighborhood_id: "nbh-002",
+    locality_id: "nbh-002",
     slug: "luxury-3bhk-lazimpat-lst-002",
     title: "Luxury 3BHK in Lazimpat — Embassy District",
     description:
@@ -338,7 +338,7 @@ export const mockListings: Listing[] = [
     pets_allowed: true,
     smoking_allowed: false,
     available_from: "2025-03-01",
-    location: makeLocation("lst-002", mockNeighborhoods[1], "Lazimpat Road, Ward 2"),
+    location: makeLocation("lst-002", mockLocalities[1], "Lazimpat Road, Ward 2"),
     owner: {
       user_id: "usr-owner-001",
       first_name: "Sita",
@@ -358,11 +358,11 @@ export const mockListings: Listing[] = [
   {
     id: "lst-003",
     owner_user_id: "usr-agent-001",
-    neighborhood_id: "nbh-003",
+    locality_id: "nbh-003",
     slug: "cozy-1bhk-patan-lst-003",
     title: "Cozy 1BHK Studio in Patan — Near Durbar Square",
     description:
-      "Affordable 1-bedroom apartment just 3 minutes from Patan Durbar Square. Quiet neighborhood, great for students and young professionals. Includes water tank and 24/7 electricity backup.",
+      "Affordable 1-bedroom apartment just 3 minutes from Patan Durbar Square. Quiet area, great for students and young professionals. Includes water tank and 24/7 electricity backup.",
     listing_type: "apartment",
     purpose: "rent",
     status: "active",
@@ -382,7 +382,7 @@ export const mockListings: Listing[] = [
     pets_allowed: false,
     smoking_allowed: false,
     available_from: "2025-01-20",
-    location: makeLocation("lst-003", mockNeighborhoods[2], "Mangal Bazar Road, Patan"),
+    location: makeLocation("lst-003", mockLocalities[2], "Mangal Bazar Road, Patan"),
     owner: {
       user_id: "usr-agent-001",
       first_name: "Bikash",
@@ -402,7 +402,7 @@ export const mockListings: Listing[] = [
   {
     id: "lst-004",
     owner_user_id: "usr-owner-001",
-    neighborhood_id: "nbh-004",
+    locality_id: "nbh-004",
     slug: "affordable-room-koteshwor-lst-004",
     title: "Affordable Single Room in Koteshwor",
     description:
@@ -426,7 +426,7 @@ export const mockListings: Listing[] = [
     pets_allowed: false,
     smoking_allowed: false,
     available_from: "2025-02-15",
-    location: makeLocation("lst-004", mockNeighborhoods[3], "Koteshwor Chowk, Ward 32"),
+    location: makeLocation("lst-004", mockLocalities[3], "Koteshwor Chowk, Ward 32"),
     owner: {
       user_id: "usr-owner-001",
       first_name: "Sita",
@@ -446,7 +446,7 @@ export const mockListings: Listing[] = [
   {
     id: "lst-005",
     owner_user_id: "usr-owner-001",
-    neighborhood_id: "nbh-005",
+    locality_id: "nbh-005",
     slug: "traditional-house-bhaktapur-lst-005",
     title: "Traditional Newari House for Sale in Bhaktapur",
     description:
@@ -470,7 +470,7 @@ export const mockListings: Listing[] = [
     pets_allowed: true,
     smoking_allowed: false,
     available_from: null,
-    location: makeLocation("lst-005", mockNeighborhoods[4], "Dattatreya Square, Bhaktapur", {
+    location: makeLocation("lst-005", mockLocalities[4], "Dattatreya Square, Bhaktapur", {
       city: "Bhaktapur",
       district: "Bhaktapur",
       municipality: "Bhaktapur Municipality",
@@ -494,7 +494,7 @@ export const mockListings: Listing[] = [
   {
     id: "lst-006",
     owner_user_id: "usr-agent-001",
-    neighborhood_id: "nbh-001",
+    locality_id: "nbh-001",
     slug: "studio-baneshwor-lst-006",
     title: "Modern Studio Apartment in Baneshwor",
     description:
@@ -518,7 +518,7 @@ export const mockListings: Listing[] = [
     pets_allowed: false,
     smoking_allowed: false,
     available_from: "2025-02-01",
-    location: makeLocation("lst-006", mockNeighborhoods[0], "New Baneshwor, Ward 10"),
+    location: makeLocation("lst-006", mockLocalities[0], "New Baneshwor, Ward 10"),
     owner: {
       user_id: "usr-agent-001",
       first_name: "Bikash",
@@ -538,7 +538,7 @@ export const mockListings: Listing[] = [
   {
     id: "lst-007",
     owner_user_id: "usr-owner-001",
-    neighborhood_id: "nbh-002",
+    locality_id: "nbh-002",
     slug: "townhouse-lazimpat-sale-lst-007",
     title: "Contemporary Townhouse for Sale in Lazimpat",
     description:
@@ -562,7 +562,7 @@ export const mockListings: Listing[] = [
     pets_allowed: true,
     smoking_allowed: false,
     available_from: null,
-    location: makeLocation("lst-007", mockNeighborhoods[1], "Lazimpat Aawas Marg, Ward 2"),
+    location: makeLocation("lst-007", mockLocalities[1], "Lazimpat Aawas Marg, Ward 2"),
     owner: {
       user_id: "usr-owner-001",
       first_name: "Sita",
@@ -582,7 +582,7 @@ export const mockListings: Listing[] = [
   {
     id: "lst-008",
     owner_user_id: "usr-agent-001",
-    neighborhood_id: "nbh-003",
+    locality_id: "nbh-003",
     slug: "family-apartment-patan-sale-lst-008",
     title: "Sunny 3BHK Family Apartment for Sale in Patan",
     description:
@@ -606,7 +606,7 @@ export const mockListings: Listing[] = [
     pets_allowed: true,
     smoking_allowed: false,
     available_from: null,
-    location: makeLocation("lst-008", mockNeighborhoods[2], "Pulchowk Lane, Patan"),
+    location: makeLocation("lst-008", mockLocalities[2], "Pulchowk Lane, Patan"),
     owner: {
       user_id: "usr-agent-001",
       first_name: "Bikash",
@@ -626,7 +626,7 @@ export const mockListings: Listing[] = [
   {
     id: "lst-009",
     owner_user_id: "usr-owner-001",
-    neighborhood_id: "nbh-004",
+    locality_id: "nbh-004",
     slug: "compact-house-koteshwor-sale-lst-009",
     title: "Compact 2.5 Storey House for Sale in Koteshwor",
     description:
@@ -650,7 +650,7 @@ export const mockListings: Listing[] = [
     pets_allowed: true,
     smoking_allowed: false,
     available_from: null,
-    location: makeLocation("lst-009", mockNeighborhoods[3], "Koteshwor Inner Road, Ward 32"),
+    location: makeLocation("lst-009", mockLocalities[3], "Koteshwor Inner Road, Ward 32"),
     owner: {
       user_id: "usr-owner-001",
       first_name: "Sita",
@@ -670,7 +670,7 @@ export const mockListings: Listing[] = [
   {
     id: "lst-010",
     owner_user_id: "usr-agent-001",
-    neighborhood_id: "nbh-001",
+    locality_id: "nbh-001",
     slug: "penthouse-thamel-sale-lst-010",
     title: "Premium Penthouse for Sale Near Thamel Heritage Zone",
     description:
@@ -694,7 +694,7 @@ export const mockListings: Listing[] = [
     pets_allowed: true,
     smoking_allowed: false,
     available_from: null,
-    location: makeLocation("lst-010", mockNeighborhoods[0], "Paknajol Road, Ward 26"),
+    location: makeLocation("lst-010", mockLocalities[0], "Paknajol Road, Ward 26"),
     owner: {
       user_id: "usr-agent-001",
       first_name: "Bikash",
@@ -714,7 +714,7 @@ export const mockListings: Listing[] = [
   {
     id: "lst-011",
     owner_user_id: "usr-owner-001",
-    neighborhood_id: "nbh-005",
+    locality_id: "nbh-005",
     slug: "family-flat-bhaktapur-sale-lst-011",
     title: "Ready-to-Move 3BHK Family Flat for Sale in Bhaktapur",
     description:
@@ -738,7 +738,7 @@ export const mockListings: Listing[] = [
     pets_allowed: true,
     smoking_allowed: false,
     available_from: null,
-    location: makeLocation("lst-011", mockNeighborhoods[4], "Suryabinayak Link Road, Bhaktapur", {
+    location: makeLocation("lst-011", mockLocalities[4], "Suryabinayak Link Road, Bhaktapur", {
       city: "Bhaktapur",
       district: "Bhaktapur",
       municipality: "Suryabinayak Municipality",
@@ -762,7 +762,7 @@ export const mockListings: Listing[] = [
   {
     id: "lst-012",
     owner_user_id: "usr-owner-001",
-    neighborhood_id: "nbh-002",
+    locality_id: "nbh-002",
     slug: "villa-lazimpat-sale-lst-012",
     title: "Detached Villa for Sale in Prime Lazimpat Location",
     description:
@@ -786,7 +786,7 @@ export const mockListings: Listing[] = [
     pets_allowed: true,
     smoking_allowed: false,
     available_from: null,
-    location: makeLocation("lst-012", mockNeighborhoods[1], "Panipokhari Extension, Ward 3"),
+    location: makeLocation("lst-012", mockLocalities[1], "Panipokhari Extension, Ward 3"),
     owner: {
       user_id: "usr-owner-001",
       first_name: "Sita",
@@ -806,7 +806,7 @@ export const mockListings: Listing[] = [
   {
     id: "lst-013",
     owner_user_id: "usr-agent-001",
-    neighborhood_id: "nbh-003",
+    locality_id: "nbh-003",
     slug: "investment-apartment-patan-sale-lst-013",
     title: "Investment-Ready 2BHK Apartment for Sale in Patan",
     description:
@@ -830,7 +830,7 @@ export const mockListings: Listing[] = [
     pets_allowed: false,
     smoking_allowed: false,
     available_from: null,
-    location: makeLocation("lst-013", mockNeighborhoods[2], "Jawalakhel Side Lane, Patan"),
+    location: makeLocation("lst-013", mockLocalities[2], "Jawalakhel Side Lane, Patan"),
     owner: {
       user_id: "usr-agent-001",
       first_name: "Bikash",
@@ -1024,8 +1024,8 @@ export const mockListingsPage1: PaginatedResponse<ListingListItem> = {
 };
 
 export const mockThamelListings: PaginatedResponse<ListingListItem> = {
-  items: mockListingItems.filter((l) => l.location?.neighborhood?.slug === "thamel"),
-  total: mockListingItems.filter((l) => l.location?.neighborhood?.slug === "thamel").length,
+  items: mockListingItems.filter((l) => l.location?.locality?.slug === "thamel"),
+  total: mockListingItems.filter((l) => l.location?.locality?.slug === "thamel").length,
   page: 1,
   page_size: 20,
   total_pages: 1,
@@ -1306,12 +1306,12 @@ export const mockAdminAnalytics: AdminAnalyticsOverview = {
   total_inquiries: 11348,
   inquiries_today: 69,
   total_views: 156432,
-  top_neighborhoods: [
-    { neighborhood: "Thamel", count: 142 },
-    { neighborhood: "Lazimpat", count: 87 },
-    { neighborhood: "Patan", count: 93 },
-    { neighborhood: "Koteshwor", count: 118 },
-    { neighborhood: "Bhaktapur", count: 54 },
+  top_localities: [
+    { name: "Thamel", count: 142 },
+    { name: "Lazimpat", count: 87 },
+    { name: "Patan", count: 93 },
+    { name: "Koteshwor", count: 118 },
+    { name: "Bhaktapur", count: 54 },
   ],
 };
 

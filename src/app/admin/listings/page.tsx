@@ -161,7 +161,7 @@ export default function AdminListingsPage() {
       header: "Actions",
       cell: (row) => (
         <div className="flex flex-wrap items-center gap-2">
-          <Link href={`/apartments/${row.id}`} className="rounded border border-border px-2 py-1 text-xs">
+          <Link href={`/listings/${row.id}`} className="rounded border border-border px-2 py-1 text-xs">
             View
           </Link>
           <button type="button" className="rounded border border-border px-2 py-1 text-xs">

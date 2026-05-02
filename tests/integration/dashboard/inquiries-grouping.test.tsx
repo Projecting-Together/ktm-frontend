@@ -3,12 +3,12 @@ import { render, screen, waitFor, within } from "@/test-utils/renderWithProvider
 import userEvent from "@testing-library/user-event";
 import InquiriesPage from "@/app/dashboard/inquiries/page";
 import DashboardOverviewClient from "@/app/dashboard/DashboardOverviewClient";
-import { getMyInquiries, getListings } from "@/lib/api/client";
+import { getMyInquiries, getMyListings } from "@/lib/api/client";
 import { useFavorites } from "@/lib/hooks/useFavorites";
 
 jest.mock("@/lib/api/client", () => ({
   getMyInquiries: jest.fn(),
-  getListings: jest.fn(),
+  getMyListings: jest.fn(),
 }));
 
 jest.mock("@/lib/hooks/useFavorites", () => ({
@@ -26,7 +26,7 @@ jest.mock("@/lib/stores/authStore", () => ({
 }));
 
 const mockGetMyInquiries = getMyInquiries as jest.MockedFunction<typeof getMyInquiries>;
-const mockGetListings = getListings as jest.MockedFunction<typeof getListings>;
+const mockGetMyListings = getMyListings as jest.MockedFunction<typeof getMyListings>;
 const mockUseFavorites = useFavorites as jest.MockedFunction<typeof useFavorites>;
 
 describe("Dashboard inquiries grouping", () => {
@@ -114,7 +114,7 @@ describe("Dashboard inquiries grouping", () => {
 
     expect(within(firstGroup as HTMLElement).getByRole("img", { name: /sunny 2bhk in thamel/i })).toBeInTheDocument();
     expect(within(firstGroup as HTMLElement).getByText("New")).toBeInTheDocument();
-    expect(within(firstGroup as HTMLElement).getByText(/o\.\s*owner/i)).toBeInTheDocument();
+    expect(within(firstGroup as HTMLElement).getByText(/o\.\s*owner\s*•\s*2\s*inquiries/i)).toBeInTheDocument();
     expect(within(firstGroup as HTMLElement).getByText(/2 inquiries/i)).toBeInTheDocument();
     expect(within(firstGroup as HTMLElement).getByText(/is this available this weekend/i)).toBeInTheDocument();
 
@@ -133,57 +133,16 @@ describe("Dashboard overview expired listings metric", () => {
     } as never);
   });
 
-  it("shows archived listings count as expired metric", async () => {
-    mockGetListings.mockResolvedValueOnce({
+  it("shows owner expired/archived listings total as expired metric", async () => {
+    mockGetMyListings.mockResolvedValueOnce({
       data: {
         page: 1,
-        page_size: 2,
-        total: 3,
+        page_size: 1,
+        total: 2,
         total_pages: 2,
         has_next: true,
         has_prev: false,
-        items: [
-          {
-            id: "l1",
-            slug: "listing-1",
-            title: "Archived 1",
-            status: "archived",
-            currency: "NPR",
-            images: [],
-            created_at: "2026-01-01T00:00:00Z",
-          },
-          {
-            id: "l2",
-            slug: "listing-2",
-            title: "Active",
-            status: "active",
-            currency: "NPR",
-            images: [],
-            created_at: "2026-01-01T00:00:00Z",
-          },
-        ],
-      },
-      error: null,
-    } as never);
-    mockGetListings.mockResolvedValueOnce({
-      data: {
-        page: 2,
-        page_size: 2,
-        total: 3,
-        total_pages: 2,
-        has_next: false,
-        has_prev: true,
-        items: [
-          {
-            id: "l3",
-            slug: "listing-3",
-            title: "Archived 2",
-            status: "archived",
-            currency: "NPR",
-            images: [],
-            created_at: "2026-01-01T00:00:00Z",
-          },
-        ],
+        items: [],
       },
       error: null,
     } as never);
@@ -194,7 +153,6 @@ describe("Dashboard overview expired listings metric", () => {
     await waitFor(() => {
       expect(expiredTile).toHaveTextContent("2");
     });
-    expect(mockGetListings).toHaveBeenNthCalledWith(1, { limit: 100, page: 1 });
-    expect(mockGetListings).toHaveBeenNthCalledWith(2, { limit: 100, page: 2 });
+    expect(mockGetMyListings).toHaveBeenCalledWith({ status: "archived", skip: 0, limit: 1 });
   });
 });

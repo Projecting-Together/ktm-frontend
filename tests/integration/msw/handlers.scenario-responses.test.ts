@@ -29,7 +29,7 @@ jest.mock("msw", () => {
 });
 
 import { handlers } from "@/msw/handlers";
-import { mockNeighborhoods } from "@/test-utils/mockData";
+import { mockLocalities } from "@/test-utils/mockData";
 
 type HandlerResolver = (args: { request: Request; params: Record<string, string>; cookies: Record<string, string> }) => Promise<Response> | Response;
 
@@ -96,16 +96,16 @@ describe("handlers scenario responses", () => {
 
   it("falls back to existing endpoint behavior when scenario does not override", async () => {
     process.env.NEXT_PUBLIC_MSW_SCENARIO_STATE = "error";
-    const resolveNeighborhoods = getResolverBySourceMarker("mockNeighborhoods");
+    const resolveLocalities = getResolverBySourceMarker("mockLocalities");
 
-    const response = await resolveNeighborhoods({
-      request: new Request("http://localhost:4010/api/v1/neighborhoods"),
+    const response = await resolveLocalities({
+      request: new Request("http://localhost:4010/api/v1/localities"),
       params: {},
       cookies: {},
     });
     const payload = await response.json();
 
     expect(response.status).toBe(200);
-    expect(payload).toEqual(mockNeighborhoods);
+    expect(payload).toEqual(mockLocalities);
   });
 });

@@ -21,20 +21,33 @@ export function AnimatedMetric({
   className,
   "data-testid": dataTestId,
 }: AnimatedMetricProps) {
-  const [displayValue, setDisplayValue] = useState(value);
-  const hasMountedRef = useRef(false);
-  const displayValueRef = useRef(value);
+  const [displayValue, setDisplayValue] = useState(0);
+  const [inView, setInView] = useState(false);
+  const rootRef = useRef<HTMLSpanElement>(null);
+  const displayValueRef = useRef(0);
 
   useEffect(() => {
     displayValueRef.current = displayValue;
   }, [displayValue]);
 
   useEffect(() => {
-    if (!hasMountedRef.current) {
-      hasMountedRef.current = true;
-      setDisplayValue(value);
-      return;
-    }
+    const el = rootRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (!entry?.isIntersecting) return;
+        obs.disconnect();
+        setInView(true);
+      },
+      { threshold: 0.3 },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!inView) return;
 
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (prefersReducedMotion || durationMs <= 0) {
@@ -58,12 +71,13 @@ export function AnimatedMetric({
 
     frameId = window.requestAnimationFrame(tick);
     return () => window.cancelAnimationFrame(frameId);
-  }, [durationMs, value]);
+  }, [inView, durationMs, value]);
 
-  const formattedValue = useMemo(() => formatMetric(displayValue), [displayValue]);
+  const shown = inView ? displayValue : 0;
+  const formattedValue = useMemo(() => formatMetric(shown), [shown]);
 
   return (
-    <span aria-live="polite" data-testid={dataTestId} className={className}>
+    <span ref={rootRef} aria-live="polite" data-testid={dataTestId} className={className}>
       {formattedValue}
       {suffix}
     </span>

@@ -70,6 +70,8 @@ export function useCreateListing() {
     onSuccess: (data) => {
       void revalidatePublicListingCache(data.id);
       qc.invalidateQueries({ queryKey: listingKeys.lists() });
+      qc.invalidateQueries({ queryKey: ["manage"] });
+      qc.invalidateQueries({ queryKey: ["dashboard", "listings", "my-expired-total"] });
       toast.success("Listing created successfully");
     },
     onError: (err: Error) => toast.error(err.message),
@@ -87,6 +89,8 @@ export function useUpdateListing() {
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: listingKeys.detail(data.id) });
       qc.invalidateQueries({ queryKey: listingKeys.lists() });
+      qc.invalidateQueries({ queryKey: ["manage"] });
+      qc.invalidateQueries({ queryKey: ["dashboard", "listings", "my-expired-total"] });
       toast.success("Listing updated");
     },
     onError: (err: Error) => toast.error(err.message),
@@ -102,6 +106,8 @@ export function useDeleteListing() {
     onSuccess: (_void, deletedId) => {
       void revalidatePublicListingCache(deletedId);
       qc.invalidateQueries({ queryKey: listingKeys.lists() });
+      qc.invalidateQueries({ queryKey: ["manage"] });
+      qc.invalidateQueries({ queryKey: ["dashboard", "listings", "my-expired-total"] });
       toast.success("Listing deleted");
     },
     onError: (err: Error) => toast.error(err.message),
@@ -119,6 +125,8 @@ export function usePublishListing() {
       void revalidatePublicListingCache(data.id);
       qc.invalidateQueries({ queryKey: listingKeys.detail(data.id) });
       qc.invalidateQueries({ queryKey: listingKeys.lists() });
+      qc.invalidateQueries({ queryKey: ["manage"] });
+      qc.invalidateQueries({ queryKey: ["dashboard", "listings", "my-expired-total"] });
       toast.success("Listing submitted for review");
     },
     onError: (err: Error) => toast.error(err.message),
@@ -135,6 +143,9 @@ export function useMarkRented() {
     onSuccess: (data) => {
       void revalidatePublicListingCache(data.id);
       qc.invalidateQueries({ queryKey: listingKeys.detail(data.id) });
+      qc.invalidateQueries({ queryKey: listingKeys.lists() });
+      qc.invalidateQueries({ queryKey: ["manage"] });
+      qc.invalidateQueries({ queryKey: ["dashboard", "listings", "my-expired-total"] });
       toast.success("Listing marked as rented");
     },
     onError: (err: Error) => toast.error(err.message),

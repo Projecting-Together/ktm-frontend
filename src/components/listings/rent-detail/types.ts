@@ -1,7 +1,7 @@
 export interface RentStatusRow {
   label: string;
   status: string;
-  tone: "positive" | "neutral" | "warning";
+  tone: "positive" | "neutral" | "warning" | "negative";
 }
 
 export interface RentDetailRow {

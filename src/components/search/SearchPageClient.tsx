@@ -40,6 +40,11 @@ const NUMERIC_URL_FILTER_KEYS = new Set([
   "max_price",
   "min_area_m2",
   "max_area_m2",
+  "min_bedrooms",
+  "max_bedrooms",
+  "min_bathrooms",
+  "max_bathrooms",
+  /** Legacy bookmark support → mapped to min_* below */
   "bedrooms",
   "bathrooms",
   "min_lat",
@@ -137,8 +142,12 @@ export default function SearchPageClient() {
           else if (key === "max_price") params.max_price = parsed;
           else if (key === "min_area_m2") params.min_area_m2 = parsed;
           else if (key === "max_area_m2") params.max_area_m2 = parsed;
-          else if (key === "bedrooms") params.bedrooms = parsed;
-          else if (key === "bathrooms") params.bathrooms = parsed;
+          else if (key === "min_bedrooms") params.min_bedrooms = parsed;
+          else if (key === "max_bedrooms") params.max_bedrooms = parsed;
+          else if (key === "min_bathrooms") params.min_bathrooms = parsed;
+          else if (key === "max_bathrooms") params.max_bathrooms = parsed;
+          else if (key === "bedrooms") params.min_bedrooms = parsed;
+          else if (key === "bathrooms") params.min_bathrooms = parsed;
           else if (key === "min_lat") params.min_lat = parsed;
           else if (key === "max_lat") params.max_lat = parsed;
           else if (key === "min_lng") params.min_lng = parsed;
@@ -162,7 +171,7 @@ export default function SearchPageClient() {
         else if (key === "purpose") params.purpose = value;
         else if (key === "city") params.city = value;
         else if (key === "district") params.district = value;
-        else if (key === "neighborhood_slug") params.neighborhood_slug = value;
+        else if (key === "city_slug") params.city_slug = value;
         else if (key === "furnishing") params.furnishing = value;
         else if (key === "available_from") params.available_from = value;
         else if (key === "sort_by") params.sort_by = value;
@@ -191,9 +200,10 @@ export default function SearchPageClient() {
     syncUrl();
   }, [
     store.search, store.listing_type, store.purpose, store.min_price, store.max_price,
-    store.bedrooms, store.bathrooms, store.furnishing, store.parking, store.pets_allowed, store.verified,
+    store.min_bedrooms, store.max_bedrooms, store.min_bathrooms, store.max_bathrooms,
+    store.furnishing, store.parking, store.pets_allowed, store.verified,
     store.amenities, store.available_from, store.sort_by, store.sort_order, store.page,
-    store.neighborhood_slug, store.min_area_m2, store.max_area_m2,
+    store.city_slug, store.min_area_m2, store.max_area_m2,
     store.min_lat, store.max_lat, store.min_lng, store.max_lng, store.lat, store.lng, store.radius_km,
     syncUrl,
   ]);

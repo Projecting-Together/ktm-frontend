@@ -8,6 +8,7 @@ jest.mock("leaflet", () => ({
   __esModule: true,
   default: {
     latLngBounds: jest.fn(() => ({})),
+    divIcon: jest.fn(() => ({})),
   },
 }));
 
@@ -69,10 +70,12 @@ describe("SearchMap", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows neighborhood/location context in marker popup", () => {
+  it("shows city-level location in marker popup (no sub-area line)", () => {
     render(<SearchMap listings={[mockListingItems[0]]} />);
 
-    expect(screen.getByText("Thamel, Kathmandu")).toBeInTheDocument();
+    const locationLine = screen.getByTestId("map-popup-location");
+    expect(locationLine).toHaveTextContent("Kathmandu");
+    expect(locationLine).not.toHaveTextContent("Thamel");
   });
 
   it("shows area in marker popup as m² text only when available", () => {

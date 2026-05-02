@@ -128,7 +128,7 @@ export const scenarioCatalog: {
     partial: {
       analytics: {
         ...mockAdminAnalytics,
-        top_neighborhoods: [],
+        top_localities: [],
       },
       inquiries: mockInquiries.slice(0, 1),
     },

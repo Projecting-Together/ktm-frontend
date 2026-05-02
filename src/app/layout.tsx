@@ -52,6 +52,14 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       </head>
       <body suppressHydrationWarning>
         <Providers>{children}</Providers>
+        {process.env.NODE_ENV === "development" && process.env.NEXT_PUBLIC_USE_MSW === "true" ? (
+          <div
+            className="pointer-events-none fixed bottom-4 right-4 z-[9999] rounded-md border border-border bg-muted px-2 py-1 font-mono text-[10px] font-semibold uppercase tracking-wide text-muted-foreground shadow-sm"
+            aria-hidden
+          >
+            MSW mock
+          </div>
+        ) : null}
       </body>
     </html>
   );

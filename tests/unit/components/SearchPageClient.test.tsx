@@ -9,7 +9,7 @@ const mockSearchParams = new URLSearchParams();
 
 jest.mock("next/navigation", () => ({
   useRouter: () => ({ replace: mockReplace }),
-  usePathname: () => "/apartments",
+  usePathname: () => "/listings",
   useSearchParams: () => mockSearchParams,
 }));
 
@@ -56,8 +56,10 @@ const resetStoreData = () => {
     purpose: undefined,
     min_price: undefined,
     max_price: undefined,
-    bedrooms: undefined,
-    bathrooms: undefined,
+    min_bedrooms: undefined,
+    max_bedrooms: undefined,
+    min_bathrooms: undefined,
+    max_bathrooms: undefined,
     furnishing: undefined,
     parking: undefined,
     pets_allowed: undefined,
@@ -73,7 +75,7 @@ const resetStoreData = () => {
     lat: undefined,
     lng: undefined,
     radius_km: undefined,
-    neighborhood_slug: undefined,
+    city_slug: undefined,
     min_area_m2: undefined,
     max_area_m2: undefined,
   });
@@ -113,24 +115,24 @@ describe("SearchPageClient", () => {
     expect(firstCallFilters.purpose).toBe("rent");
   });
 
-  it("hydrates neighborhood and area filters from URL params", () => {
-    mockSearchParams.set("neighborhood_slug", "baneshwor");
+  it("hydrates city_slug and area filters from URL params", () => {
+    mockSearchParams.set("city_slug", "kathmandu");
     mockSearchParams.set("min_area_m2", "450");
     mockSearchParams.set("max_area_m2", "1100");
 
     render(<SearchPageClient />);
 
-    expect(useFilterStore.getState().neighborhood_slug).toBe("baneshwor");
+    expect(useFilterStore.getState().city_slug).toBe("kathmandu");
     expect(useFilterStore.getState().min_area_m2).toBe(450);
     expect(useFilterStore.getState().max_area_m2).toBe(1100);
   });
 
-  it("hydrates bathrooms filter from URL params", () => {
+  it("hydrates bathrooms filter from legacy URL params", () => {
     mockSearchParams.set("bathrooms", "2");
 
     render(<SearchPageClient />);
 
-    expect(useFilterStore.getState().bathrooms).toBe(2);
+    expect(useFilterStore.getState().min_bathrooms).toBe(2);
   });
 
   it("ignores invalid area params during URL hydration", () => {
@@ -143,20 +145,20 @@ describe("SearchPageClient", () => {
     expect(useFilterStore.getState().max_area_m2).toBeUndefined();
   });
 
-  it("syncs neighborhood and area filters into URL params", () => {
+  it("syncs city_slug and area filters into URL params", () => {
     render(<SearchPageClient />);
     mockReplace.mockClear();
 
     act(() => {
       useFilterStore.getState().setFilters({
-        neighborhood_slug: "baneshwor",
+        city_slug: "kathmandu",
         min_area_m2: 500,
         max_area_m2: 1200,
       });
     });
 
     expect(mockReplace).toHaveBeenCalledWith(
-      expect.stringMatching(/neighborhood_slug=baneshwor/),
+      expect.stringMatching(/city_slug=kathmandu/),
       expect.objectContaining({ scroll: false }),
     );
     expect(mockReplace).toHaveBeenCalledWith(
@@ -169,18 +171,18 @@ describe("SearchPageClient", () => {
     );
   });
 
-  it("syncs bathrooms filter into URL params", () => {
+  it("syncs min bathrooms filter into URL params", () => {
     render(<SearchPageClient />);
     mockReplace.mockClear();
 
     act(() => {
       useFilterStore.getState().setFilters({
-        bathrooms: 3,
+        min_bathrooms: 3,
       });
     });
 
     expect(mockReplace).toHaveBeenCalledWith(
-      expect.stringMatching(/bathrooms=3/),
+      expect.stringMatching(/min_bathrooms=3/),
       expect.objectContaining({ scroll: false }),
     );
   });
@@ -207,17 +209,17 @@ describe("SearchPageClient", () => {
     });
   });
 
-  it("reset clears neighborhood and area filters", () => {
+  it("reset clears city_slug and area filters", () => {
     act(() => {
       useFilterStore.getState().setFilters({
-        neighborhood_slug: "baneshwor",
+        city_slug: "baneshwor",
         min_area_m2: 450,
         max_area_m2: 1000,
       });
       useFilterStore.getState().resetFilters();
     });
 
-    expect(useFilterStore.getState().neighborhood_slug).toBeUndefined();
+    expect(useFilterStore.getState().city_slug).toBeUndefined();
     expect(useFilterStore.getState().min_area_m2).toBeUndefined();
     expect(useFilterStore.getState().max_area_m2).toBeUndefined();
   });

@@ -11,6 +11,7 @@ const toneClasses: Record<RentStatusRow["tone"], string> = {
   positive: "border-verified/30 bg-verified/10 text-verified",
   neutral: "border-border bg-muted/40 text-muted-foreground",
   warning: "border-warning/30 bg-warning/10 text-warning",
+  negative: "border-destructive/30 bg-destructive/10 text-destructive",
 };
 
 export function RentStatusChips({ rows, className }: RentStatusChipsProps) {

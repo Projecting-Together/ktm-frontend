@@ -2,7 +2,6 @@ import {
   adaptAuthUser,
   adaptListingsForMap,
   adaptListingsForSearch,
-  adaptMarketListingSubmitStatus,
   adaptNewsPublishPermission,
   adaptProfile,
 } from "@/lib/contracts/adapters";
@@ -206,17 +205,5 @@ describe("contract adapters", () => {
     expect(adaptNewsPublishPermission("owner")).toBe(false);
     expect(adaptNewsPublishPermission("agent")).toBe(true);
     expect(adaptNewsPublishPermission("admin")).toBe(true);
-  });
-
-  it("adapts market listing submit status consistently", () => {
-    expect(adaptMarketListingSubmitStatus("owner")).toBe("pending_review");
-    expect(adaptMarketListingSubmitStatus("agent")).toBe("published");
-    expect(adaptMarketListingSubmitStatus("admin")).toBe("published");
-  });
-
-  it("surfaces deterministic error for invalid runtime market listing role", () => {
-    expect(() => adaptMarketListingSubmitStatus("invalid-role" as never)).toThrow(
-      'Invalid publishing role for market listing submit transition: "invalid-role"',
-    );
   });
 });

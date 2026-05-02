@@ -3,7 +3,7 @@
 import { create } from "zustand";
 import type { ListingFilters, ListingType } from "@/lib/api/types";
 
-type SearchFilters = Omit<ListingFilters, "neighborhood">;
+type SearchFilters = ListingFilters;
 
 export interface FilterState extends SearchFilters {
   // UI-only state (not serialized to URL)
@@ -16,6 +16,8 @@ interface FilterActions {
   setFilters: (filters: Partial<SearchFilters>) => void;
   setPriceRange: (min?: number, max?: number) => void;
   setAreaRange: (min?: number, max?: number) => void;
+  setBedroomRange: (min?: number, max?: number) => void;
+  setBathroomRange: (min?: number, max?: number) => void;
   resetFilters: () => void;
   toggleFilterPanel: () => void;
   setView: (view: FilterState["view"]) => void;
@@ -39,13 +41,15 @@ const API_FILTER_KEYS = [
   "purpose",
   "city",
   "district",
-  "neighborhood_slug",
+  "city_slug",
   "min_price",
   "max_price",
   "min_area_m2",
   "max_area_m2",
-  "bedrooms",
-  "bathrooms",
+  "min_bedrooms",
+  "max_bedrooms",
+  "min_bathrooms",
+  "max_bathrooms",
   "furnishing",
   "parking",
   "pets_allowed",
@@ -86,6 +90,41 @@ function normalizeAreaRange(min?: number, max?: number): Pick<SearchFilters, "mi
   return { min_area_m2: minArea, max_area_m2: maxArea };
 }
 
+export const BED_MIN = 0;
+export const BED_MAX = 8;
+
+function normalizeBedroomRange(min?: number, max?: number): Pick<SearchFilters, "min_bedrooms" | "max_bedrooms"> {
+  const lo = Number.isFinite(min) ? Math.max(BED_MIN, Math.min(BED_MAX, Math.round(min!))) : BED_MIN;
+  const hi = Number.isFinite(max) ? Math.max(BED_MIN, Math.min(BED_MAX, Math.round(max!))) : BED_MAX;
+  const [a, b] = lo <= hi ? [lo, hi] : [hi, lo];
+  return {
+    min_bedrooms: a <= BED_MIN ? undefined : a,
+    max_bedrooms: b >= BED_MAX ? undefined : b,
+  };
+}
+
+export const BATH_MIN = 0;
+export const BATH_MAX = 6;
+export const BATH_STEP = 0.5;
+
+function roundHalf(x: number): number {
+  return Math.round(x * 2) / 2;
+}
+
+function normalizeBathroomRange(min?: number, max?: number): Pick<SearchFilters, "min_bathrooms" | "max_bathrooms"> {
+  const lo = Number.isFinite(min)
+    ? Math.max(BATH_MIN, Math.min(BATH_MAX, roundHalf(min!)))
+    : BATH_MIN;
+  const hi = Number.isFinite(max)
+    ? Math.max(BATH_MIN, Math.min(BATH_MAX, roundHalf(max!)))
+    : BATH_MAX;
+  const [a, b] = lo <= hi ? [lo, hi] : [hi, lo];
+  return {
+    min_bathrooms: a <= BATH_MIN ? undefined : a,
+    max_bathrooms: b >= BATH_MAX ? undefined : b,
+  };
+}
+
 export const useFilterStore = create<FilterState & FilterActions>((set, get) => ({
   ...DEFAULT_FILTERS,
   isFilterPanelOpen: false,
@@ -110,10 +149,30 @@ export const useFilterStore = create<FilterState & FilterActions>((set, get) => 
               hasMaxArea ? filters.max_area_m2 : state.max_area_m2
             )
           : {};
+      const hasMinBed = Object.prototype.hasOwnProperty.call(filters, "min_bedrooms");
+      const hasMaxBed = Object.prototype.hasOwnProperty.call(filters, "max_bedrooms");
+      const normalizedBeds =
+        hasMinBed || hasMaxBed
+          ? normalizeBedroomRange(
+              hasMinBed ? filters.min_bedrooms : state.min_bedrooms,
+              hasMaxBed ? filters.max_bedrooms : state.max_bedrooms
+            )
+          : {};
+      const hasMinBath = Object.prototype.hasOwnProperty.call(filters, "min_bathrooms");
+      const hasMaxBath = Object.prototype.hasOwnProperty.call(filters, "max_bathrooms");
+      const normalizedBaths =
+        hasMinBath || hasMaxBath
+          ? normalizeBathroomRange(
+              hasMinBath ? filters.min_bathrooms : state.min_bathrooms,
+              hasMaxBath ? filters.max_bathrooms : state.max_bathrooms
+            )
+          : {};
       return {
         ...state,
         ...filters,
         ...normalizedAreasWithStateFallback,
+        ...normalizedBeds,
+        ...normalizedBaths,
         page: hasExplicitPage ? filters.page : 1,
       };
     }),
@@ -132,6 +191,20 @@ export const useFilterStore = create<FilterState & FilterActions>((set, get) => 
       page: 1,
     })),
 
+  setBedroomRange: (min, max) =>
+    set((state) => ({
+      ...state,
+      ...normalizeBedroomRange(min, max),
+      page: 1,
+    })),
+
+  setBathroomRange: (min, max) =>
+    set((state) => ({
+      ...state,
+      ...normalizeBathroomRange(min, max),
+      page: 1,
+    })),
+
   resetFilters: () =>
     set((state) => ({
       // Restore required defaults
@@ -144,11 +217,13 @@ export const useFilterStore = create<FilterState & FilterActions>((set, get) => 
       purpose: undefined,
       min_price: undefined,
       max_price: undefined,
-      neighborhood_slug: undefined,
+      city_slug: undefined,
       min_area_m2: undefined,
       max_area_m2: undefined,
-      bedrooms: undefined,
-      bathrooms: undefined,
+      min_bedrooms: undefined,
+      max_bedrooms: undefined,
+      min_bathrooms: undefined,
+      max_bathrooms: undefined,
       furnishing: undefined,
       parking: undefined,
       pets_allowed: undefined,

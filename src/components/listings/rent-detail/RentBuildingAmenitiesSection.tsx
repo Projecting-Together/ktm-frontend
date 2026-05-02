@@ -17,7 +17,7 @@ function toBuildingAmenityRows(listing: Listing): RentStatusRow[] {
   );
 
   const items = [
-    { label: "Parking", code: "parking", availableText: "Available" },
+    { label: "Building parking", code: "parking", availableText: "Available" },
     { label: "Gym", code: "gym", availableText: "Available" },
     { label: "Lift", code: "lift", availableText: "Available" },
     { label: "Security", code: "security_guard", availableText: "Guarded" },
@@ -28,7 +28,12 @@ function toBuildingAmenityRows(listing: Listing): RentStatusRow[] {
     return {
       label: item.label,
       status,
-      tone: status === MISSING_DETAIL_TEXT ? "warning" : "positive",
+      tone:
+        status === "Not available"
+          ? "negative"
+          : status === MISSING_DETAIL_TEXT
+            ? "warning"
+            : "positive",
     };
   });
 }

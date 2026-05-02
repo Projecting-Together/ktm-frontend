@@ -15,7 +15,7 @@ async function openMobileFilterDrawerIfPresent(page: import("@playwright/test").
 
 test.describe("Home / Apartments Search Page", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("/apartments", { waitUntil: "domcontentloaded" });
+    await page.goto("/listings", { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("load");
   });
 
@@ -101,7 +101,7 @@ test.describe("Home / Apartments Search Page", () => {
 
   test("renders mobile bottom navigation on small screens", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto("/apartments", { waitUntil: "domcontentloaded" });
+    await page.goto("/listings", { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("load");
     const mobileNav = page.locator("nav").last();
     await expect(mobileNav).toBeVisible();
@@ -116,7 +116,7 @@ test.describe("Home / Apartments Search Page", () => {
     const buyListingsLink = page.getByRole("link", { name: /view buy listings/i });
     await expect(buyListingsLink).toBeVisible();
     await buyListingsLink.click();
-    await page.waitForURL(/\/apartments\?purpose=sale/, { timeout: 20_000 });
+    await page.waitForURL(/\/listings\?purpose=sale/, { timeout: 20_000 });
     await expect(page).toHaveURL(/purpose=sale/);
   });
 });

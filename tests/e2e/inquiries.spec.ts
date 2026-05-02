@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Inquiry & Lead Flows", () => {
   test("sale listing inquiry CTA labels seller-specific intent", async ({ page }) => {
-    await page.goto("/apartments/traditional-house-bhaktapur-lst-005", {
+    await page.goto("/listings/traditional-house-bhaktapur-lst-005", {
       waitUntil: "domcontentloaded",
     });
     await page.waitForLoadState("load");

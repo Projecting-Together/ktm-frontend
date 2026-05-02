@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { Building2, MessageCircle, Calendar, BarChart2, Plus, Eye } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { getListings } from "@/lib/api/client";
+import { getMyListings } from "@/lib/api/client";
 import { useAuthStore } from "@/lib/stores/authStore";
 import { ListingCard, ListingCardSkeleton } from "@/components/listings/ListingCard";
 
@@ -11,7 +11,7 @@ export default function ManagePage() {
   const { data, isLoading } = useQuery({
     queryKey: ["manage", "listings"],
     queryFn: async () => {
-      const res = await getListings({ limit: 6 });
+      const res = await getMyListings({ skip: 0, limit: 6 });
       if (res.error) throw new Error(res.error.message);
       return res.data;
     },

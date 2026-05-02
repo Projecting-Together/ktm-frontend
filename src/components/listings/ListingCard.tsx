@@ -3,8 +3,11 @@
 import Link from "next/link";
 import { Heart, MapPin, Bed, Bath, Square, PawPrint } from "lucide-react";
 import { cn, formatPrice, getListingCoverImage, getListingLocation, formatBedBath, formatRelativeTime } from "@/lib/utils";
+import { AddToCompareButton } from "@/components/compare/AddToCompareButton";
+import { listingListItemToCompareSnapshot } from "@/lib/compare/listingToCompareSnapshot";
 import { ListingCoverImage } from "@/components/listings/ListingCoverImage";
 import { VerifiedBadge } from "@/components/common/VerifiedBadge";
+import { ModeratedBadge } from "@/components/common/ModeratedBadge";
 import { useToggleFavorite, useIsFavorite } from "@/lib/hooks/useFavorites";
 import { useAuthStore } from "@/lib/stores/authStore";
 import type { ListingListItem } from "@/lib/api/types";
@@ -52,18 +55,14 @@ export function ListingCard({ listing, variant = "grid", className }: ListingCar
             <PawPrint aria-hidden="true" className="h-3.5 w-3.5 text-black" />
           </span>
         )}
-        {showModeratedBadge && (
-          <span className="rounded-full bg-card/85 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-foreground backdrop-blur-sm">
-            Moderated
-          </span>
-        )}
+        {showModeratedBadge && <ModeratedBadge size="sm" />}
       </div>
     );
   };
 
   if (variant === "list") {
     return (
-      <Link href={`/apartments/${listing.slug}`} className={cn("listing-card flex overflow-hidden", className)}>
+      <Link href={`/listings/${listing.slug}`} className={cn("listing-card flex overflow-hidden", className)}>
         <div className="relative h-36 w-48 shrink-0 sm:h-44 sm:w-56">
           <ListingCoverImage
             src={coverImage}
@@ -85,14 +84,17 @@ export function ListingCard({ listing, variant = "grid", className }: ListingCar
               <h3 className="line-clamp-2 text-base font-semibold text-foreground leading-snug">
                 {listing.title}
               </h3>
-              <button
-                onClick={handleFavorite}
-                disabled={isPending}
-                className="shrink-0 rounded-full p-1.5 text-muted-foreground transition-colors hover:text-accent"
-                aria-label="Save listing"
-              >
-                <Heart className={cn("h-4 w-4", isFavorite && "fill-accent text-accent")} />
-              </button>
+              <div className="flex shrink-0 items-center gap-1">
+                <AddToCompareButton snapshot={listingListItemToCompareSnapshot(listing)} />
+                <button
+                  onClick={handleFavorite}
+                  disabled={isPending}
+                  className="rounded-full p-1.5 text-muted-foreground transition-colors hover:text-accent"
+                  aria-label="Save listing"
+                >
+                  <Heart className={cn("h-4 w-4", isFavorite && "fill-accent text-accent")} />
+                </button>
+              </div>
             </div>
             <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
               <MapPin className="h-3 w-3 shrink-0" />
@@ -140,7 +142,7 @@ export function ListingCard({ listing, variant = "grid", className }: ListingCar
   }
 
   return (
-    <Link href={`/apartments/${listing.slug}`} className={cn("listing-card group block overflow-hidden", className)}>
+    <Link href={`/listings/${listing.slug}`} className={cn("listing-card group block overflow-hidden", className)}>
       {/* Image */}
       <div className="relative aspect-[4/3] overflow-hidden bg-muted">
         <ListingCoverImage
@@ -169,16 +171,18 @@ export function ListingCard({ listing, variant = "grid", className }: ListingCar
             </span>
           )}
         </div>
-        {/* Favorite button */}
-        <button
-          onClick={handleFavorite}
-          disabled={isPending}
-          className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-card/80 text-muted-foreground shadow-sm backdrop-blur-sm transition-all hover:bg-card hover:text-accent"
-          aria-label="Save listing"
-        >
-          <Heart className={cn("h-4 w-4", isFavorite && "fill-accent text-accent")} />
-        </button>
-        {renderStatusBadgeOverlay("right-3 top-12")}
+        <div className="absolute right-3 top-3 z-[1] flex flex-col gap-2">
+          <AddToCompareButton snapshot={listingListItemToCompareSnapshot(listing)} />
+          <button
+            onClick={handleFavorite}
+            disabled={isPending}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-card/80 text-muted-foreground shadow-sm backdrop-blur-sm transition-all hover:bg-card hover:text-accent"
+            aria-label="Save listing"
+          >
+            <Heart className={cn("h-4 w-4", isFavorite && "fill-accent text-accent")} />
+          </button>
+        </div>
+        {renderStatusBadgeOverlay("right-3 top-28")}
         {/* Image count */}
         {listing.images.length > 1 && (
           <span className="absolute bottom-2 right-2 rounded-full bg-black/50 px-2 py-0.5 text-[10px] text-white">

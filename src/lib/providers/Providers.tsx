@@ -6,6 +6,7 @@ import { ThemeProvider } from "next-themes";
 import { useState } from "react";
 import { Toaster } from "sonner";
 import { MswGate } from "@/lib/providers/MswGate";
+import { CompareShell } from "@/components/compare/CompareShell";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -35,6 +36,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           disableTransitionOnChange
         >
           {children}
+          <CompareShell />
           <Toaster
             position="top-right"
             richColors

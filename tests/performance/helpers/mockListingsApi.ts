@@ -36,7 +36,7 @@ function makeListing(index: number) {
     location: {
       city: "Kathmandu",
       district: "Kathmandu",
-      neighborhood: {
+      locality: {
         id: "nbh-perf",
         name: "Thamel",
         slug: "thamel",

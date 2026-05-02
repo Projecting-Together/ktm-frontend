@@ -3,10 +3,8 @@ import { Building2, Phone, Mail, MapPin } from "lucide-react";
 
 const FOOTER_LINKS = {
   Explore: [
-    { href: "/apartments", label: "Apartments" },
-    { href: "/agents", label: "Agents" },
+    { href: "/listings", label: "Listings" },
     { href: "/news", label: "News" },
-    { href: "/market-listing", label: "Market Listing" },
   ],
   Account: [
     { href: "/dashboard", label: "My Dashboard" },

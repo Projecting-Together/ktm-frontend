@@ -1,4 +1,5 @@
-import { render, screen } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
+import { render } from "@/test-utils/renderWithProviders";
 import HomePage from "@/app/(public)/page";
 import { fetchPublicListings } from "@/lib/api/server-public-listings";
 
@@ -24,6 +25,28 @@ describe("public home dynamic hero, banner, and metrics", () => {
       data: { items: [{ id: "listing-1", title: "Modern flat in Baneshwor" }] },
       error: null,
     });
+    global.fetch = jest.fn((input: RequestInfo | URL) => {
+      const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+      if (String(url).includes("/site-config")) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: async () => ({ heroBannerUrl: null, ctaBannerUrl: null }),
+        } as Response);
+      }
+      return Promise.reject(new Error(`unexpected fetch in test: ${url}`));
+    });
+    global.IntersectionObserver = jest.fn().mockImplementation((cb: IntersectionObserverCallback) => ({
+      observe: (el: Element) => {
+        cb([{ isIntersecting: true, intersectionRatio: 1, target: el } as IntersectionObserverEntry], {} as IntersectionObserver);
+      },
+      disconnect: jest.fn(),
+      unobserve: jest.fn(),
+      takeRecords: jest.fn(),
+      root: null,
+      rootMargin: "",
+      thresholds: [0.3],
+    }));
     Object.defineProperty(window, "matchMedia", {
       writable: true,
       value: jest.fn().mockImplementation(() => ({
@@ -48,7 +71,9 @@ describe("public home dynamic hero, banner, and metrics", () => {
     expect(screen.getByTestId("cta-image-wrapper")).toBeInTheDocument();
     expect(screen.getByTestId("cta-image-overlay")).toBeInTheDocument();
 
-    expect(screen.getByTestId("home-metric-Active Listings")).toHaveTextContent("2,402+");
+    await waitFor(() => {
+      expect(screen.getByTestId("home-metric-Active Listings")).toHaveTextContent("2,402+");
+    });
     expect(screen.getByTestId("home-metric-Verified Properties")).toHaveTextContent("1,800+");
     expect(screen.getByTestId("home-metric-Years Serving Renters")).toHaveTextContent(
       `${yearsServingRenters}+`

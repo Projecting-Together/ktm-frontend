@@ -4,6 +4,10 @@ import { FilterPanel } from "@/components/search/FilterPanel";
 import { useFilterStore } from "@/lib/stores/filterStore";
 
 describe("FilterPanel", () => {
+  beforeEach(() => {
+    useFilterStore.getState().resetFilters();
+  });
+
   it("renders without crashing", () => {
     const { container } = render(<FilterPanel />);
     expect(container.firstChild).not.toBeNull();
@@ -17,10 +21,10 @@ describe("FilterPanel", () => {
     expect(screen.getByRole("button", { name: /studio/i })).toBeInTheDocument();
   });
 
-  it("renders a neighborhood filter section", () => {
+  it("renders a city filter section (stores city_slug)", () => {
     render(<FilterPanel />);
-    expect(screen.getByText(/neighborhood/i)).toBeInTheDocument();
-    expect(screen.getByRole("textbox", { name: /neighborhood slug/i })).toBeInTheDocument();
+    expect(screen.getByText(/^city$/i)).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: /city filter/i })).toBeInTheDocument();
   });
 
   it("renders price range slider and min/max inputs", () => {
@@ -31,26 +35,27 @@ describe("FilterPanel", () => {
     expect(screen.getByRole("spinbutton", { name: /maximum price/i })).toBeInTheDocument();
   });
 
-  it("renders bedroom count buttons", () => {
+  it("renders bedroom range sliders and inputs", () => {
     render(<FilterPanel />);
-    const bedroomsHeading = screen.getByText(/bedrooms/i);
-    const bedroomsSection = bedroomsHeading.parentElement;
-    expect(bedroomsSection).not.toBeNull();
-    const bedroomButtons = screen
-      .getAllByRole("button")
-      .filter((button) => bedroomsSection?.contains(button) && ["1", "2", "3", "4+"].includes(button.textContent ?? ""));
-    expect(bedroomButtons).toHaveLength(4);
+    expect(screen.getByRole("slider", { name: /minimum bedrooms slider/i })).toBeInTheDocument();
+    expect(screen.getByRole("slider", { name: /maximum bedrooms slider/i })).toBeInTheDocument();
+    expect(screen.getByRole("spinbutton", { name: /minimum bedrooms/i })).toBeInTheDocument();
+    expect(screen.getByRole("spinbutton", { name: /maximum bedrooms/i })).toBeInTheDocument();
   });
 
-  it("renders bathroom selector options", () => {
+  it("renders bathroom range sliders and inputs", () => {
     render(<FilterPanel />);
-    const bathroomsHeading = screen.getByText(/bathrooms/i);
-    const bathroomsSection = bathroomsHeading.parentElement;
-    expect(bathroomsSection).not.toBeNull();
-    const bathroomButtons = screen
-      .getAllByRole("button")
-      .filter((button) => bathroomsSection?.contains(button) && ["1", "2", "3", "4+"].includes(button.textContent ?? ""));
-    expect(bathroomButtons).toHaveLength(4);
+    expect(screen.getByRole("slider", { name: /minimum bathrooms slider/i })).toBeInTheDocument();
+    expect(screen.getByRole("slider", { name: /maximum bathrooms slider/i })).toBeInTheDocument();
+    expect(screen.getByRole("spinbutton", { name: /minimum bathrooms/i })).toBeInTheDocument();
+    expect(screen.getByRole("spinbutton", { name: /maximum bathrooms/i })).toBeInTheDocument();
+  });
+
+  it("shows area range summary with m² when area filters are set", () => {
+    useFilterStore.getState().setFilters({ min_area_m2: 50, max_area_m2: 150 });
+    render(<FilterPanel />);
+    expect(screen.getByTestId("area-range-summary")).toHaveTextContent("50 m²");
+    expect(screen.getByTestId("area-range-summary")).toHaveTextContent("150 m²");
   });
 
   it("renders furnishing radio labels", () => {
@@ -60,17 +65,15 @@ describe("FilterPanel", () => {
     expect(screen.getByText(/unfurnished/i)).toBeInTheDocument();
   });
 
-  it("renders verified listings switch", () => {
+  it("shows verified switch by default and hides parking/pets until More filters", () => {
     render(<FilterPanel />);
+    expect(screen.getByRole("switch", { name: /verified listings only/i })).toBeInTheDocument();
+    expect(screen.queryByRole("switch", { name: /parking available/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("switch", { name: /pet-friendly/i })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /more filters/i }));
     expect(screen.getByRole("switch", { name: /parking available/i })).toBeInTheDocument();
     expect(screen.getByRole("switch", { name: /pet-friendly/i })).toBeInTheDocument();
-    expect(screen.getByRole("switch", { name: /verified listings only/i })).toBeInTheDocument();
-  });
-
-  it("renders parking and pet-friendly toggles", () => {
-    render(<FilterPanel />);
-    expect(screen.getByText(/parking/i)).toBeInTheDocument();
-    expect(screen.getByText(/pet/i)).toBeInTheDocument();
   });
 
   it("clicking apartment type button does not throw", () => {
@@ -85,16 +88,10 @@ describe("FilterPanel", () => {
     expect(() => fireEvent.click(btn)).not.toThrow();
   });
 
-  it("clicking bathroom option activates reset affordance", () => {
+  it("adjusting bathroom range shows reset affordance", () => {
     render(<FilterPanel />);
-    const bathroomsHeading = screen.getByText(/bathrooms/i);
-    const bathroomsSection = bathroomsHeading.parentElement;
-    expect(bathroomsSection).not.toBeNull();
-    const bathroomButton = bathroomsSection
-      ? screen.getAllByRole("button", { name: /^2$/ }).find((button) => bathroomsSection.contains(button))
-      : undefined;
-    expect(bathroomButton).toBeDefined();
-    if (bathroomButton) fireEvent.click(bathroomButton);
+    const minBath = screen.getByRole("spinbutton", { name: /minimum bathrooms/i });
+    fireEvent.change(minBath, { target: { value: "2" } });
     expect(screen.getByRole("button", { name: /reset/i })).toBeInTheDocument();
   });
 

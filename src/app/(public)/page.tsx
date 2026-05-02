@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, ShieldCheck, Zap, TrendingUp } from "lucide-react";
+import { ArrowRight, Building2, MapPin, ShieldCheck } from "lucide-react";
 import { AnimatedMetric } from "@/components/common/AnimatedMetric";
-import { SearchBar } from "@/components/search/SearchBar";
+import { HomeHeroBackdrop } from "@/components/home/HomeHeroBackdrop";
+import { HomeCtaBackdrop } from "@/components/home/HomeCtaBackdrop";
+import { HomeHeroSearch } from "@/components/home/HomeHeroSearch";
 import { ListingCard, ListingCardSkeleton } from "@/components/listings/ListingCard";
 import { fetchPublicListings } from "@/lib/api/server-public-listings";
 
@@ -28,12 +30,12 @@ const FEATURES = [
     desc: "Every listing goes through our verification process — no fake ads, no surprises.",
   },
   {
-    icon: Zap,
+    icon: MapPin,
     title: "Sub-second Search",
     desc: "Optimized for Nepal's mobile networks. Fast results even on 3G connections.",
   },
   {
-    icon: TrendingUp,
+    icon: Building2,
     title: "Market Insights",
     desc: "Real-time pricing data and rental trends across Kathmandu.",
   },
@@ -52,10 +54,12 @@ export default async function HomePage() {
     ),
   ]);
 
+  const rentOk = featuredRentRes.status === "fulfilled";
+  const saleOk = featuredSaleRes.status === "fulfilled";
   const featuredRent =
-    featuredRentRes.status === "fulfilled" ? (featuredRentRes.value.data?.items ?? []) : [];
+    rentOk ? (featuredRentRes.value.data?.items ?? []) : [];
   const featuredSale =
-    featuredSaleRes.status === "fulfilled" ? (featuredSaleRes.value.data?.items ?? []) : [];
+    saleOk ? (featuredSaleRes.value.data?.items ?? []) : [];
   const featuredListingCount = featuredRent.length + featuredSale.length;
   const verifiedFeaturedCount = [...featuredRent, ...featuredSale].filter((listing) => listing.is_verified).length;
   const yearsServingRenters = Math.max(1, new Date().getUTCFullYear() - 2021);
@@ -70,12 +74,7 @@ export default async function HomePage() {
     <>
       {/* ── Hero ──────────────────────────────────────────────────────────── */}
       <section className="relative overflow-hidden bg-primary py-16 md:py-24 lg:py-32">
-        <div
-          data-testid="hero-image-wrapper"
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `url(${HOME_BACKGROUND_IMAGES.hero})` }}
-        />
+        <HomeHeroBackdrop staticFallback={HOME_BACKGROUND_IMAGES.hero} />
         <div
           data-testid="hero-image-overlay"
           aria-hidden="true"
@@ -101,10 +100,7 @@ export default async function HomePage() {
             </p>
           </div>
 
-          {/* Search bar */}
-          <div className="mx-auto mt-10 max-w-2xl">
-            <SearchBar size="lg" />
-          </div>
+          <HomeHeroSearch />
         </div>
       </section>
 
@@ -139,7 +135,7 @@ export default async function HomePage() {
               <h2 className="mt-1">Latest Verified Properties</h2>
             </div>
             <Link
-              href="/apartments?purpose=rent"
+              href="/listings?purpose=rent"
               className="flex items-center gap-1 text-sm font-medium text-accent hover:underline"
             >
               View all <ArrowRight className="h-4 w-4" />
@@ -147,13 +143,19 @@ export default async function HomePage() {
           </div>
 
           <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {featuredRent.length > 0
-              ? featuredRent.map((listing) => (
-                  <ListingCard key={listing.id} listing={listing} />
-                ))
-              : Array.from({ length: 8 }).map((_, i) => (
-                  <ListingCardSkeleton key={i} />
-                ))}
+            {!rentOk ? (
+              Array.from({ length: 8 }).map((_, i) => (
+                <ListingCardSkeleton key={i} />
+              ))
+            ) : featuredRent.length === 0 ? (
+              <p className="col-span-full py-8 text-center text-sm text-muted-foreground">
+                No listings available. Check back soon.
+              </p>
+            ) : (
+              featuredRent.map((listing) => (
+                <ListingCard key={listing.id} listing={listing} />
+              ))
+            )}
           </div>
 
           <div className="mt-10 flex items-end justify-between">
@@ -164,7 +166,7 @@ export default async function HomePage() {
               <h2 className="mt-1">Latest Verified Sale Listings</h2>
             </div>
             <Link
-              href="/apartments?purpose=sale"
+              href="/listings?purpose=sale"
               className="flex items-center gap-1 text-sm font-medium text-accent hover:underline"
             >
               View buy listings <ArrowRight className="h-4 w-4" />
@@ -172,13 +174,19 @@ export default async function HomePage() {
           </div>
 
           <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {featuredSale.length > 0
-              ? featuredSale.map((listing) => (
-                  <ListingCard key={listing.id} listing={listing} />
-                ))
-              : Array.from({ length: 8 }).map((_, i) => (
-                  <ListingCardSkeleton key={`sale-${i}`} />
-                ))}
+            {!saleOk ? (
+              Array.from({ length: 8 }).map((_, i) => (
+                <ListingCardSkeleton key={`sale-${i}`} />
+              ))
+            ) : featuredSale.length === 0 ? (
+              <p className="col-span-full py-8 text-center text-sm text-muted-foreground">
+                No listings available. Check back soon.
+              </p>
+            ) : (
+              featuredSale.map((listing) => (
+                <ListingCard key={listing.id} listing={listing} />
+              ))
+            )}
           </div>
         </div>
       </section>
@@ -198,8 +206,8 @@ export default async function HomePage() {
               const Icon = f.icon;
               return (
                 <div key={f.title} className="rounded-xl border border-border bg-card p-6">
-                  <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10">
-                    <Icon className="h-5 w-5 text-accent" />
+                  <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
+                    <Icon className="h-5 w-5 text-accent" aria-hidden />
                   </div>
                   <h3 className="text-base font-semibold">{f.title}</h3>
                   <p className="mt-2 text-sm text-muted-foreground">{f.desc}</p>
@@ -212,12 +220,7 @@ export default async function HomePage() {
 
       {/* ── CTA Banner ────────────────────────────────────────────────────── */}
       <section className="section relative overflow-hidden bg-accent">
-        <div
-          data-testid="cta-image-wrapper"
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 bg-cover bg-center opacity-25"
-          style={{ backgroundImage: `url(${HOME_BACKGROUND_IMAGES.cta})` }}
-        />
+        <HomeCtaBackdrop staticFallback={HOME_BACKGROUND_IMAGES.cta} />
         <div
           data-testid="cta-image-overlay"
           aria-hidden="true"
@@ -244,10 +247,10 @@ export default async function HomePage() {
               <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
-              href="/agents"
+              href="/contact"
               className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/40 px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-white/10"
             >
-              Find an Agent
+              Contact us
             </Link>
           </div>
         </div>

@@ -12,8 +12,10 @@ const resetStoreData = () => {
     listing_type: undefined,
     min_price: undefined,
     max_price: undefined,
-    bedrooms: undefined,
-    bathrooms: undefined,
+    min_bedrooms: undefined,
+    max_bedrooms: undefined,
+    min_bathrooms: undefined,
+    max_bathrooms: undefined,
     furnishing: undefined,
     parking: undefined,
     pets_allowed: undefined,
@@ -64,9 +66,10 @@ describe("filterStore", () => {
     expect(useFilterStore.getState().max_price).toBe(30000);
   });
 
-  it("setFilter sets bedrooms", () => {
-    useFilterStore.getState().setFilter("bedrooms", 2);
-    expect(useFilterStore.getState().bedrooms).toBe(2);
+  it("setBedroomRange sets min_bedrooms", () => {
+    useFilterStore.getState().setBedroomRange(2, 4);
+    expect(useFilterStore.getState().min_bedrooms).toBe(2);
+    expect(useFilterStore.getState().max_bedrooms).toBe(4);
   });
 
   it("setFilter resets page to 1 when a filter changes", () => {
@@ -135,7 +138,7 @@ describe("filterStore", () => {
     const apiFilters = selectApiFilters(useFilterStore.getState());
     expect(apiFilters).not.toHaveProperty("isFilterPanelOpen");
     expect(apiFilters).not.toHaveProperty("view");
-    expect(apiFilters).not.toHaveProperty("neighborhood");
+    expect(apiFilters).not.toHaveProperty("locality");
     expect(apiFilters.listing_type).toBe("apartment");
   });
 
@@ -144,12 +147,12 @@ describe("filterStore", () => {
     expect(apiFilters).not.toHaveProperty("setFilter");
     expect(apiFilters).not.toHaveProperty("setPriceRange");
     expect(apiFilters).not.toHaveProperty("resetFilters");
-    expect(apiFilters).not.toHaveProperty("toggleNeighborhood");
+    expect(apiFilters).not.toHaveProperty("toggleLocality");
   });
 
-  it("store API does not expose neighborhood helper actions", () => {
+  it("store API does not expose locality helper actions", () => {
     const state = useFilterStore.getState() as unknown as Record<string, unknown>;
-    expect(state).not.toHaveProperty("toggleNeighborhood");
-    expect(state).not.toHaveProperty("neighborhood");
+    expect(state).not.toHaveProperty("toggleLocality");
+    expect(state).not.toHaveProperty("locality");
   });
 });

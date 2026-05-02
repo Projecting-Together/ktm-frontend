@@ -14,7 +14,7 @@ test.describe("Apartments performance (real backend report)", () => {
     });
 
     const loadMs = await measureActionMs(async () => {
-      await page.goto("/apartments", { waitUntil: "domcontentloaded" });
+      await page.goto("/listings", { waitUntil: "domcontentloaded" });
       await expect(page.getByRole("heading", { name: /properties/i })).toBeVisible({ timeout: 30_000 });
       await expect(page.locator(".listing-card").first()).toBeVisible({ timeout: 30_000 });
     });
@@ -40,7 +40,7 @@ test.describe("Apartments performance (real backend report)", () => {
     const snapshot = {
       testName: testInfo.title,
       mode: "real",
-      route: "/apartments",
+      route: "/listings",
       auditPhase: "search_flow" as const,
       metrics: {
         loadMs,

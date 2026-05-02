@@ -37,13 +37,13 @@ describe("step1Schema — BasicInfo", () => {
     expect(result.success).toBe(false);
   });
 
-  it("allows step 1 without neighborhood_id", () => {
+  it("allows step 1 without locality_id", () => {
     const result = step1Schema.safeParse(validStep1);
     expect(result.success).toBe(true);
   });
 
-  it("fails when neighborhood_id is provided but not a UUID", () => {
-    const result = step1Schema.safeParse({ ...validStep1, neighborhood_id: "not-a-uuid" });
+  it("fails when locality_id is provided but not a UUID", () => {
+    const result = step1Schema.safeParse({ ...validStep1, locality_id: "not-a-uuid" });
     expect(result.success).toBe(false);
   });
 

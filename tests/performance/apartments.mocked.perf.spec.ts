@@ -10,7 +10,7 @@ test.describe("Apartments performance (mocked)", () => {
 
     const phaseStartedAt = performance.now();
     const loadMs = await measureActionMs(async () => {
-      await page.goto("/apartments", { waitUntil: "domcontentloaded" });
+      await page.goto("/listings", { waitUntil: "domcontentloaded" });
       await expect(page.getByRole("heading", { name: /properties/i })).toBeVisible();
       await expect(page.locator(".listing-card").first()).toBeVisible();
     });
@@ -34,7 +34,7 @@ test.describe("Apartments performance (mocked)", () => {
     await writePerfSnapshot(testInfo, {
       testName: testInfo.title,
       mode: "mocked",
-      route: "/apartments",
+      route: "/listings",
       auditPhase: "search_flow",
       metrics: { loadMs },
       budgets,
@@ -57,7 +57,7 @@ test.describe("Apartments performance (mocked)", () => {
   test("single filter interaction updates results under budget", async ({ page }, testInfo) => {
     const requests = await installListingsMocks(page, { totalItems: 80, delayMs: 120 });
 
-    await page.goto("/apartments", { waitUntil: "domcontentloaded" });
+    await page.goto("/listings", { waitUntil: "domcontentloaded" });
     await expect(page.getByRole("button", { name: /^apartment$/i }).first()).toBeVisible();
 
     const beforeFilter = requests.getCount("/api/v1/listings");
@@ -99,7 +99,7 @@ test.describe("Apartments performance (mocked)", () => {
     await writePerfSnapshot(testInfo, {
       testName: testInfo.title,
       mode: "mocked",
-      route: "/apartments",
+      route: "/listings",
       auditPhase: "search_flow",
       metrics: { interactionMs },
       budgets,
@@ -124,7 +124,7 @@ test.describe("Apartments performance (mocked)", () => {
   test("slow API keeps loading feedback visible", async ({ page }, testInfo) => {
     const requests = await installListingsMocks(page, { totalItems: 30, delayMs: 8000 });
 
-    await page.goto("/apartments", { waitUntil: "domcontentloaded" });
+    await page.goto("/listings", { waitUntil: "domcontentloaded" });
     await expect(page.getByText(/still loading/i)).toBeVisible({ timeout: 10_000 });
 
     const heading = page.getByRole("heading", { name: /properties/i });
@@ -133,7 +133,7 @@ test.describe("Apartments performance (mocked)", () => {
     await writePerfSnapshot(testInfo, {
       testName: testInfo.title,
       mode: "mocked",
-      route: "/apartments",
+      route: "/listings",
       auditPhase: "search_flow",
       metrics: { delayedResponseMs: 8000 },
       budgets: [{ name: "slow_loading_hint_visible", threshold: 1, actual: 1, pass: true }],
@@ -152,7 +152,7 @@ test.describe("Apartments performance (mocked)", () => {
     const requests = await installListingsMocks(page, { totalItems: 400, delayMs: 100 });
 
     const renderMs = await measureActionMs(async () => {
-      await page.goto("/apartments", { waitUntil: "domcontentloaded" });
+      await page.goto("/listings", { waitUntil: "domcontentloaded" });
       await expect(page.locator(".listing-card").first()).toBeVisible();
     });
 
@@ -161,7 +161,7 @@ test.describe("Apartments performance (mocked)", () => {
     await writePerfSnapshot(testInfo, {
       testName: testInfo.title,
       mode: "mocked",
-      route: "/apartments",
+      route: "/listings",
       auditPhase: "search_flow",
       metrics: { renderMs, records: 400 },
       budgets: [budget],

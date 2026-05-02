@@ -3,7 +3,7 @@
  * Requests use `NEXT_PUBLIC_API_URL` as origin + `/listings/`, etc. — pathname is always `/api/v1/...`.
  */
 import { http, HttpResponse, passthrough } from "msw";
-import type { ListingStats } from "@/lib/api/types";
+import type { ListingStats, PaginatedResponse, ListingListItem } from "@/lib/api/types";
 import { scenarioCatalog } from "@/msw/mockScenarioData";
 import { resolveScenarioState } from "@/msw/mockScenarioSelector";
 import {
@@ -12,7 +12,7 @@ import {
   mockPendingListings,
   mockListings,
   mockListingItems,
-  mockNeighborhoods,
+  mockLocalities,
   mockRenter,
   mockOwner,
   mockAdmin,
@@ -66,23 +66,43 @@ function getAdminScenario() {
   return scenarioCatalog.admin[getScenarioState()];
 }
 
+function resolveMockUserIdFromAccessToken(token: string): string | null {
+  if (token === mockOwnerAuthTokens.access_token) return mockOwner.id;
+  if (token === mockAdminAuthTokens.access_token) return mockAdmin.id;
+  if (token === mockAuthTokens.access_token) return mockRenter.id;
+  return null;
+}
+
 function filterListingItems(request: Request) {
   const url = new URL(request.url);
-  const neighborhood = url.searchParams.get("neighborhood");
   const status = url.searchParams.get("status");
   const priceMax = url.searchParams.get("price_max") ?? url.searchParams.get("max_price");
-  const beds = url.searchParams.get("beds") ?? url.searchParams.get("bedrooms");
+  const bedsMin = url.searchParams.get("beds") ?? url.searchParams.get("bedrooms");
+  const bedsMax = url.searchParams.get("max_bedrooms");
+  const bathsMin = url.searchParams.get("bathrooms");
+  const bathsMax = url.searchParams.get("max_bathrooms");
   const furnishing = url.searchParams.get("furnishing");
   const verified = url.searchParams.get("verified");
+  const city = url.searchParams.get("city");
 
   if (status === "pending") return mockPendingListings;
-  if (neighborhood === "thamel") return mockThamelListings;
+  /** Frontend sends `city` from `city_slug` (e.g. thamel for area filter demos). */
+  if (city?.toLowerCase() === "thamel") return mockThamelListings;
 
   let filtered = [...mockListingItems];
   if (priceMax) filtered = filtered.filter((l) => Number(l.price) <= Number(priceMax));
-  if (beds) filtered = filtered.filter((l) => (l.bedrooms ?? 0) >= Number(beds));
+  if (bedsMin) filtered = filtered.filter((l) => (l.bedrooms ?? 0) >= Number(bedsMin));
+  if (bedsMax) filtered = filtered.filter((l) => (l.bedrooms ?? 999) <= Number(bedsMax));
+  if (bathsMin) filtered = filtered.filter((l) => Number(l.bathrooms ?? 0) >= Number(bathsMin));
+  if (bathsMax) filtered = filtered.filter((l) => Number(l.bathrooms ?? 999) <= Number(bathsMax));
   if (furnishing) filtered = filtered.filter((l) => l.furnishing === furnishing);
   if (verified === "true") filtered = filtered.filter((l) => l.is_verified);
+  if (city) {
+    const q = city.trim().toLowerCase();
+    filtered = filtered.filter((l) =>
+      (l.location?.city ?? "").toLowerCase().includes(q),
+    );
+  }
 
   return {
     ...mockListingsPage1,
@@ -138,6 +158,15 @@ export const handlers = [
   ),
 
   http.get(
+    ({ request }) => pathname(request) === "/api/v1/site-config",
+    () =>
+      HttpResponse.json({
+        heroBannerUrl: null,
+        ctaBannerUrl: null,
+      })
+  ),
+
+  http.get(
     ({ request }) => pathname(request) === "/api/v1/auth/me",
     ({ request }) => {
       const authScenario = getAuthScenario();
@@ -157,6 +186,59 @@ export const handlers = [
   ),
 
   // ── LISTINGS (specific paths before `/listings/:id`) ─────────────────────
+  http.get(
+    ({ request }) => pathname(request) === "/api/v1/listings/user/my-listings",
+    ({ request }) => {
+      const auth = request.headers.get("Authorization");
+      if (!auth?.startsWith("Bearer ")) {
+        return HttpResponse.json({ detail: "Not authenticated" }, { status: 401 });
+      }
+      const userId = resolveMockUserIdFromAccessToken(auth.slice(7));
+      if (!userId) {
+        return HttpResponse.json({ detail: "Not authenticated" }, { status: 401 });
+      }
+
+      const url = new URL(request.url);
+      const rawStatus = url.searchParams.get("status")?.trim().toLowerCase();
+      const dbStatus =
+        rawStatus === "archived" ? "expired" : rawStatus ?? null;
+
+      const skip = Math.max(0, Number(url.searchParams.get("skip") ?? 0));
+      const limit = Math.min(100, Math.max(1, Number(url.searchParams.get("limit") ?? 20)));
+
+      let ownerItems: ListingListItem[] = mockListingItems.filter((item) => {
+        const full = mockListingsWithRentVariants.find((l) => l.id === item.id);
+        return full?.owner_user_id === userId;
+      });
+
+      if (dbStatus) {
+        ownerItems = ownerItems.filter((item) => {
+          if (dbStatus === "expired") {
+            return item.status === "expired" || item.status === "archived";
+          }
+          return item.status === dbStatus;
+        });
+      }
+
+      const total = ownerItems.length;
+      const pageItems = ownerItems.slice(skip, skip + limit);
+      const pageSize = limit;
+      const page = pageSize > 0 ? Math.floor(skip / pageSize) + 1 : 1;
+      const totalPages = pageSize > 0 ? Math.max(1, Math.ceil(total / pageSize)) : 1;
+
+      const body: PaginatedResponse<ListingListItem> = {
+        items: pageItems,
+        total,
+        page,
+        page_size: pageSize,
+        total_pages: totalPages,
+        has_next: skip + pageSize < total,
+        has_prev: skip > 0,
+      };
+      return HttpResponse.json(body);
+    }
+  ),
+
   http.get(
     ({ request }) => /^\/api\/v1\/listings\/[^/]+\/stats$/.test(pathname(request)),
     ({ request }) => {
@@ -296,24 +378,24 @@ export const handlers = [
     () => HttpResponse.json(null, { status: 204 })
   ),
 
-  // ── AMENITIES / NEIGHBORHOODS ───────────────────────────────────────────────
+  // ── AMENITIES / LOCALITIES ────────────────────────────────────────────────────
   http.get(
     ({ request }) => /^\/api\/v1\/amenities\/?/.test(pathname(request)),
     () => HttpResponse.json(mockAmenities)
   ),
 
   http.get(
-    ({ request }) => pathname(request) === "/api/v1/neighborhoods" || pathname(request) === "/api/v1/neighborhoods/",
-    () => HttpResponse.json(mockNeighborhoods)
+    ({ request }) => pathname(request) === "/api/v1/localities" || pathname(request) === "/api/v1/localities/",
+    () => HttpResponse.json(mockLocalities)
   ),
 
   http.get(
-    ({ request }) => /^\/api\/v1\/neighborhoods\/[^/]+$/.test(pathname(request)),
+    ({ request }) => /^\/api\/v1\/localities\/[^/]+$/.test(pathname(request)),
     ({ request }) => {
       const slug = pathname(request).split("/").pop()!;
-      const nbh = mockNeighborhoods.find((n) => n.slug === slug);
-      if (!nbh) return HttpResponse.json({ detail: "Neighborhood not found" }, { status: 404 });
-      return HttpResponse.json(nbh);
+      const loc = mockLocalities.find((n) => n.slug === slug);
+      if (!loc) return HttpResponse.json({ detail: "Locality not found" }, { status: 404 });
+      return HttpResponse.json(loc);
     }
   ),
 

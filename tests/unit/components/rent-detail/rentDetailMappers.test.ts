@@ -82,6 +82,9 @@ describe("rent detail mappers", () => {
       { label: "Balcony", status: "Included", tone: "positive" },
       { label: "Air Conditioning", status: "Included", tone: "positive" },
       { label: "Heating", status: "Included", tone: "positive" },
+      { label: "Parking", status: MISSING_DETAIL_TEXT, tone: "warning" },
+      { label: "Pets", status: MISSING_DETAIL_TEXT, tone: "warning" },
+      { label: "Smoking", status: MISSING_DETAIL_TEXT, tone: "warning" },
     ]);
 
     expect(toUnitUtilityRows(fallbackListing)).toEqual([
@@ -90,6 +93,9 @@ describe("rent detail mappers", () => {
       { label: "Balcony", status: MISSING_DETAIL_TEXT, tone: "warning" },
       { label: "Air Conditioning", status: MISSING_DETAIL_TEXT, tone: "warning" },
       { label: "Heating", status: MISSING_DETAIL_TEXT, tone: "warning" },
+      { label: "Parking", status: MISSING_DETAIL_TEXT, tone: "warning" },
+      { label: "Pets", status: MISSING_DETAIL_TEXT, tone: "warning" },
+      { label: "Smoking", status: MISSING_DETAIL_TEXT, tone: "warning" },
     ]);
   });
 
