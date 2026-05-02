@@ -5,6 +5,7 @@
  * Refresh token: httpOnly cookie (30-day expiry, browser-managed).
  */
 import { buildListingQueryParams } from "./listing-query-params";
+import { API_BASE, API_FETCH_TIMEOUT_MS } from "@/shared/appConfig";
 import type {
   ApiResponse, TokenPair, User, Listing, ListingListItem,
   ListingFilters, MyListingsFilters, PaginatedResponse, Amenity,
@@ -14,11 +15,6 @@ import type {
 } from "./types";
 
 export type { Listing, ListingListItem, ListingFilters, MyListingsFilters, PaginatedResponse, Amenity, User, Inquiry, VisitRequest, Favorite, AuditLog, AdminAnalyticsOverview, NewsListItem, NewsArticle, NewsFilters };
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "https://api.ktmapartments.com/api/v1";
-
-/** Abort slow/hung requests so the UI does not stay on “Searching…” forever. */
-const API_FETCH_TIMEOUT_MS = 25_000;
 
 function mergeFetchSignals(userSignal: AbortSignal | undefined): AbortSignal {
   const timeoutSignal = AbortSignal.timeout(API_FETCH_TIMEOUT_MS);
