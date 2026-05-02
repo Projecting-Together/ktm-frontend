@@ -47,6 +47,8 @@ const nextConfig: NextConfig = {
       { source: "/apartments", destination: "/listings", permanent: true },
       { source: "/apartments/:path*", destination: "/listings/:path*", permanent: true },
       { source: "/properties", destination: "/listings", permanent: true },
+      { source: "/neighborhoods", destination: "/listings", permanent: true },
+      { source: "/neighborhoods/:slug", destination: "/listings?city_slug=:slug", permanent: true },
       { source: "/dashboard/compare", destination: "/compare", permanent: true },
     ];
   },

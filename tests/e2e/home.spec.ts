@@ -120,3 +120,11 @@ test.describe("Home / Apartments Search Page", () => {
     await expect(page).toHaveURL(/purpose=sale/);
   });
 });
+
+test.describe("Home page / legacy URLs", () => {
+  test("home page does not link to /neighborhoods", async ({ page }) => {
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+    const bad = page.locator('a[href^="/neighborhoods"]');
+    await expect(bad).toHaveCount(0);
+  });
+});
