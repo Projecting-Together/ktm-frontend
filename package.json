@@ -90,6 +90,7 @@
   },
   "devDependencies": {
     "@jest/globals": "^30.3.0",
+    "@next/env": "15.5.14",
     "@playwright/test": "^1.58.2",
     "@tailwindcss/postcss": "^4.2.2",
     "@tailwindcss/typography": "^0.5.15",

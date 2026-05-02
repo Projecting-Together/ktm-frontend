@@ -1,5 +1,11 @@
+import { loadEnvConfig } from "@next/env";
 import { defineConfig, devices } from "@playwright/test";
 
+/** Same env loading as Next.js so `.env` / `.env.local` apply to Playwright runs. */
+loadEnvConfig(process.cwd());
+
+/** Override to run specs outside the default dir (e.g. `__tests__/e2e`). Default: `./tests/e2e`. */
+const testDir = process.env.PLAYWRIGHT_TEST_DIR ?? "./tests/e2e";
 /** Dedicated dev port for e2e (avoids :3000 and stale checkouts). Override if busy: PLAYWRIGHT_E2E_PORT=4199 */
 const e2ePort = process.env.PLAYWRIGHT_E2E_PORT ?? "4188";
 const e2eOrigin = `http://localhost:${e2ePort}`;
@@ -14,7 +20,7 @@ const mswApiUrl = process.env.PLAYWRIGHT_MSW_API_URL ?? `${e2eOrigin}/api/v1`;
 const enableMsw = process.env.PLAYWRIGHT_MSW !== "0";
 
 export default defineConfig({
-  testDir: "./tests/e2e",
+  testDir,
   outputDir: "build/test-results",
   fullyParallel: false, // sequential in sandbox to avoid resource contention
   forbidOnly: !!process.env.CI,

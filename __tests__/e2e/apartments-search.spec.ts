@@ -14,6 +14,13 @@ async function closeFiltersDrawerIfOpen(page: import("@playwright/test").Page) {
   }
 }
 
+/** Sidebar is hidden on small viewports; mobile uses the drawer when filters are open (both may stay in the DOM). */
+async function getVisibleFilterPanel(page: import("@playwright/test").Page) {
+  const drawer = page.getByTestId("search-filter-panel-drawer");
+  if (await drawer.isVisible().catch(() => false)) return drawer;
+  return page.getByTestId("search-filter-panel-sidebar");
+}
+
 test.describe("Apartments search page", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/apartments");
@@ -38,8 +45,8 @@ test.describe("Apartments search page", () => {
   });
 
   test("renders the footer with navigation links", async ({ page }) => {
-    await expect(page.getByRole("link", { name: /privacy policy/i })).toBeVisible();
-    await expect(page.getByRole("link", { name: /terms of service/i })).toBeVisible();
+    await expect(page.getByRole("link", { name: /^privacy$/i })).toBeVisible();
+    await expect(page.getByRole("link", { name: /^terms$/i })).toBeVisible();
   });
 
   test("clicking Apartment filter button adds active CSS class", async ({ page }) => {
@@ -52,12 +59,14 @@ test.describe("Apartments search page", () => {
     await closeFiltersDrawerIfOpen(page);
   });
 
-  test("price range quick-select updates URL params", async ({ page }) => {
+  test("maximum price input updates URL params", async ({ page }) => {
     await openFiltersIfMobile(page);
-    const chip = page.getByRole("button", { name: /under 10k/i }).first();
-    await expect(chip).toBeVisible({ timeout: 20000 });
-    await chip.scrollIntoViewIfNeeded();
-    await chip.click();
+    const panel = await getVisibleFilterPanel(page);
+    const maxInput = panel.getByRole("spinbutton", { name: "Maximum price" });
+    await expect(maxInput).toBeVisible({ timeout: 20000 });
+    await maxInput.scrollIntoViewIfNeeded();
+    await maxInput.fill("10000");
+    await maxInput.press("Tab");
     await page.waitForURL(/max_price=10000/, { timeout: 20000 });
     await expect(page).toHaveURL(/max_price=10000/);
     await closeFiltersDrawerIfOpen(page);
