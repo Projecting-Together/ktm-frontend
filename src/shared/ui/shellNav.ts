@@ -5,16 +5,48 @@ export type ShellNavItemDef = {
   exact?: boolean;
 };
 
-export const DASHBOARD_SHELL_SECTION_TITLE = "Renter Dashboard";
+/** Dashboard nav may include Compare, which opens the global compare drawer instead of routing. */
+export type DashboardShellNavItem =
+  | ShellNavItemDef
+  | { id: string; label: string; behavior: "compare-drawer" };
 
-export const DASHBOARD_SHELL_NAV: ReadonlyArray<ShellNavItemDef> = [
-  { id: "overview", href: "/dashboard", label: "Overview", exact: true },
-  { id: "favorites", href: "/dashboard/favorites", label: "Saved" },
-  { id: "recent", href: "/dashboard/recently-viewed", label: "Recently Viewed" },
-  { id: "inquiries", href: "/dashboard/inquiries", label: "Inquiries" },
-  { id: "visits", href: "/dashboard/visits", label: "Visit Requests" },
-  { id: "compare", href: "/compare", label: "Compare" },
-  { id: "settings", href: "/dashboard/settings", label: "Settings" },
+export const DASHBOARD_MEMBER_HUB_TITLE = "Member dashboard";
+
+export const DASHBOARD_NEW_LISTING_LABEL = "New listing";
+
+/**
+ * Dashboard IA glossary (member account — one user identity):
+ * - **Inquiries sent** → `/dashboard/inquiries` — messages you sent to listing contacts as a renter/buyer.
+ * - **My visits** → `/dashboard/visits` — visits you scheduled on listings.
+ * - **Lead inbox** → `/dashboard/leads/inquiries` — inquiries renters sent about **your** listings.
+ * - **Visit requests** → `/dashboard/leads/visits` — visit requests from renters on **your** listings.
+ */
+export const DASHBOARD_NAV_GROUPS: ReadonlyArray<{
+  title: string;
+  items: ReadonlyArray<DashboardShellNavItem>;
+}> = [
+  {
+    title: "Activity",
+    items: [
+      { id: "overview", href: "/dashboard", label: "Overview", exact: true },
+      { id: "favorites", href: "/dashboard/favorites", label: "Saved" },
+      { id: "recent", href: "/dashboard/recently-viewed", label: "Recently viewed" },
+      { id: "inquiries-sent", href: "/dashboard/inquiries", label: "Inquiries sent" },
+      { id: "visits-mine", href: "/dashboard/visits", label: "My visits" },
+      { id: "compare", label: "Compare", behavior: "compare-drawer" },
+      { id: "settings", href: "/dashboard/settings", label: "Settings" },
+    ],
+  },
+  {
+    title: "Listings & leads",
+    items: [
+      { id: "my-listings", href: "/dashboard/listings", label: "My listings" },
+      { id: "lead-inbox", href: "/dashboard/leads/inquiries", label: "Lead inbox" },
+      { id: "lead-visits", href: "/dashboard/leads/visits", label: "Visit requests" },
+      { id: "news", href: "/dashboard/news", label: "News" },
+      { id: "analytics", href: "/dashboard/analytics", label: "Analytics" },
+    ],
+  },
 ];
 
 export const ADMIN_SHELL_SECTION_TITLE = "Admin Panel";
@@ -25,15 +57,4 @@ export const ADMIN_SHELL_NAV: ReadonlyArray<ShellNavItemDef> = [
   { id: "transactions", href: "/admin/transactions", label: "Transactions" },
   { id: "users", href: "/admin/users", label: "User Management" },
   { id: "analytics", href: "/admin/analytics", label: "Analytics" },
-];
-
-export const MANAGE_SHELL_SECTION_TITLE = "Owner / Agent";
-export const MANAGE_NEW_LISTING_CTA = "New Listing";
-
-export const MANAGE_SHELL_NAV: ReadonlyArray<ShellNavItemDef> = [
-  { id: "overview", href: "/manage", label: "Overview", exact: true },
-  { id: "listings", href: "/manage/listings", label: "My Listings" },
-  { id: "inquiries", href: "/manage/inquiries", label: "Inquiries" },
-  { id: "visits", href: "/manage/visits", label: "Visit Requests" },
-  { id: "analytics", href: "/manage/analytics", label: "Analytics" },
 ];

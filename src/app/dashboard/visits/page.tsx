@@ -17,8 +17,8 @@ export default function VisitsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-1">Visit Requests</h1>
-      <p className="text-muted-foreground mb-6">Your scheduled property visits.</p>
+      <h1 className="text-2xl font-bold mb-1">My visits</h1>
+      <p className="text-muted-foreground mb-6">Property visits you scheduled — not requests from renters on your listings.</p>
 
       {isLoading ? (
         <div className="space-y-3">{Array.from({length:3}).map((_,i) => <div key={i} className="skeleton h-20 rounded-xl" />)}</div>

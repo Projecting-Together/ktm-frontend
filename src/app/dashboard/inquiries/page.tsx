@@ -83,8 +83,8 @@ export default function InquiriesPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-1">My Inquiries</h1>
-      <p className="text-muted-foreground mb-6">Messages you've sent to property owners.</p>
+      <h1 className="text-2xl font-bold mb-1">Inquiries sent</h1>
+      <p className="text-muted-foreground mb-6">Messages you&apos;ve sent to property owners.</p>
 
       {isLoading ? (
         <div className="space-y-3">{Array.from({length:3}).map((_,i) => <div key={i} className="skeleton h-20 rounded-xl" />)}</div>
@@ -109,11 +109,14 @@ export default function InquiriesPage() {
                 >
                   <div className="flex min-w-0 items-center gap-3">
                     {group.listingImage ? (
-                      <img
-                        src={group.listingImage}
-                        alt={group.listingTitle}
-                        className="h-12 w-12 rounded-md object-cover"
-                      />
+                      <>
+                        {/* eslint-disable-next-line @next/next/no-img-element -- remote listing thumbnail URLs */}
+                        <img
+                          src={group.listingImage}
+                          alt={group.listingTitle}
+                          className="h-12 w-12 rounded-md object-cover"
+                        />
+                      </>
                     ) : (
                       <div className="h-12 w-12 rounded-md bg-muted" aria-hidden />
                     )}
