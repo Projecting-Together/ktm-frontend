@@ -1,9 +1,9 @@
 import { resolveListingCapabilities } from "@/lib/capabilities/listingCapabilities";
 
 describe("resolveListingCapabilities", () => {
-  it("allows renter to create listing below cap", () => {
+  it("allows member (user) to create listing below free cap", () => {
     const result = resolveListingCapabilities({
-      role: "renter",
+      role: "user",
       activeListingCount: 1,
     });
 
@@ -12,40 +12,18 @@ describe("resolveListingCapabilities", () => {
     expect(result.requiresAgentUpgrade).toBe(false);
   });
 
-  it("requires upgrade for renter at cap", () => {
-    const result = resolveListingCapabilities({
-      role: "renter",
+  it("blocks member (user) at or above free cap", () => {
+    const atCap = resolveListingCapabilities({
+      role: "user",
       activeListingCount: 2,
     });
 
-    expect(result.activeListingCount).toBe(2);
-    expect(result.canCreateWithoutUpgrade).toBe(false);
-    expect(result.requiresAgentUpgrade).toBe(true);
+    expect(atCap.activeListingCount).toBe(2);
+    expect(atCap.canCreateWithoutUpgrade).toBe(false);
+    expect(atCap.requiresAgentUpgrade).toBe(false);
   });
 
-  it("requires upgrade for owner above cap", () => {
-    const result = resolveListingCapabilities({
-      role: "owner",
-      activeListingCount: 3,
-    });
-
-    expect(result.activeListingCount).toBe(3);
-    expect(result.canCreateWithoutUpgrade).toBe(false);
-    expect(result.requiresAgentUpgrade).toBe(true);
-  });
-
-  it("keeps agent unlimited", () => {
-    const result = resolveListingCapabilities({
-      role: "agent",
-      activeListingCount: 99,
-    });
-
-    expect(result.activeListingCount).toBe(99);
-    expect(result.canCreateWithoutUpgrade).toBe(true);
-    expect(result.requiresAgentUpgrade).toBe(false);
-  });
-
-  it("keeps admin unlimited", () => {
+  it("keeps admin unlimited regardless of count", () => {
     const result = resolveListingCapabilities({
       role: "admin",
       activeListingCount: 20,
@@ -56,20 +34,9 @@ describe("resolveListingCapabilities", () => {
     expect(result.requiresAgentUpgrade).toBe(false);
   });
 
-  it("keeps moderator unlimited", () => {
-    const result = resolveListingCapabilities({
-      role: "moderator",
-      activeListingCount: 50,
-    });
-
-    expect(result.activeListingCount).toBe(50);
-    expect(result.canCreateWithoutUpgrade).toBe(true);
-    expect(result.requiresAgentUpgrade).toBe(false);
-  });
-
   it("sanitizes negative active listing count to zero", () => {
     const result = resolveListingCapabilities({
-      role: "renter",
+      role: "user",
       activeListingCount: -2,
     });
 
@@ -80,11 +47,11 @@ describe("resolveListingCapabilities", () => {
 
   it("sanitizes non-finite active listing counts to zero", () => {
     const infinityResult = resolveListingCapabilities({
-      role: "renter",
+      role: "user",
       activeListingCount: Number.POSITIVE_INFINITY,
     });
     const nanResult = resolveListingCapabilities({
-      role: "renter",
+      role: "user",
       activeListingCount: Number.NaN,
     });
 
