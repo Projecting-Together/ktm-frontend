@@ -1,4 +1,24 @@
 import type { User } from "@/lib/api/types";
+import type { UserRole } from "@/lib/constants/userRole";
+
+/**
+ * Minimal `User` for `resolveMemberCapabilities` when only `userRole` cookie is present (Edge
+ * middleware). Missing/expired session rows are represented by invalid roles → `null`.
+ * Status is **`active`** when the cookie matches `user` | `admin` — JWT/session validity is
+ * implied by `accessToken` already checked in middleware before calling this.
+ */
+export function sessionUserFromRoleCookie(role: string | undefined): User | null {
+  if (role !== "user" && role !== "admin") return null;
+  const typed = role as UserRole;
+  return {
+    id: "__cookie__",
+    email: "",
+    role: typed,
+    status: "active",
+    is_verified: false,
+    created_at: new Date(0).toISOString(),
+  };
+}
 
 /** Booleans used by guards and UI — no owner/agent naming here. */
 export interface MemberCapabilities {

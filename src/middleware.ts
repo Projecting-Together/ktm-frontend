@@ -1,18 +1,27 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { contentSecurityPolicy } from "@/lib/csp";
-
-const PROTECTED_PREFIXES = ["/dashboard", "/manage", "/admin"];
+import { resolveMemberCapabilities, sessionUserFromRoleCookie } from "@/lib/capabilities/memberCapabilities";
+import { PROTECTED_PATH_PREFIXES } from "@/lib/constants/routeGuards";
 
 function withCsp(response: NextResponse) {
   response.headers.set("Content-Security-Policy", contentSecurityPolicy);
   return response;
 }
 
+/** Owner/member tools (formerly under `/manage`). */
+function isMemberOwnerDashboardPath(path: string): boolean {
+  if (path === "/dashboard/listings" || path.startsWith("/dashboard/listings/")) return true;
+  if (path.startsWith("/dashboard/leads")) return true;
+  if (path.startsWith("/dashboard/news")) return true;
+  if (path.startsWith("/dashboard/analytics")) return true;
+  return false;
+}
+
 export function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
-  const requiresAuth = PROTECTED_PREFIXES.some((prefix) => path.startsWith(prefix));
-  const isListingCreationPath = path === "/manage/listings/new";
+  const requiresAuth = PROTECTED_PATH_PREFIXES.some((prefix) => path.startsWith(prefix));
+  const isListingCreationPath = path === "/dashboard/listings/new";
 
   if (!requiresAuth) {
     return withCsp(NextResponse.next());
@@ -27,13 +36,13 @@ export function middleware(request: NextRequest) {
       }
     }
 
-    if (path.startsWith("/manage")) {
-      const role = request.cookies.get("userRole")?.value;
-      const canAccessManage = isListingCreationPath
-        ? role === "admin" || role === "agent" || role === "owner" || role === "renter" || role === "landlord"
-        : role === "admin" || role === "agent" || role === "owner" || role === "landlord";
+    if (isMemberOwnerDashboardPath(path)) {
+      const roleCookie = request.cookies.get("userRole")?.value;
+      const sessionUser = sessionUserFromRoleCookie(roleCookie);
+      const caps = resolveMemberCapabilities({ user: sessionUser });
+      const ok = isListingCreationPath ? caps.canCreateListing : caps.canUseMemberDashboard;
 
-      if (!canAccessManage) {
+      if (!ok) {
         return withCsp(NextResponse.redirect(new URL("/dashboard", request.url)));
       }
     }

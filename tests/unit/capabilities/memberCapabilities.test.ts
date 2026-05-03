@@ -1,5 +1,5 @@
 import type { User } from "@/lib/api/types";
-import { resolveMemberCapabilities } from "@/lib/capabilities/memberCapabilities";
+import { resolveMemberCapabilities, sessionUserFromRoleCookie } from "@/lib/capabilities/memberCapabilities";
 
 const baseUser = (over: Partial<User>): User => ({
   id: "u1",
@@ -35,5 +35,20 @@ describe("resolveMemberCapabilities", () => {
       apiCapabilities: { canCreateListing: false },
     });
     expect(c.canCreateListing).toBe(false);
+  });
+});
+
+describe("sessionUserFromRoleCookie", () => {
+  it("returns null for undefined or invalid role", () => {
+    expect(sessionUserFromRoleCookie(undefined)).toBeNull();
+    expect(sessionUserFromRoleCookie("owner")).toBeNull();
+  });
+
+  it("returns active user for user and admin cookies", () => {
+    const u = sessionUserFromRoleCookie("user");
+    expect(u?.role).toBe("user");
+    expect(u?.status).toBe("active");
+    const a = sessionUserFromRoleCookie("admin");
+    expect(a?.role).toBe("admin");
   });
 });
