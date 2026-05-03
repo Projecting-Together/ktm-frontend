@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { toast } from "sonner";
 import { ListingForm } from "@/components/listings/ListingForm";
-import { ProUpgradeModal } from "@/components/listings/ProUpgradeModal";
 import { resolveListingCapabilities } from "@/lib/capabilities/listingCapabilities";
+import { resolveMemberCapabilities } from "@/lib/capabilities/memberCapabilities";
+import { USER_ROLE_USER } from "@/lib/constants/userRole";
 import { useAuthStore } from "@/lib/stores/authStore";
 import type { User } from "@/lib/api/types";
 
@@ -31,10 +31,8 @@ function readPersistedUser(): (User & { stats?: { active_listings?: number } }) 
 }
 
 export function NewListingRouteGate({ initialPurpose }: NewListingRouteGateProps) {
-  const { user: storeUser, upgradeToAgent } = useAuthStore();
+  const { user: storeUser } = useAuthStore();
   const [persistedUser, setPersistedUser] = useState<(User & { stats?: { active_listings?: number } }) | null>(null);
-  const [isUpgrading, setIsUpgrading] = useState(false);
-  const [didDeclineUpgrade, setDidDeclineUpgrade] = useState(false);
 
   useEffect(() => {
     setPersistedUser(readPersistedUser());
@@ -44,30 +42,19 @@ export function NewListingRouteGate({ initialPurpose }: NewListingRouteGateProps
     () => (storeUser as (User & { stats?: { active_listings?: number } }) | null) ?? persistedUser,
     [persistedUser, storeUser]
   );
-  const canCreateListing =
-    user?.role === "renter" || user?.role === "owner" || user?.role === "agent" || user?.role === "admin";
+  const memberCaps = useMemo(
+    () => (user ? resolveMemberCapabilities({ user }) : null),
+    [user],
+  );
+  const canCreateListing = Boolean(memberCaps?.canCreateListing);
   const rawActiveListingCount = user?.stats?.active_listings;
   const hasKnownActiveListingCount = Number.isFinite(rawActiveListingCount);
   const activeListingCount = hasKnownActiveListingCount ? Number(rawActiveListingCount) : 0;
-  const isNormalTierUser = user?.role === "renter" || user?.role === "owner";
+  const isDefaultUserAccount = user?.role === USER_ROLE_USER;
   const listingCapabilities =
     user && hasKnownActiveListingCount
       ? resolveListingCapabilities({ role: user.role, activeListingCount })
       : null;
-  const requiresAgentUpgrade = Boolean(isNormalTierUser && listingCapabilities?.requiresAgentUpgrade);
-
-  const handleUpgradeConfirm = async () => {
-    try {
-      setIsUpgrading(true);
-      await upgradeToAgent();
-      toast.success("Your account has been upgraded to Pro.");
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Upgrade failed. Please try again.";
-      toast.error(message);
-    } finally {
-      setIsUpgrading(false);
-    }
-  };
 
   if (!canCreateListing) {
     return (
@@ -77,7 +64,7 @@ export function NewListingRouteGate({ initialPurpose }: NewListingRouteGateProps
     );
   }
 
-  if (isNormalTierUser && !hasKnownActiveListingCount) {
+  if (isDefaultUserAccount && !hasKnownActiveListingCount) {
     return (
       <div className="rounded-lg border border-border bg-card p-6 text-sm text-muted-foreground">
         We could not verify your active listing count. Please return to the dashboard and try again.
@@ -85,26 +72,15 @@ export function NewListingRouteGate({ initialPurpose }: NewListingRouteGateProps
     );
   }
 
-  if (requiresAgentUpgrade) {
+  if (
+    listingCapabilities &&
+    !listingCapabilities.canCreateWithoutUpgrade &&
+    user?.role === USER_ROLE_USER
+  ) {
     return (
-      <>
-        <div className="rounded-lg border border-border bg-card p-6 text-sm text-muted-foreground">
-          You have reached your free listing limit. Upgrade to Pro to continue creating listings.
-        </div>
-        {didDeclineUpgrade ? (
-          <div className="mt-3 rounded-lg border border-border bg-card p-4 text-sm text-muted-foreground">
-            Upgrade canceled. You can stay on this page and review your listing details, then upgrade from your account
-            settings when you are ready to publish another listing.
-          </div>
-        ) : (
-          <ProUpgradeModal
-            open
-            isLoading={isUpgrading}
-            onCancel={() => setDidDeclineUpgrade(true)}
-            onConfirm={handleUpgradeConfirm}
-          />
-        )}
-      </>
+      <div className="rounded-lg border border-border bg-card p-6 text-sm text-muted-foreground">
+        You have reached your free listing limit for this account.
+      </div>
     );
   }
 
