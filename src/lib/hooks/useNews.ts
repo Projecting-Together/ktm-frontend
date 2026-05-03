@@ -52,7 +52,7 @@ export function useNewsDetail(slug: string, options?: { enabled?: boolean }) {
   });
 }
 
-/** Authenticated manage/news workspace (MSW or FastAPI). */
+/** Authenticated dashboard news workspace (`/dashboard/news`; MSW or FastAPI). */
 export function useNewsWorkspace(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: newsKeys.workspace(),
@@ -146,11 +146,11 @@ export function getNewsSubmitTransitionDecision(
   role: UserRole | null | undefined,
   currentStatus: ManageNewsStatus,
 ): TransitionDecision<ManageNewsStatus> {
-  if (role !== "owner") {
+  if (role !== "user") {
     return {
       allowed: false,
       nextStatus: currentStatus,
-      message: "Only owners can submit drafts for moderation review.",
+      message: "Only signed-in users can submit drafts for moderation review.",
     };
   }
 
@@ -164,8 +164,8 @@ export function getNewsSubmitTransitionDecision(
 
   return {
     allowed: true,
-    nextStatus: nextNewsStatusForSubmit("owner"),
-    message: "Owner draft submitted to moderation queue as pending review.",
+    nextStatus: nextNewsStatusForSubmit("user"),
+    message: "Draft submitted to moderation queue as pending review.",
   };
 }
 
@@ -177,7 +177,7 @@ export function getNewsPublishTransitionDecision(
     return {
       allowed: false,
       nextStatus: currentStatus,
-      message: "Only trusted agents or admins can publish news.",
+      message: "Only an administrator can publish news.",
     };
   }
 
@@ -192,6 +192,6 @@ export function getNewsPublishTransitionDecision(
   return {
     allowed: true,
     nextStatus: "published",
-    message: "Trusted agent published the approved article to the public news feed.",
+    message: "Article published to the public news feed.",
   };
 }

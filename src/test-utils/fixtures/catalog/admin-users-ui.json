@@ -9,7 +9,7 @@
   {
     "id": "u2",
     "email": "agent@test.com",
-    "role": "agent",
+    "role": "user",
     "status": "active",
     "joinedAt": "2026-04-19T08:30:00.000Z"
   },

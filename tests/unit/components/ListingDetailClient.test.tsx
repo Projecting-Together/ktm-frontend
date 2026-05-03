@@ -3,7 +3,7 @@ import { render, screen, within } from "@/test-utils/renderWithProviders";
 import userEvent from "@testing-library/user-event";
 import ListingDetailClient from "@/components/listings/ListingDetailClient";
 import { mockListings } from "@/test-utils/mockData";
-import { trackInquiryCtaClick } from "@/lib/analytics/events";
+import { trackInquiryCtaClick } from "@/lib/observability";
 
 jest.mock("@/lib/hooks/useListings", () => ({
   useListing: () => ({
@@ -27,9 +27,13 @@ jest.mock("@/lib/stores/authStore", () => ({
   useAuthStore: () => ({ isAuthenticated: true }),
 }));
 
-jest.mock("@/lib/analytics/events", () => ({
-  trackInquiryCtaClick: jest.fn(),
-}));
+jest.mock("@/lib/observability", () => {
+  const actual = jest.requireActual<typeof import("@/lib/observability")>("@/lib/observability");
+  return {
+    ...actual,
+    trackInquiryCtaClick: jest.fn(),
+  };
+});
 
 describe("ListingDetailClient", () => {
   it("shows seller-specific inquiry CTA for sale listings", () => {

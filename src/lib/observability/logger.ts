@@ -24,10 +24,8 @@ function shouldEmit(level: LogLevel): boolean {
 function formatDev(level: LogLevel, message: string, context?: LogContext): void {
   const prefix = `[${level.toUpperCase()}]`;
   if (context !== undefined) {
-    // eslint-disable-next-line no-console
     console[level === "debug" || level === "info" ? "log" : level](`${prefix} ${message}`, context);
   } else {
-    // eslint-disable-next-line no-console
     console[level === "debug" || level === "info" ? "log" : level](`${prefix} ${message}`);
   }
 }
@@ -40,10 +38,8 @@ function formatProd(level: LogLevel, message: string, context?: LogContext): voi
     timestamp: new Date().toISOString(),
   });
   if (level === "error") {
-    // eslint-disable-next-line no-console
     console.error(entry);
   } else {
-    // eslint-disable-next-line no-console
     console.warn(entry);
   }
 }

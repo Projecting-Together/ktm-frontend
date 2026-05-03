@@ -7,7 +7,7 @@ import {
   type User,
   type UserRole,
 } from "@/lib/api/types";
-import { clearTokens, getCurrentUser, logout as apiLogout, upgradeCurrentUserToAgent } from "@/lib/api/client";
+import { clearTokens, getCurrentUser, logout as apiLogout } from "@/lib/api/client";
 
 interface AuthState {
   user: User | null;
@@ -16,7 +16,6 @@ interface AuthState {
   // Actions
   setUser: (user: User | null) => void;
   loadUser: () => Promise<void>;
-  upgradeToAgent: () => Promise<void>;
   logout: () => Promise<void>;
   hasRole: (role: UserRole | UserRole[]) => boolean;
   canCreateListing: () => boolean;
@@ -39,18 +38,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } else {
       set({ user: null, isAuthenticated: false, isLoading: false });
     }
-  },
-
-  upgradeToAgent: async () => {
-    const currentUser = get().user;
-    if (!currentUser) throw new Error("User is not authenticated");
-
-    const res = await upgradeCurrentUserToAgent();
-    if (res.error || !res.data) {
-      throw new Error(res.error?.message ?? "Failed to upgrade user to agent");
-    }
-
-    set({ user: res.data, isAuthenticated: true });
   },
 
   logout: async () => {

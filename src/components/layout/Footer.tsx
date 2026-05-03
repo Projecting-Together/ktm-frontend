@@ -10,7 +10,7 @@ const FOOTER_LINKS = {
     { href: "/dashboard", label: "My Dashboard" },
     { href: "/dashboard/favorites", label: "Saved Listings" },
     { href: "/dashboard/inquiries", label: "My Inquiries" },
-    { href: "/manage/listings/new", label: "Post a Listing" },
+    { href: "/dashboard/listings/new", label: "Post a Listing" },
   ],
   Company: [
     { href: "/about", label: "About" },

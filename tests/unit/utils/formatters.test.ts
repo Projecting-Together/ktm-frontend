@@ -1,4 +1,4 @@
-import { formatPrice, formatRelativeTime, formatDate, slugify } from "@/lib/utils";
+import { formatPrice, formatListingPrice, formatRelativeTime, formatDate, slugify } from "@/lib/utils";
 
 describe("formatPrice", () => {
   it("formats NPR price with comma separators", () => {
@@ -29,6 +29,30 @@ describe("formatPrice", () => {
   it("handles string price input", () => {
     const result = formatPrice("15000", "NPR");
     expect(result).toContain("15,000");
+  });
+});
+
+describe("formatListingPrice", () => {
+  it("omits period suffix for sale listings", () => {
+    const s = formatListingPrice({
+      price: 12_500_000,
+      currency: "NPR",
+      price_period: "monthly",
+      purpose: "sale",
+    });
+    expect(s).toContain("12,500,000");
+    expect(s).not.toMatch(/\/monthly/i);
+  });
+
+  it("keeps period suffix for rent when price_period is set", () => {
+    const s = formatListingPrice({
+      price: 28_000,
+      currency: "NPR",
+      price_period: "monthly",
+      purpose: "rent",
+    });
+    expect(s).toContain("28,000");
+    expect(s).toContain("monthly");
   });
 });
 

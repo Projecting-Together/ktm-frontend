@@ -1,7 +1,7 @@
 import type { UserRole } from "@/lib/api/types";
 import { PUBLISHING_ROLE_VALUES, type PublishingRole } from "@/lib/contracts/publishing";
 
-/** News CMS workflow states (frontend domain; keep in sync with admin/manage news UI). */
+/** News CMS workflow states (frontend domain; keep in sync with admin & dashboard news UI). */
 export const CONTENT_STATUS_VALUES = [
   "draft",
   "pending_review",
@@ -14,7 +14,7 @@ export type ContentStatus = (typeof CONTENT_STATUS_VALUES)[number];
 export const PUBLISHER_ROLES = PUBLISHING_ROLE_VALUES;
 
 export function canPublishNews(role: UserRole): boolean {
-  return role === "agent" || role === "admin";
+  return role === "admin";
 }
 
 export function nextNewsStatusForSubmit(role: PublishingRole): ContentStatus {

@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useAuthStore } from "@/lib/stores/authStore";
 import { useLogout } from "@/lib/hooks/useAuth";
-import { LogOut, User, Bell, Shield } from "lucide-react";
+import { LogOut, User, Shield } from "lucide-react";
 
 export default function SettingsPage() {
   const { user } = useAuthStore();

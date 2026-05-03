@@ -15,7 +15,7 @@ export default function SettingsProfilePage() {
       mapProfileDto({
         id: user?.id ?? "local-user",
         email: user?.email ?? "guest@example.com",
-        role: user?.role ?? "renter",
+        role: user?.role ?? "user",
         profile: {
           first_name: user?.profile?.first_name ?? "",
           last_name: user?.profile?.last_name ?? "",

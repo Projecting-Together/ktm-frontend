@@ -52,9 +52,10 @@ test.describe("Authentication Flow", () => {
     await expect(page).toHaveURL(/\/login/, { timeout: 10000 });
   });
 
-  test("manage routes redirect to login", async ({ page }) => {
+  test("legacy /manage URL ends at login when unauthenticated (redirects to /dashboard first)", async ({ page }) => {
     await page.goto("/manage", { waitUntil: "domcontentloaded" });
     await expect(page).toHaveURL(/\/login/, { timeout: 10000 });
+    await expect(page).toHaveURL(/next=%2Fdashboard/);
   });
 
   test("admin routes redirect to login", async ({ page }) => {

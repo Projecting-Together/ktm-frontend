@@ -8,7 +8,7 @@ export const ADMIN_LISTING_STATUS_VALUES = ["pending", "active", "sold", "reject
 export type AdminListingStatus = (typeof ADMIN_LISTING_STATUS_VALUES)[number];
 export type AdminTransactionStatus = "paid" | "pending" | "failed" | "refunded";
 export type AdminPaymentMethod = "wallet" | "bank_transfer" | "cash";
-export type AdminUserRole = "user" | "agent" | "moderator" | "admin";
+export type AdminUserRole = "user" | "admin";
 export type AdminUserStatus = "active" | "inactive" | "suspended";
 
 /** Keys match `admin-dashboard.json` `kpis[].key`; single source for types + Zod. */

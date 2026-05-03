@@ -88,13 +88,9 @@ export function getPublishedBySlug(slug: string): NewsArticleRow | null {
   return row ?? null;
 }
 
-/** Workspace article for manage UI (owner sees own draft; publisher roles see pending_review queue item). */
+/** Workspace article for member-owner dashboard news UI (`user` sees own draft; `admin` sees pending_review queue). */
 export function getWorkspaceArticle(userId: string, role: UserRole): { ok: true; article: NewsArticleRow } | { ok: false; status: number; detail: string } {
-  if (role === "renter") {
-    return { ok: false, status: 403, detail: "News workspace is not available for this role." };
-  }
-
-  if (role === "owner") {
+  if (role === "user") {
     if (workspaceArticle.author_user_id !== userId) {
       return { ok: false, status: 404, detail: "No news workspace article for this account." };
     }
@@ -112,13 +108,13 @@ export function getWorkspaceArticle(userId: string, role: UserRole): { ok: true;
 }
 
 export function submitWorkspaceArticle(userId: string, role: UserRole): { ok: true; article: NewsArticleRow } | { ok: false; status: number; detail: string } {
-  if (role !== "owner" || workspaceArticle.author_user_id !== userId) {
-    return { ok: false, status: 403, detail: "Only the article owner can submit for review." };
+  if (role !== "user" || workspaceArticle.author_user_id !== userId) {
+    return { ok: false, status: 403, detail: "Only the article author can submit for review." };
   }
   if (workspaceArticle.status !== "draft" && workspaceArticle.status !== "rejected") {
     return { ok: false, status: 400, detail: "Only draft or rejected articles can be submitted for review." };
   }
-  const next = nextNewsStatusForSubmit("owner");
+  const next = nextNewsStatusForSubmit("user");
   workspaceArticle = {
     ...workspaceArticle,
     status: next,
@@ -130,7 +126,7 @@ export function submitWorkspaceArticle(userId: string, role: UserRole): { ok: tr
 
 export function publishWorkspaceArticle(userId: string, role: UserRole): { ok: true; article: NewsArticleRow } | { ok: false; status: number; detail: string } {
   if (!canPublishNews(role)) {
-    return { ok: false, status: 403, detail: "Only trusted agents or admins can publish news." };
+    return { ok: false, status: 403, detail: "Only an administrator can publish news." };
   }
   if (workspaceArticle.status !== "pending_review") {
     return { ok: false, status: 400, detail: "News can only be published after it enters pending review." };

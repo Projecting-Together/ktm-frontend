@@ -3,25 +3,30 @@ import { test, expect, type Page } from "@playwright/test";
 async function assertAuthenticatedPrecondition(page: Page): Promise<void> {
   await expect(
     page,
-    "Auth precondition failed: expected authenticated owner setup to stay on listing pages, but request was redirected to /login."
+    "Auth precondition failed: expected authenticated user setup to stay on listing pages, but request was redirected to /login."
   ).not.toHaveURL(/\/login(?:\?|$)/);
 }
 
+/** Wizard footer Next — scoped to listing form so it does not match Next.js Dev Tools. */
+function getListingWizardNext(page: Page) {
+  return page.locator(".mx-auto.max-w-2xl").getByRole("button", { name: /^next$/i });
+}
+
 test.describe("Listing Creation Wizard (Unauthenticated)", () => {
-  test("redirects to login when accessing /manage/listings/new unauthenticated", async ({ page }) => {
-    await page.goto("/manage/listings/new");
+  test("redirects to login when accessing /dashboard/listings/new unauthenticated", async ({ page }) => {
+    await page.goto("/dashboard/listings/new");
     await expect(page).toHaveURL(/login/);
-    await expect(page).toHaveURL(/next=%2Fmanage%2Flistings%2Fnew/);
+    await expect(page).toHaveURL(/next=%2Fdashboard%2Flistings%2Fnew/);
   });
 
 });
 
-test.describe("Listing Creation Wizard (Authenticated Owner)", () => {
+test.describe("Listing Creation Wizard (Authenticated User)", () => {
   test.beforeEach(async ({ page, baseURL }) => {
     const appUrl = baseURL ?? "http://localhost:4188";
     await page.context().addCookies([
       { name: "accessToken", value: "mock-owner-token", url: appUrl },
-      { name: "userRole", value: "owner", url: appUrl },
+      { name: "userRole", value: "user", url: appUrl },
     ]);
     await page.goto("/login");
     await page.evaluate(() => {
@@ -31,7 +36,7 @@ test.describe("Listing Creation Wizard (Authenticated Owner)", () => {
           user: {
             id: "usr-owner-001",
             email: "sita.thapa@ktmapartments.com",
-            role: "owner",
+            role: "user",
             status: "active",
             stats: { active_listings: 1 },
           },
@@ -40,7 +45,7 @@ test.describe("Listing Creation Wizard (Authenticated Owner)", () => {
         version: 0,
       }));
     });
-    await page.goto("/manage/listings/new");
+    await page.goto("/dashboard/listings/new");
     await assertAuthenticatedPrecondition(page);
   });
 
@@ -51,7 +56,7 @@ test.describe("Listing Creation Wizard (Authenticated Owner)", () => {
   });
 
   test("Step 1 — shows validation error when Next is clicked without selecting type", async ({ page }) => {
-    const nextBtn = page.getByRole("button", { name: /next/i });
+    const nextBtn = getListingWizardNext(page);
     await expect(nextBtn).toBeVisible();
     await nextBtn.click();
     await expect(page.getByText(/invalid option/i)).toBeVisible();
@@ -65,7 +70,7 @@ test.describe("Listing Creation Wizard (Authenticated Owner)", () => {
     await page.getByPlaceholder(/describe your property/i).fill(
       "A beautifully furnished apartment in the heart of Thamel with mountain views, natural light, secure parking, and reliable backup power. The home includes a modern kitchen, spacious living room, two well-ventilated bedrooms, and two bathrooms with premium fittings. It is close to shops, schools, hospitals, gyms, and public transport, and the building has secure entry, steady water supply, and a responsive caretaker. The flat is ideal for families and professionals seeking comfort, convenience, and a peaceful area."
     );
-    const nextBtn = page.getByRole("button", { name: /next/i });
+    const nextBtn = getListingWizardNext(page);
     await expect(nextBtn).toBeVisible();
     await nextBtn.click();
     // Should advance to step 2
@@ -74,31 +79,31 @@ test.describe("Listing Creation Wizard (Authenticated Owner)", () => {
   });
 
   test("Step 1 — preselects purpose as sale from query parameter", async ({ page }) => {
-    await page.goto("/manage/listings/new?purpose=sale");
+    await page.goto("/dashboard/listings/new?purpose=sale");
     await assertAuthenticatedPrecondition(page);
     await expect(page.getByRole("button", { name: /for sale/i })).toHaveAttribute("aria-pressed", "true");
     await expect(page.getByRole("button", { name: /for rent/i })).toHaveAttribute("aria-pressed", "false");
   });
 
   test("Step 1 — defaults purpose to rent when query is missing", async ({ page }) => {
-    await page.goto("/manage/listings/new");
+    await page.goto("/dashboard/listings/new");
     await assertAuthenticatedPrecondition(page);
     await expect(page.getByRole("button", { name: /for rent/i })).toHaveAttribute("aria-pressed", "true");
     await expect(page.getByRole("button", { name: /for sale/i })).toHaveAttribute("aria-pressed", "false");
   });
 
   test("Step 1 — falls back to rent for invalid purpose query", async ({ page }) => {
-    await page.goto("/manage/listings/new?purpose=invalid-value");
+    await page.goto("/dashboard/listings/new?purpose=invalid-value");
     await assertAuthenticatedPrecondition(page);
     await expect(page.getByRole("button", { name: /for rent/i })).toHaveAttribute("aria-pressed", "true");
     await expect(page.getByRole("button", { name: /for sale/i })).toHaveAttribute("aria-pressed", "false");
   });
 
-  test("capped owner requires upgrade modal on direct listing route", async ({ page, baseURL }) => {
+  test("capped user sees listing limit message on direct listing route", async ({ page, baseURL }) => {
     const appUrl = baseURL ?? "http://localhost:4188";
     await page.context().addCookies([
       { name: "accessToken", value: "mock-owner-token", url: appUrl },
-      { name: "userRole", value: "owner", url: appUrl },
+      { name: "userRole", value: "user", url: appUrl },
     ]);
     await page.route("**/api/v1/auth/me", async (route) => {
       await route.fulfill({
@@ -107,7 +112,7 @@ test.describe("Listing Creation Wizard (Authenticated Owner)", () => {
         body: JSON.stringify({
           id: "usr-owner-001",
           email: "sita.thapa@gmail.com",
-          role: "owner",
+          role: "user",
           status: "active",
           is_verified: true,
           created_at: "2024-06-15T08:00:00Z",
@@ -127,7 +132,7 @@ test.describe("Listing Creation Wizard (Authenticated Owner)", () => {
           user: {
             id: "usr-owner-001",
             email: "sita.thapa@ktmapartments.com",
-            role: "owner",
+            role: "user",
             status: "active",
             stats: { active_listings: 2 },
           },
@@ -136,22 +141,18 @@ test.describe("Listing Creation Wizard (Authenticated Owner)", () => {
         version: 0,
       }));
     });
-    await page.goto("/manage/listings/new", { waitUntil: "domcontentloaded" });
-    await expect(page).toHaveURL(/\/manage\/listings\/new/);
-    const upgradeModalTitle = page.getByRole("heading", { name: /upgrade to pro/i });
-    await expect(upgradeModalTitle).toBeVisible();
-    await page.getByRole("button", { name: /cancel/i }).click();
-    await expect(page).toHaveURL(/\/manage\/listings\/new$/);
-    await expect(page.getByText(/upgrade canceled/i)).toBeVisible();
+    await page.goto("/dashboard/listings/new", { waitUntil: "domcontentloaded" });
+    await expect(page).toHaveURL(/\/dashboard\/listings\/new/);
+    await expect(page.getByText(/free listing limit/i)).toBeVisible();
   });
 });
 
-test.describe("Listing Creation Wizard (Authenticated Renter)", () => {
-  test("allows renter to access /manage/listings/new", async ({ page, baseURL }) => {
+test.describe("Listing Creation Wizard (session as default user)", () => {
+  test("allows user role to access /dashboard/listings/new", async ({ page, baseURL }) => {
     const appUrl = baseURL ?? "http://localhost:4188";
     await page.context().addCookies([
       { name: "accessToken", value: "mock-renter-token", url: appUrl },
-      { name: "userRole", value: "renter", url: appUrl },
+      { name: "userRole", value: "user", url: appUrl },
     ]);
     await page.goto("/login");
     await page.evaluate(() => {
@@ -161,7 +162,7 @@ test.describe("Listing Creation Wizard (Authenticated Renter)", () => {
           user: {
             id: "usr-renter-001",
             email: "renter@ktmapartments.com",
-            role: "renter",
+            role: "user",
             status: "active",
             stats: { active_listings: 1 },
           },
@@ -171,7 +172,7 @@ test.describe("Listing Creation Wizard (Authenticated Renter)", () => {
       }));
     });
 
-    await page.goto("/manage/listings/new");
+    await page.goto("/dashboard/listings/new");
     await assertAuthenticatedPrecondition(page);
     await expect(page.getByText(/create a new listing/i)).toBeVisible();
   });

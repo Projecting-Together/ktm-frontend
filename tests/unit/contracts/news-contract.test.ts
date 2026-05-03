@@ -17,21 +17,19 @@ describe("news publishing contract", () => {
   });
 
   it("defines expected publisher roles", () => {
-    expect(PUBLISHER_ROLES).toEqual(["owner", "agent", "admin"]);
+    expect(PUBLISHER_ROLES).toEqual(["user", "admin"]);
   });
 
-  it("allows only agent and admin roles to publish news", () => {
-    expect(canPublishNews("owner")).toBe(false);
-    expect(canPublishNews("agent")).toBe(true);
+  it("allows only admin to publish news", () => {
+    expect(canPublishNews("user")).toBe(false);
     expect(canPublishNews("admin")).toBe(true);
   });
 
-  it("maps owner submit transition to pending_review", () => {
-    expect(nextNewsStatusForSubmit("owner")).toBe("pending_review");
+  it("maps user submit transition to pending_review", () => {
+    expect(nextNewsStatusForSubmit("user")).toBe("pending_review");
   });
 
-  it("maps trusted agent and admin submit transitions to published", () => {
-    expect(nextNewsStatusForSubmit("agent")).toBe("published");
+  it("maps admin submit transition to published when publishing directly", () => {
     expect(nextNewsStatusForSubmit("admin")).toBe("published");
   });
 

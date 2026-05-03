@@ -12,12 +12,12 @@ test.describe("Inquiry & Lead Flows", () => {
     await expect(cta).toHaveAttribute("href", "/login");
   });
 
-  test("manage inquiries sale lead filter isolates sale leads", async ({ page, baseURL }) => {
+  test("lead inbox sale lead filter isolates sale leads", async ({ page, baseURL }) => {
     const appUrl = baseURL ?? "http://localhost:4188";
 
     await page.context().addCookies([
       { name: "accessToken", value: "mock-owner-token", url: appUrl },
-      { name: "userRole", value: "landlord", url: appUrl },
+      { name: "userRole", value: "user", url: appUrl },
     ]);
 
     await page.goto("/login");
@@ -40,7 +40,7 @@ test.describe("Inquiry & Lead Flows", () => {
       );
     });
 
-    await page.goto("/manage/inquiries", { waitUntil: "domcontentloaded" });
+    await page.goto("/dashboard/leads/inquiries", { waitUntil: "domcontentloaded" });
     if (page.url().includes("login")) {
       test.skip();
       return;

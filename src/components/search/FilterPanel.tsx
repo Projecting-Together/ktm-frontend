@@ -11,7 +11,7 @@ import {
   BATH_MAX,
   BATH_STEP,
 } from "@/lib/stores/filterStore";
-import type { ListingType } from "@/lib/api/types";
+import type { FurnishingType, ListingType } from "@/lib/api/types";
 
 const LISTING_TYPES: { value: ListingType; label: string }[] = [
   { value: "apartment", label: "Apartment" },
@@ -23,7 +23,7 @@ const LISTING_TYPES: { value: ListingType; label: string }[] = [
   { value: "video_shooting", label: "Video Shooting" },
 ];
 
-const FURNISHING_OPTIONS = [
+const FURNISHING_OPTIONS: ReadonlyArray<{ value: FurnishingType; label: string }> = [
   { value: "fully", label: "Fully Furnished" },
   { value: "semi", label: "Semi Furnished" },
   { value: "unfurnished", label: "Unfurnished" },
@@ -109,7 +109,7 @@ export function FilterPanel({ mode = "sidebar" }: FilterPanelProps) {
     store.max_bedrooms != null,
     store.min_bathrooms != null,
     store.max_bathrooms != null,
-    store.furnishing != null,
+    (store.furnishing?.length ?? 0) > 0,
     store.parking,
     store.pets_allowed,
     store.verified,
@@ -462,32 +462,20 @@ export function FilterPanel({ mode = "sidebar" }: FilterPanelProps) {
         </div>
       </div>
 
-      {/* Furnishing */}
+      {/* Furnishing — multi-select (OR); empty selection = no filter */}
       <div>
         <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Furnishing
         </p>
+        <p className="mb-2 text-xs text-muted-foreground">Select one or more; listings matching any selected type are shown.</p>
         <div className="flex flex-col gap-1.5">
-          <label className="flex cursor-pointer items-center gap-2.5">
-            <input
-              type="radio"
-              name="furnishing"
-              value=""
-              checked={store.furnishing == null}
-              onChange={() => store.setFilter("furnishing", undefined)}
-              className="h-3.5 w-3.5 accent-accent"
-            />
-            <span className="text-sm">Any Furnishing</span>
-          </label>
           {FURNISHING_OPTIONS.map((opt) => (
             <label key={opt.value} className="flex cursor-pointer items-center gap-2.5">
               <input
-                type="radio"
-                name="furnishing"
-                value={opt.value}
-                checked={store.furnishing === opt.value}
-                onChange={() => store.setFilter("furnishing", opt.value)}
-                className="h-3.5 w-3.5 accent-accent"
+                type="checkbox"
+                checked={(store.furnishing ?? []).includes(opt.value)}
+                onChange={() => store.toggleFurnishing(opt.value)}
+                className="h-3.5 w-3.5 rounded border-border accent-accent"
               />
               <span className="text-sm">{opt.label}</span>
             </label>

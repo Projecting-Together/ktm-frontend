@@ -2,12 +2,18 @@
 
 import Link from "next/link";
 import { Heart, MapPin, Bed, Bath, Square, PawPrint } from "lucide-react";
-import { cn, formatPrice, getListingCoverImage, getListingLocation, formatBedBath, formatRelativeTime } from "@/lib/utils";
+import {
+  cn,
+  formatFurnishingLabel,
+  formatListingPrice,
+  getListingCoverImage,
+  getListingLocation,
+  formatRelativeTime,
+} from "@/lib/utils";
 import { AddToCompareButton } from "@/components/compare/AddToCompareButton";
 import { listingListItemToCompareSnapshot } from "@/lib/compare/listingToCompareSnapshot";
 import { ListingCoverImage } from "@/components/listings/ListingCoverImage";
 import { VerifiedBadge } from "@/components/common/VerifiedBadge";
-import { ModeratedBadge } from "@/components/common/ModeratedBadge";
 import { useToggleFavorite, useIsFavorite } from "@/lib/hooks/useFavorites";
 import { useAuthStore } from "@/lib/stores/authStore";
 import type { ListingListItem } from "@/lib/api/types";
@@ -23,7 +29,6 @@ export function ListingCard({ listing, variant = "grid", className }: ListingCar
   const location = getListingLocation(listing);
   const isSaleListing = listing.purpose === "sale";
   const showPetFriendlyBadge = listing.pets_allowed === true;
-  const showModeratedBadge = listing.is_moderated === true;
   const { isAuthenticated } = useAuthStore();
   const isFavorite = useIsFavorite(listing.id);
   const { mutate: toggleFavorite, isPending } = useToggleFavorite();
@@ -39,23 +44,20 @@ export function ListingCard({ listing, variant = "grid", className }: ListingCar
   };
 
   const renderStatusBadgeOverlay = (positionClassName: string) => {
-    if (!showPetFriendlyBadge && !showModeratedBadge) {
+    if (!showPetFriendlyBadge) {
       return null;
     }
 
     return (
       <div className={cn("absolute flex flex-col items-end gap-1.5", positionClassName)}>
-        {showPetFriendlyBadge && (
-          <span
-            role="img"
-            data-testid="listing-pet-friendly-badge"
-            aria-label="Pets allowed"
-            className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-green-400"
-          >
-            <PawPrint aria-hidden="true" className="h-3.5 w-3.5 text-black" />
-          </span>
-        )}
-        {showModeratedBadge && <ModeratedBadge size="sm" />}
+        <span
+          role="img"
+          data-testid="listing-pet-friendly-badge"
+          aria-label="Pets allowed"
+          className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-green-400"
+        >
+          <PawPrint aria-hidden="true" className="h-3.5 w-3.5 text-black" />
+        </span>
       </div>
     );
   };
@@ -131,7 +133,7 @@ export function ListingCard({ listing, variant = "grid", className }: ListingCar
             </div>
             <div className="mt-2 flex items-center justify-between">
               <p className="price text-lg font-bold text-accent">
-                {formatPrice(listing.price, listing.currency, listing.price_period)}
+                {formatListingPrice(listing)}
               </p>
               <span className="text-xs text-muted-foreground">{formatRelativeTime(listing.created_at)}</span>
             </div>
@@ -216,13 +218,11 @@ export function ListingCard({ listing, variant = "grid", className }: ListingCar
               <Square className="h-3 w-3" /> {listing.area_m2} m²
             </span>
           )}
-          {listing.furnishing && (
-            <span className="capitalize">{listing.furnishing}</span>
-          )}
+          {listing.furnishing && <span>{formatFurnishingLabel(listing.furnishing)}</span>}
         </div>
         <div className="mt-3 flex items-center justify-between">
           <p className="price text-base font-bold text-accent">
-            {formatPrice(listing.price, listing.currency, listing.price_period)}
+            {formatListingPrice(listing)}
           </p>
           <span className="text-[10px] text-muted-foreground">{formatRelativeTime(listing.created_at)}</span>
         </div>

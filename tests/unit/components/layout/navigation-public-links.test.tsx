@@ -24,7 +24,7 @@ describe("Public navigation links", () => {
     mockUseAuthStore.mockReturnValue({
       isAuthenticated: false,
       user: null,
-      upgradeToAgent: jest.fn(),
+      canCreateListing: () => false,
     });
   });
 

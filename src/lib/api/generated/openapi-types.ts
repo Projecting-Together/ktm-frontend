@@ -235,41 +235,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/auth/upgrade-agent": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Upgrade current user to agent (product-specific) */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["User"];
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/site-config": {
         parameters: {
             query?: never;
@@ -317,11 +282,15 @@ export interface paths {
          * @description Client may call `GET /listings`, `GET /listings/`, or `GET /listings/?…` with listing filters.
          *     Query keys align with `ListingSearchQueryParamKey` / `buildListingQueryParams` (skip, limit, page,
          *     listing_type, purpose, city, district, price and area ranges, amenities, sort, optional geo params).
+         *     Repeat `furnishing` for OR semantics (e.g. `furnishing=fully&furnishing=semi` → listings whose furnishing is fully **or** semi).
          *
          */
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    /** @description Filter by furnishing type; repeat the parameter to match any of the given values (OR). */
+                    furnishing?: components["schemas"]["FurnishingType"][];
+                };
                 header?: never;
                 path?: never;
                 cookie?: never;
@@ -1877,7 +1846,7 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         /** @enum {string} */
-        UserRole: "renter" | "owner" | "agent" | "moderator" | "admin";
+        UserRole: "user" | "admin";
         /** @enum {string} */
         UserStatus: "active" | "suspended" | "pending_verification";
         /** @enum {string} */
@@ -1985,7 +1954,6 @@ export interface components {
             furnishing?: components["schemas"]["FurnishingType"] | null;
             status: components["schemas"]["ListingStatus"];
             is_verified?: boolean | null;
-            is_moderated?: boolean | null;
             is_sponsored?: boolean | null;
             sponsored_weight?: number | null;
             /** Format: date-time */

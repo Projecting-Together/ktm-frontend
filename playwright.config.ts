@@ -1,8 +1,8 @@
-import { loadEnvConfig } from "@next/env";
+import nextEnv from "@next/env";
 import { defineConfig, devices } from "@playwright/test";
 
 /** Same env loading as Next.js so `.env` / `.env.local` apply to Playwright runs. */
-loadEnvConfig(process.cwd());
+nextEnv.loadEnvConfig(process.cwd());
 
 /** Override to run specs outside the default dir (e.g. `__tests__/e2e`). Default: `./tests/e2e`. */
 const testDir = process.env.PLAYWRIGHT_TEST_DIR ?? "./tests/e2e";

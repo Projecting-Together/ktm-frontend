@@ -6,9 +6,9 @@ import { Suspense, useState } from "react";
 import { Menu, X, Heart, Plus, Building2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { shouldShowPreviewAsCustomerBanner } from "@/lib/constants/routeGuards";
 import { useAuthStore } from "@/lib/stores/authStore";
 import { resolveListingCapabilities } from "@/lib/capabilities/listingCapabilities";
-import { ProUpgradeModal } from "@/components/listings/ProUpgradeModal";
 import { PRIMARY_NAV_LINKS } from "@/shared/ui/publicNav";
 
 type PostListingButtonProps = {
@@ -23,8 +23,8 @@ function PostListingButton({ onCreate, className, iconClassName, label, closeMob
   const searchParams = useSearchParams();
   const contextPurpose = searchParams.get("purpose");
   const createListingHref = contextPurpose === "sale"
-    ? "/manage/listings/new?purpose=sale"
-    : "/manage/listings/new";
+    ? "/dashboard/listings/new?purpose=sale"
+    : "/dashboard/listings/new";
 
   return (
     <button
@@ -45,15 +45,13 @@ export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [isUpgrading, setIsUpgrading] = useState(false);
-  const [pendingCreateListingHref, setPendingCreateListingHref] = useState("/manage/listings/new");
-  const { user, isAuthenticated, upgradeToAgent } = useAuthStore();
-  const canPostListing = user?.role === "renter" || user?.role === "owner" || user?.role === "agent" || user?.role === "admin";
+  const { user, isAuthenticated, canCreateListing } = useAuthStore();
+  const canPostListing = isAuthenticated && canCreateListing();
   const rawActiveListingCount = (user as { stats?: { active_listings?: number } } | null)?.stats?.active_listings;
   const hasKnownActiveListingCount = Number.isFinite(rawActiveListingCount);
   const activeListingCount = hasKnownActiveListingCount ? Number(rawActiveListingCount) : 0;
-  const isNormalTierUser = user?.role === "renter" || user?.role === "owner";
+  const isDefaultUserAccount = user?.role === "user";
+  const showPreviewBanner = shouldShowPreviewAsCustomerBanner(pathname, user?.role);
 
   const listingCapabilities = user
     ? resolveListingCapabilities({
@@ -65,43 +63,38 @@ export function Navbar() {
   const handleCreateListingEntry = async (createListingHref: string) => {
     if (!user) return;
 
-    if (isNormalTierUser && !hasKnownActiveListingCount) {
+    if (isDefaultUserAccount && !hasKnownActiveListingCount) {
       toast.error("Couldn't verify your active listings. Please retry in a moment.");
       return;
     }
 
-    if (listingCapabilities?.requiresAgentUpgrade) {
-      setPendingCreateListingHref(createListingHref);
-      setShowUpgradeModal(true);
+    if (!listingCapabilities?.canCreateWithoutUpgrade) {
+      toast.error("You've reached the listing limit for your account.");
       return;
     }
 
     router.push(createListingHref);
   };
 
-  const handleUpgradeConfirm = async () => {
-    try {
-      setIsUpgrading(true);
-      await upgradeToAgent();
-      setShowUpgradeModal(false);
-      router.push(pendingCreateListingHref);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Upgrade failed. Please try again.";
-      toast.error(message);
-    } finally {
-      setIsUpgrading(false);
-    }
-  };
-
-  const dashboardHref =
-    user?.role === "admin"
-      ? "/admin"
-      : user?.role === "owner" || user?.role === "agent"
-      ? "/manage"
-      : "/dashboard";
+  const dashboardHref = user?.role === "admin" ? "/admin" : "/dashboard";
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-border bg-card/95 backdrop-blur-sm">
+    <div className="sticky top-0 z-40 w-full">
+      {showPreviewBanner ? (
+        <div
+          role="region"
+          aria-label="Preview as customer"
+          className="border-b border-amber-300 bg-amber-50 px-4 py-2 text-center text-sm text-amber-950 dark:bg-amber-950/40 dark:text-amber-50"
+        >
+          <span className="font-semibold">Preview as customer</span>
+          <span className="text-amber-900 dark:text-amber-100">
+            {" "}
+            — You are signed in as an administrator. Customer data and actions still follow your admin account and server
+            rules.
+          </span>
+        </div>
+      ) : null}
+      <header className="w-full border-b border-border bg-card/95 backdrop-blur-sm">
       <nav className="container flex h-16 items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 font-bold text-primary">
@@ -147,7 +140,7 @@ export function Navbar() {
                     <button
                       type="button"
                       onClick={async () => {
-                        await handleCreateListingEntry("/manage/listings/new");
+                        await handleCreateListingEntry("/dashboard/listings/new");
                       }}
                       className="btn-primary gap-1.5 py-2 text-xs"
                     >
@@ -236,7 +229,7 @@ export function Navbar() {
                         type="button"
                         onClick={async () => {
                           setMobileOpen(false);
-                          await handleCreateListingEntry("/manage/listings/new");
+                          await handleCreateListingEntry("/dashboard/listings/new");
                         }}
                         className="btn-primary mt-2 justify-center gap-1.5"
                       >
@@ -268,12 +261,7 @@ export function Navbar() {
           </div>
         </div>
       )}
-      <ProUpgradeModal
-        open={showUpgradeModal}
-        isLoading={isUpgrading}
-        onCancel={() => setShowUpgradeModal(false)}
-        onConfirm={handleUpgradeConfirm}
-      />
     </header>
+    </div>
   );
 }

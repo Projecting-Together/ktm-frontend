@@ -66,10 +66,13 @@ function expandMswUploadTemplates(filename: string) {
 function resolveLoginTokens(email: string, password: string) {
   for (const row of mswAuthLogins.loginAccounts) {
     if (row.email !== email || row.password !== password) continue;
-    if (row.tokens === "renter") return mockAuthTokens;
-    if (row.tokens === "owner") return mockOwnerAuthTokens;
-    if (row.tokens === "agent") return mockAgentAuthTokens;
     if (row.tokens === "admin") return mockAdminAuthTokens;
+    if (row.tokens === "user" || row.tokens === "renter" || row.tokens === "owner" || row.tokens === "agent") {
+      if (email === "ram.sharma@gmail.com") return mockAuthTokens;
+      if (email === "sita.thapa@gmail.com") return mockOwnerAuthTokens;
+      if (email === "bikash.gurung@ktmrealty.com") return mockAgentAuthTokens;
+      return mockAuthTokens;
+    }
   }
   return null;
 }

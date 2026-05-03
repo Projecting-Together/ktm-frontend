@@ -1,7 +1,12 @@
 "use client";
 
 import { create } from "zustand";
-import { LISTING_FILTER_PARAM_KEYS, type ListingFilters, type ListingType } from "@/lib/api/types";
+import {
+  LISTING_FILTER_PARAM_KEYS,
+  type FurnishingType,
+  type ListingFilters,
+  type ListingType,
+} from "@/lib/api/types";
 
 type SearchFilters = ListingFilters;
 
@@ -24,6 +29,7 @@ interface FilterActions {
   // Helpers
   toggleListingType: (type: ListingType) => void;
   toggleAmenity: (code: string) => void;
+  toggleFurnishing: (type: FurnishingType) => void;
 }
 
 const DEFAULT_FILTERS: SearchFilters = {
@@ -227,16 +233,27 @@ export const useFilterStore = create<FilterState & FilterActions>((set, get) => 
       : [...current, code];
     set({ amenities: next.length ? next : undefined, page: 1 });
   },
+
+  toggleFurnishing: (type) => {
+    const current = get().furnishing ?? [];
+    const next = current.includes(type)
+      ? current.filter((t) => t !== type)
+      : [...current, type];
+    set({ furnishing: next.length ? next : undefined, page: 1 });
+  },
 }));
 
 // Selector: extract only the API-relevant filters (strip UI state)
 export function selectApiFilters(state: FilterState): ListingFilters {
   const filters: ListingFilters = {};
   for (const key of LISTING_FILTER_PARAM_KEYS) {
+    if (key === "purpose") continue;
     const value = state[key];
-    if (value !== undefined) {
-      (filters as Record<string, unknown>)[key] = value;
-    }
+    if (value === undefined) continue;
+    if (key === "furnishing" && Array.isArray(value) && value.length === 0) continue;
+    (filters as Record<string, unknown>)[key] = value;
   }
+  // Always send a single mode so search never mixes rent + sale (invalid/empty coerces to rent).
+  filters.purpose = state.purpose === "sale" ? "sale" : "rent";
   return filters;
 }

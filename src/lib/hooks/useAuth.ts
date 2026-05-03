@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { login, logout, register, getCurrentUser, refreshAccessToken, persistTokens } from "@/lib/api/client";
+import { login, logout, register, getCurrentUser, persistTokens } from "@/lib/api/client";
 import { useAuthStore } from "@/lib/stores/authStore";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -38,7 +38,7 @@ export function useCurrentUser() {
   });
 }
 
-export function useLogin() {
+export function useLogin(redirectAfterLogin = "/dashboard") {
   const qc = useQueryClient();
   const { setUser } = useAuthStore();
   const router = useRouter();
@@ -59,7 +59,7 @@ export function useLogin() {
         qc.setQueryData(authKeys.user, userRes.data);
       }
       toast.success("Welcome back!");
-      router.push("/dashboard");
+      router.push(redirectAfterLogin);
     },
     onError: (err: Error) => toast.error(err.message),
   });

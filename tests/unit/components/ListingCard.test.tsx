@@ -74,47 +74,27 @@ describe("ListingCard", () => {
   });
 
   it("renders pet-friendly image badge when pets are allowed", () => {
-    const petFriendlyListing = { ...listing, pets_allowed: true, is_moderated: false };
+    const petFriendlyListing = { ...listing, pets_allowed: true };
     const { container } = render(<ListingCard listing={petFriendlyListing} />);
     const card = within(container);
     const petBadge = card.getByTestId("listing-pet-friendly-badge");
     expect(petBadge).toBeInTheDocument();
-    // Add semantic expectation so this assertion isn't purely structural.
     expect(petBadge).toHaveAccessibleName(/pet/i);
-    expect(card.queryByText(/^moderated$/i)).not.toBeInTheDocument();
   });
 
-  it("renders moderated image badge when listing is moderated", () => {
-    const moderatedListing = { ...listing, pets_allowed: false, is_moderated: true };
-    const { container } = render(<ListingCard listing={moderatedListing} />);
-    const card = within(container);
-    expect(card.getByText(/^moderated$/i)).toBeInTheDocument();
-    expect(card.queryByTestId("listing-pet-friendly-badge")).not.toBeInTheDocument();
-  });
-
-  it("renders both pet-friendly and moderated badges together", () => {
-    const petFriendlyModeratedListing = { ...listing, pets_allowed: true, is_moderated: true };
-    const { container } = render(<ListingCard listing={petFriendlyModeratedListing} />);
-    const card = within(container);
-    expect(card.getByTestId("listing-pet-friendly-badge")).toBeInTheDocument();
-    expect(card.getByText(/^moderated$/i)).toBeInTheDocument();
-  });
-
-  it("keeps verified badge visible when pet-friendly and moderated badges are shown", () => {
-    const fullyBadgedListing = { ...listing, is_verified: true, pets_allowed: true, is_moderated: true };
+  it("keeps verified badge visible when pet-friendly overlay is shown", () => {
+    const fullyBadgedListing = { ...listing, is_verified: true, pets_allowed: true };
     const { container } = render(<ListingCard listing={fullyBadgedListing} />);
     const card = within(container);
     expect(card.getByText(/^verified$/i)).toBeInTheDocument();
     expect(card.getByTestId("listing-pet-friendly-badge")).toBeInTheDocument();
-    expect(card.getByText(/^moderated$/i)).toBeInTheDocument();
   });
 
-  it("does not render pet-friendly or moderated badges when both are false", () => {
-    const regularListing = { ...listing, pets_allowed: false, is_moderated: false };
+  it("does not render pet-friendly badge when pets are not allowed", () => {
+    const regularListing = { ...listing, pets_allowed: false };
     const { container } = render(<ListingCard listing={regularListing} />);
     const card = within(container);
     expect(card.queryByTestId("listing-pet-friendly-badge")).not.toBeInTheDocument();
-    expect(card.queryByText(/^moderated$/i)).not.toBeInTheDocument();
   });
 });
 

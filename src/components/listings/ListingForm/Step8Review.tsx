@@ -2,7 +2,7 @@
 import { useFormContext } from "react-hook-form";
 import type { ListingFormData } from "@/lib/validations/listingSchema";
 import { CheckCircle, AlertCircle } from "lucide-react";
-import { formatPrice } from "@/lib/utils";
+import { formatListingPrice, formatFurnishingLabel } from "@/lib/utils";
 
 interface Props {
   images: { preview: string; isCover: boolean }[];
@@ -63,17 +63,29 @@ export function Step8Review({ images }: Props) {
       <div className="rounded-2xl border border-border bg-card p-5">
         <h3 className="font-semibold mb-4">Listing Summary</h3>
         {images[0] && (
-          <img src={images.find(i => i.isCover)?.preview ?? images[0].preview} alt="Cover"
-            className="w-full aspect-video object-cover rounded-xl mb-4" />
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element -- object URL preview */}
+            <img src={images.find(i => i.isCover)?.preview ?? images[0].preview} alt="Cover"
+              className="w-full aspect-video object-cover rounded-xl mb-4" />
+          </>
         )}
         <h4 className="font-bold text-lg">{data.title || "—"}</h4>
-        <p className="text-accent font-semibold mt-1">{data.price ? formatPrice(data.price, "NPR", data.price_period) : "—"}</p>
+        <p className="text-accent font-semibold mt-1">
+          {data.price
+            ? formatListingPrice({
+                price: data.price,
+                currency: "NPR",
+                price_period: data.price_period,
+                purpose: data.purpose,
+              })
+            : "—"}
+        </p>
         <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
           {[
             ["Type", data.listing_type],
             ["Bedrooms", data.bedrooms],
             ["Bathrooms", data.bathrooms],
-            ["Furnishing", data.furnishing],
+            ["Furnishing", data.furnishing ? formatFurnishingLabel(data.furnishing) : null],
             ["Photos", `${images.length} uploaded`],
           ].map(([label, value]) => value != null && (
             <div key={String(label)} className="flex justify-between border-b border-border pb-1.5">

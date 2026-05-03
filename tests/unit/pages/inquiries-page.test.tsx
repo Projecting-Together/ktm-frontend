@@ -1,7 +1,7 @@
 import React from "react";
 import { render, screen, waitFor } from "@/test-utils/renderWithProviders";
 import userEvent from "@testing-library/user-event";
-import ManageInquiriesPage from "@/app/manage/inquiries/page";
+import LeadInboxInquiriesPage from "@/app/dashboard/leads/inquiries/page";
 import { getReceivedInquiries } from "@/lib/api/client";
 import { mockInquiries } from "@/test-utils/mockData";
 
@@ -46,7 +46,7 @@ describe("Manage inquiries page", () => {
     });
 
     const user = userEvent.setup();
-    render(<ManageInquiriesPage />);
+    render(<LeadInboxInquiriesPage />);
 
     expect(await screen.findByRole("button", { name: /all leads/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /rental leads/i })).toBeInTheDocument();
@@ -87,7 +87,7 @@ describe("Manage inquiries page", () => {
       error: null,
     });
 
-    render(<ManageInquiriesPage />);
+    render(<LeadInboxInquiriesPage />);
 
     expect(await screen.findByText("Rental Lead")).toBeInTheDocument();
     expect(screen.getByText("Sale Lead")).toBeInTheDocument();

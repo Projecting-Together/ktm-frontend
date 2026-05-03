@@ -53,7 +53,7 @@ const resetStoreData = () => {
     isFilterPanelOpen: false,
     view: "grid",
     listing_type: undefined,
-    purpose: undefined,
+    purpose: "rent",
     min_price: undefined,
     max_price: undefined,
     min_bedrooms: undefined,

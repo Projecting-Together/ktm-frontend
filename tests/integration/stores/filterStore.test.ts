@@ -104,7 +104,7 @@ describe("filterStore", () => {
     useFilterStore.getState().setFilter("parking", true);
     useFilterStore.getState().setFilter("pets_allowed", true);
     useFilterStore.getState().setFilter("available_from", "2026-05-01");
-    useFilterStore.getState().setFilter("furnishing", "semi");
+    useFilterStore.getState().setFilter("furnishing", ["semi"]);
     useFilterStore.getState().resetFilters();
     const state = useFilterStore.getState();
     expect(state.listing_type).toBeUndefined();
@@ -115,10 +115,10 @@ describe("filterStore", () => {
     expect(state.furnishing).toBeUndefined();
   });
 
-  it("resetFilters keeps purpose unset by default", () => {
+  it("resetFilters restores default purpose (rent)", () => {
     useFilterStore.getState().setFilter("purpose", "sale");
     useFilterStore.getState().resetFilters();
-    expect(useFilterStore.getState().purpose).toBeUndefined();
+    expect(useFilterStore.getState().purpose).toBe("rent");
   });
 
   it("toggleListingType adds a listing type", () => {
@@ -140,6 +140,12 @@ describe("filterStore", () => {
     expect(apiFilters).not.toHaveProperty("view");
     expect(apiFilters).not.toHaveProperty("locality");
     expect(apiFilters.listing_type).toBe("apartment");
+  });
+
+  it("selectApiFilters always includes normalized purpose (rent or sale)", () => {
+    expect(selectApiFilters(useFilterStore.getState()).purpose).toBe("rent");
+    useFilterStore.getState().setFilter("purpose", "sale");
+    expect(selectApiFilters(useFilterStore.getState()).purpose).toBe("sale");
   });
 
   it("selectApiFilters does not include store action functions", () => {

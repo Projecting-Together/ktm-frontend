@@ -78,7 +78,7 @@ describe("rent detail mappers", () => {
 
     expect(toUnitUtilityRows(inferredListing)).toEqual([
       { label: "Wi-Fi", status: "Included", tone: "positive" },
-      { label: "Furnishing", status: "fully", tone: "neutral" },
+      { label: "Furnishing", status: "Fully furnished", tone: "neutral" },
       { label: "Balcony", status: "Included", tone: "positive" },
       { label: "Air Conditioning", status: "Included", tone: "positive" },
       { label: "Heating", status: "Included", tone: "positive" },
@@ -105,7 +105,7 @@ describe("rent detail mappers", () => {
       bedrooms: 2,
       bathrooms: 1,
       area_m2: 1200,
-      furnishing: "Semi Furnished",
+      furnishing: "semi",
       floor: 3,
       total_floors: 5,
       parking: false,
@@ -119,7 +119,7 @@ describe("rent detail mappers", () => {
       { key: "Bedrooms", value: "2" },
       { key: "Bathrooms", value: "1" },
       { key: "Area", value: "1200.0 m²" },
-      { key: "Furnishing", value: "Semi Furnished" },
+      { key: "Furnishing", value: "Semi furnished" },
       { key: "Floor", value: "3 of 5" },
       { key: "Parking", value: "Not available" },
       { key: "Pets", value: "Not available" },

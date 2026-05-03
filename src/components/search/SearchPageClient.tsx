@@ -11,7 +11,7 @@ import { useFilterStore, selectApiFilters } from "@/lib/stores/filterStore";
 import { useListings } from "@/lib/hooks/useListings";
 import { adaptListingsForSearch } from "@/lib/contracts/adapters";
 import { trackPurposeModeChange } from "@/lib/observability";
-import type { ListingFilters } from "@/lib/api/types";
+import { FURNISHING_TYPE_VALUES, type FurnishingType, type ListingFilters } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 import { SEARCH_MAP_LOADING_MESSAGE, SORT_OPTIONS } from "@/shared/ui/search";
 
@@ -160,6 +160,13 @@ export default function SearchPageClient() {
       } else if (key === "amenities") {
         const existing = params.amenities;
         params.amenities = existing ? [...existing, value] : [value];
+      } else if (key === "furnishing") {
+        if ((FURNISHING_TYPE_VALUES as readonly string[]).includes(value)) {
+          const ft = value as FurnishingType;
+          const existing = params.furnishing;
+          const merged = existing ? [...existing, ft] : [ft];
+          params.furnishing = [...new Set(merged)];
+        }
       } else {
         if (key === "search") params.search = value;
         else if (key === "listing_type") params.listing_type = value;
@@ -167,7 +174,6 @@ export default function SearchPageClient() {
         else if (key === "city") params.city = value;
         else if (key === "district") params.district = value;
         else if (key === "city_slug") params.city_slug = value;
-        else if (key === "furnishing") params.furnishing = value;
         else if (key === "available_from") params.available_from = value;
         else if (key === "sort_by") params.sort_by = value;
         else if (key === "sort_order") params.sort_order = value;
@@ -203,7 +209,10 @@ export default function SearchPageClient() {
   }, [
     store.search, store.listing_type, store.purpose, store.min_price, store.max_price,
     store.min_bedrooms, store.max_bedrooms, store.min_bathrooms, store.max_bathrooms,
-    store.furnishing, store.parking, store.pets_allowed, store.verified,
+    store.furnishing?.join(","),
+    store.parking,
+    store.pets_allowed,
+    store.verified,
     store.amenities, store.available_from, store.sort_by, store.sort_order, store.page,
     store.city_slug, store.min_area_m2, store.max_area_m2,
     store.min_lat, store.max_lat, store.min_lng, store.max_lng, store.lat, store.lng, store.radius_km,

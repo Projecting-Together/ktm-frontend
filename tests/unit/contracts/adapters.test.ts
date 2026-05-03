@@ -5,6 +5,7 @@ import {
   adaptNewsPublishPermission,
   adaptProfile,
 } from "@/lib/contracts/adapters";
+import type { ListingDto } from "@/lib/contracts/listing";
 
 describe("contract adapters", () => {
   it("normalizes listing DTOs for search UI consumption", () => {
@@ -102,29 +103,19 @@ describe("contract adapters", () => {
     });
   });
 
-  it("preserves is_moderated from listing DTOs", () => {
-    const listings = adaptListingsForSearch([
-      {
-        id: "listing-moderated-1",
-        slug: "listing-moderated-1",
-        title: "Moderated listing",
-        currency: "NPR",
-        status: "active",
-        created_at: "2026-01-01T00:00:00Z",
-        is_moderated: true,
-      },
-      {
-        id: "listing-moderated-2",
-        slug: "listing-moderated-2",
-        title: "Unspecified moderation listing",
-        currency: "NPR",
-        status: "active",
-        created_at: "2026-01-02T00:00:00Z",
-      },
-    ]);
+  it("does not surface legacy is_moderated from listing DTOs", () => {
+    const legacyDto: ListingDto & { is_moderated?: boolean } = {
+      id: "listing-legacy-1",
+      slug: "listing-legacy-1",
+      title: "Legacy DTO with moderated flag",
+      currency: "NPR",
+      status: "active",
+      created_at: "2026-01-01T00:00:00Z",
+      is_moderated: true,
+    };
+    const listings = adaptListingsForSearch([legacyDto]);
 
-    expect(listings[0].is_moderated).toBe(true);
-    expect(listings[1].is_moderated).toBe(false);
+    expect(listings[0]).not.toHaveProperty("is_moderated");
   });
 
   it("adapts listings for map markers and filters invalid coordinates", () => {

@@ -9,9 +9,7 @@ const PRICE_PERIODS = [
 ];
 
 export function Step3Pricing() {
-  const { register, watch, setValue, formState: { errors } } = useFormContext<ListingFormData>();
-  const period = watch("price_period");
-  const negotiable = watch("price_negotiable");
+  const { register, formState: { errors } } = useFormContext<ListingFormData>();
 
   return (
     <div className="space-y-6">

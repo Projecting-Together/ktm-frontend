@@ -122,7 +122,7 @@ export function parseAdminListingsCatalog(data: unknown): AdminListing[] {
 const adminUserUiSchema = z.object({
   id: z.string(),
   email: z.string(),
-  role: z.enum(["user", "agent", "moderator", "admin"]),
+  role: z.enum(["user", "admin"]),
   status: z.enum(["active", "inactive", "suspended"]),
   joinedAt: z.string(),
 });

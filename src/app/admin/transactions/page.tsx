@@ -7,10 +7,14 @@ import { FilterToolbar } from "@/components/admin/FilterToolbar";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { adminService } from "@/lib/admin/service";
 import type { AdminTransaction, AdminTransactionStatus } from "@/lib/admin/types";
+import {
+  ADMIN_TRANSACTION_STATUSES_FILTER,
+  ADMIN_TRANSACTION_STATUS_UPDATES,
+} from "@/lib/constants/adminUi";
 import { ADMIN_PAGE_TRANSACTIONS, ADMIN_TRANSACTIONS_TABLE } from "@/shared/ui/admin/tableCopy";
 
-const TRANSACTION_STATUSES: Array<AdminTransactionStatus | ""> = ["", "paid", "pending", "failed", "refunded"];
-const STATUS_UPDATE_OPTIONS: AdminTransactionStatus[] = ["paid", "pending", "failed", "refunded"];
+const TRANSACTION_STATUSES = ADMIN_TRANSACTION_STATUSES_FILTER;
+const STATUS_UPDATE_OPTIONS = ADMIN_TRANSACTION_STATUS_UPDATES;
 
 function toBadgeStatus(status: AdminTransactionStatus): "active" | "pending" | "rejected" | "inactive" {
   if (status === "paid") {

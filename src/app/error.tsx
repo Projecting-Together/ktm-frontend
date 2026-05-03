@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import Link from "next/link";
 import { logger } from "@/lib/observability/logger";
 import { trackClientError } from "@/lib/observability/analytics";
 
@@ -44,12 +45,12 @@ export default function Error({ error, reset }: ErrorProps) {
         >
           Try again
         </button>
-        <a
+        <Link
           href="/"
           className="rounded-md border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
         >
           Go home
-        </a>
+        </Link>
       </div>
     </div>
   );

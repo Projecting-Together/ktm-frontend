@@ -30,17 +30,16 @@ export function buildFilteredListingPageFromSearchParams(
 
   let filtered = [...mockListingItems];
 
-  const purpose = searchParams.get("purpose");
-  if (purpose === "rent" || purpose === "sale") {
-    filtered = filtered.filter((l) => (l.purpose ?? "rent") === purpose);
-  }
+  const purposeRaw = searchParams.get("purpose");
+  const purpose: "rent" | "sale" = purposeRaw === "sale" ? "sale" : "rent";
+  filtered = filtered.filter((l) => (l.purpose ?? "rent") === purpose);
 
   const priceMax = searchParams.get("price_max") ?? searchParams.get("max_price");
   const bedsMin = searchParams.get("beds") ?? searchParams.get("bedrooms");
   const bedsMax = searchParams.get("max_bedrooms");
   const bathsMin = searchParams.get("bathrooms");
   const bathsMax = searchParams.get("max_bathrooms");
-  const furnishing = searchParams.get("furnishing");
+  const furnishingValues = searchParams.getAll("furnishing");
   const verified = searchParams.get("verified");
 
   if (priceMax) filtered = filtered.filter((l) => Number(l.price) <= Number(priceMax));
@@ -48,7 +47,10 @@ export function buildFilteredListingPageFromSearchParams(
   if (bedsMax) filtered = filtered.filter((l) => (l.bedrooms ?? 999) <= Number(bedsMax));
   if (bathsMin) filtered = filtered.filter((l) => Number(l.bathrooms ?? 0) >= Number(bathsMin));
   if (bathsMax) filtered = filtered.filter((l) => Number(l.bathrooms ?? 999) <= Number(bathsMax));
-  if (furnishing) filtered = filtered.filter((l) => l.furnishing === furnishing);
+  if (furnishingValues.length > 0) {
+    const allowed = new Set(furnishingValues);
+    filtered = filtered.filter((l) => l.furnishing != null && allowed.has(l.furnishing));
+  }
   if (verified === "true") filtered = filtered.filter((l) => l.is_verified);
   if (city && city.toLowerCase() !== "thamel") {
     const q = city.trim().toLowerCase();
@@ -65,7 +67,7 @@ export function buildFilteredListingPageFromSearchParams(
 export function getMockPaginatedPublicListings(filters: ListingFilters): PaginatedResponse<ListingListItem> {
   const params = buildListingQueryParams(filters);
   const base = buildFilteredListingPageFromSearchParams(params);
-  let items = [...base.items];
+  const items = [...base.items];
 
   const sortBy = filters.sort_by ?? params.get("sort_by") ?? "created_at";
   const sortOrderRaw = filters.sort_order ?? params.get("sort_order") ?? "desc";

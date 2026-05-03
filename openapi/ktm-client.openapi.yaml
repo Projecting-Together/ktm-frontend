@@ -123,17 +123,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/User"
 
-  /auth/upgrade-agent:
-    post:
-      tags: [Auth]
-      summary: Upgrade current user to agent (product-specific)
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/User"
-
   /site-config:
     get:
       tags: [SiteConfig]
@@ -154,7 +143,18 @@ paths:
         Client may call `GET /listings`, `GET /listings/`, or `GET /listings/?…` with listing filters.
         Query keys align with `ListingSearchQueryParamKey` / `buildListingQueryParams` (skip, limit, page,
         listing_type, purpose, city, district, price and area ranges, amenities, sort, optional geo params).
+        Repeat `furnishing` for OR semantics (e.g. `furnishing=fully&furnishing=semi` → listings whose furnishing is fully **or** semi).
       security: []
+      parameters:
+        - name: furnishing
+          in: query
+          description: Filter by furnishing type; repeat the parameter to match any of the given values (OR).
+          schema:
+            type: array
+            items:
+              $ref: "#/components/schemas/FurnishingType"
+          style: form
+          explode: true
       responses:
         "200":
           content:
@@ -886,7 +886,7 @@ components:
   schemas:
     UserRole:
       type: string
-      enum: [renter, owner, agent, moderator, admin]
+      enum: [user, admin]
     UserStatus:
       type: string
       enum: [active, suspended, pending_verification]
@@ -1129,7 +1129,6 @@ components:
         status:
           $ref: "#/components/schemas/ListingStatus"
         is_verified: { type: boolean, nullable: true }
-        is_moderated: { type: boolean, nullable: true }
         is_sponsored: { type: boolean, nullable: true }
         sponsored_weight: { type: number, nullable: true }
         sponsored_until: { type: string, format: date-time, nullable: true }

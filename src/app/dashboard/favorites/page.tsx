@@ -1,6 +1,8 @@
 "use client";
 import Link from "next/link";
 import { Heart } from "lucide-react";
+import { AddToCompareButton } from "@/components/compare/AddToCompareButton";
+import { listingListItemToCompareSnapshot } from "@/lib/compare/listingToCompareSnapshot";
 import { useFavorites } from "@/lib/hooks/useFavorites";
 import { FavoriteRowSkeleton } from "@/components/dashboard/FavoriteRowSkeleton";
 
@@ -10,7 +12,7 @@ export default function FavoritesPage() {
   return (
     <div>
       <h1 className="text-2xl font-bold mb-1">Saved Listings</h1>
-      <p className="text-muted-foreground mb-6">Properties you've saved for later.</p>
+      <p className="text-muted-foreground mb-6">Properties you&apos;ve saved for later.</p>
 
       {isLoading ? (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -29,27 +31,38 @@ export default function FavoritesPage() {
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {favorites.map((fav) => (
             fav.listing ? (
-              <Link
+              <div
                 key={fav.listing_id}
-                href={`/listings/${fav.listing_id}`}
-                className="flex items-center gap-3 rounded-lg border border-border bg-card p-3 transition-all hover:border-accent hover:shadow-sm"
+                className="relative flex items-center gap-2 rounded-lg border border-border bg-card p-3 pr-2 transition-all hover:border-accent hover:shadow-sm"
               >
-                {fav.listing.images?.[0]?.image_url ? (
-                  <img
-                    src={fav.listing.images[0].image_url}
-                    alt={fav.listing.title}
-                    className="h-14 w-14 shrink-0 rounded-md object-cover"
-                  />
-                ) : (
-                  <div className="h-14 w-14 shrink-0 rounded-md bg-muted" aria-hidden />
-                )}
-                <div className="min-w-0">
-                  <p className="line-clamp-1 text-sm font-semibold">{fav.listing.title}</p>
-                  <p className="text-xs text-muted-foreground">
-                    Saved {new Date(fav.created_at).toLocaleDateString()}
-                  </p>
-                </div>
-              </Link>
+                <Link
+                  href={`/listings/${fav.listing.slug}`}
+                  className="flex min-w-0 flex-1 items-center gap-3"
+                >
+                  {fav.listing.images?.[0]?.image_url ? (
+                    <>
+                      {/* eslint-disable-next-line @next/next/no-img-element -- remote listing CDN URLs */}
+                      <img
+                        src={fav.listing.images[0].image_url}
+                        alt={fav.listing.title}
+                        className="h-14 w-14 shrink-0 rounded-md object-cover"
+                      />
+                    </>
+                  ) : (
+                    <div className="h-14 w-14 shrink-0 rounded-md bg-muted" aria-hidden />
+                  )}
+                  <div className="min-w-0">
+                    <p className="line-clamp-1 text-sm font-semibold">{fav.listing.title}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Saved {new Date(fav.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                </Link>
+                <AddToCompareButton
+                  snapshot={listingListItemToCompareSnapshot(fav.listing)}
+                  className="shrink-0"
+                />
+              </div>
             ) : null
           ))}
         </div>

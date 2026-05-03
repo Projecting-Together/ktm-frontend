@@ -49,7 +49,19 @@ const nextConfig: NextConfig = {
       { source: "/properties", destination: "/listings", permanent: true },
       { source: "/neighborhoods", destination: "/listings", permanent: true },
       { source: "/neighborhoods/:slug", destination: "/listings?city_slug=:slug", permanent: true },
-      { source: "/dashboard/compare", destination: "/compare", permanent: true },
+      { source: "/dashboard/compare", destination: "/dashboard", permanent: true },
+      { source: "/compare", destination: "/listings", permanent: true },
+      // Legacy owner portal → unified member dashboard (see `src/lib/constants/memberDashboardRoutes.ts`).
+      // Explicit paths first; catch-all last sends any other `/manage/*` to the member hub (bookmarks/emails).
+      { source: "/manage", destination: "/dashboard", permanent: true },
+      { source: "/manage/listings", destination: "/dashboard/listings", permanent: true },
+      { source: "/manage/listings/new", destination: "/dashboard/listings/new", permanent: true },
+      { source: "/manage/listings/:id/edit", destination: "/dashboard/listings/:id/edit", permanent: true },
+      { source: "/manage/inquiries", destination: "/dashboard/leads/inquiries", permanent: true },
+      { source: "/manage/visits", destination: "/dashboard/leads/visits", permanent: true },
+      { source: "/manage/news", destination: "/dashboard/news", permanent: true },
+      { source: "/manage/analytics", destination: "/dashboard/analytics", permanent: true },
+      { source: "/manage/:path*", destination: "/dashboard", permanent: true },
     ];
   },
 

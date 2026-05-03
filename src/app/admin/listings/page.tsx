@@ -9,11 +9,11 @@ import { FilterToolbar } from "@/components/admin/FilterToolbar";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { adminService } from "@/lib/admin/service";
 import type { AdminListing, AdminListingStatus, AdminListingType } from "@/lib/admin/types";
-import { LISTING_TYPE_VALUES } from "@/lib/api/types";
+import { ADMIN_LISTING_STATUS_FILTER, ADMIN_LISTING_TYPE_FILTER } from "@/lib/constants/adminUi";
 import { ADMIN_LISTINGS_TABLE, ADMIN_PAGE_LISTINGS } from "@/shared/ui/admin/tableCopy";
 
-const LISTING_STATUSES: Array<AdminListingStatus | ""> = ["", "pending", "active", "sold", "rejected"];
-const LISTING_TYPES: Array<AdminListingType | ""> = ["", ...LISTING_TYPE_VALUES];
+const LISTING_STATUSES = ADMIN_LISTING_STATUS_FILTER;
+const LISTING_TYPES = ADMIN_LISTING_TYPE_FILTER;
 
 function toBadgeStatus(status: AdminListingStatus): "pending" | "active" | "rejected" | "inactive" {
   if (status === "sold") {

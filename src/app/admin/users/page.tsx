@@ -7,10 +7,13 @@ import { FilterToolbar } from "@/components/admin/FilterToolbar";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { adminService } from "@/lib/admin/service";
 import type { AdminUser, AdminUserRole, AdminUserStatus } from "@/lib/admin/types";
+import {
+  ADMIN_USER_ROLES,
+  ADMIN_USER_STATUS_FILTER,
+} from "@/lib/constants/adminUi";
 import { ADMIN_PAGE_USERS, ADMIN_USERS_TABLE } from "@/shared/ui/admin/tableCopy";
 
-const USER_ROLES: AdminUserRole[] = ["user", "agent", "moderator", "admin"];
-const USER_STATUSES: Array<AdminUserStatus | ""> = ["", "active", "inactive", "suspended"];
+const USER_STATUSES = ADMIN_USER_STATUS_FILTER;
 
 function toBadgeStatus(status: AdminUserStatus): "active" | "inactive" | "rejected" {
   if (status === "suspended") {
@@ -49,11 +52,16 @@ export default function AdminUsersPage() {
       id: string;
       patch: Partial<Pick<AdminUser, "role" | "status">>;
     }) => {
-      const user = await adminService.updateUser(id, patch);
-      if (!user) {
-        throw new Error("User not found.");
+      try {
+        const user = await adminService.updateUser(id, patch);
+        if (!user) {
+          throw new Error("User not found.");
+        }
+        return user;
+      } catch (e) {
+        const message = e instanceof Error ? e.message : "Update failed.";
+        throw new Error(message);
       }
-      return user;
     },
     onSuccess: async () => {
       await refreshUsers();
@@ -86,7 +94,10 @@ export default function AdminUsersPage() {
     },
   });
 
-  const rows = usersQuery.data?.items ?? [];
+  const rows = useMemo(
+    () => usersQuery.data?.items ?? [],
+    [usersQuery.data?.items],
+  );
 
   const columns: DataTableColumn<AdminUser>[] = useMemo(
     () => [
@@ -110,16 +121,23 @@ export default function AdminUsersPage() {
                   onSuccess: () => {
                     setFeedback(`Role for user ${row.id} updated to ${nextRole}.`);
                   },
+                  onError: (err) => {
+                    setFeedback(err instanceof Error ? err.message : "Role update failed.");
+                  },
                 },
               );
             }}
             className="h-9 rounded-md border border-border bg-background px-2 text-sm capitalize"
           >
-            {USER_ROLES.map((role) => (
-              <option key={role} value={role}>
-                {role}
-              </option>
-            ))}
+            {ADMIN_USER_ROLES.map((role) => {
+              const adminTakenElsewhere = rows.some((r) => r.role === "admin" && r.id !== row.id);
+              const disableAdmin = role === "admin" && row.role !== "admin" && adminTakenElsewhere;
+              return (
+                <option key={role} value={role} disabled={disableAdmin}>
+                  {role}
+                </option>
+              );
+            })}
           </select>
         ),
       },
@@ -225,7 +243,7 @@ export default function AdminUsersPage() {
         },
       },
     ],
-    [deleteMutation, forcePasswordResetMutation, updateMutation],
+    [deleteMutation, forcePasswordResetMutation, updateMutation, rows],
   );
 
   return (
@@ -253,7 +271,7 @@ export default function AdminUsersPage() {
               className="h-10 rounded-md border border-border bg-background px-3 text-sm capitalize"
             >
               <option value="">All Roles</option>
-              {USER_ROLES.map((role) => (
+              {ADMIN_USER_ROLES.map((role) => (
                 <option key={role} value={role}>
                   {role}
                 </option>

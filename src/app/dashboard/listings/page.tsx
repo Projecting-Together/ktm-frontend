@@ -4,18 +4,18 @@ import { Plus, Edit, Trash2, Eye } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { getMyListings } from "@/lib/api/client";
-import { formatPrice, formatRelativeTime, getStatusColor, formatListingStatusLabel, cn } from "@/lib/utils";
+import { formatListingPrice, formatRelativeTime, getStatusColor, formatListingStatusLabel, cn } from "@/lib/utils";
 import { useDeleteListing, usePublishListing } from "@/lib/hooks/useListings";
 import { Suspense } from "react";
 
-function ManageListingsContent() {
+function MyListingsContent() {
   const searchParams = useSearchParams();
   const statusFilter = searchParams.get("status");
 
   const filterKey = statusFilter === "archived" ? "archived" : "all";
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["manage", "my-listings", filterKey],
+    queryKey: ["dashboard", "owner-listings", filterKey],
     queryFn: async () => {
       const res =
         filterKey === "archived"
@@ -35,13 +35,13 @@ function ManageListingsContent() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">My Listings</h1>
-        <Link href="/manage/listings/new" className="btn-primary gap-1.5">
+        <Link href="/dashboard/listings/new" className="btn-primary gap-1.5">
           <Plus className="h-4 w-4" /> New Listing
         </Link>
       </div>
 
       {isLoading ? (
-        <div className="space-y-3">{Array.from({length:4}).map((_,i) => <div key={i} className="skeleton h-20 rounded-xl" />)}</div>
+        <div className="space-y-3">{Array.from({ length: 4 }).map((_, i) => <div key={i} className="skeleton h-20 rounded-xl" />)}</div>
       ) : isError ? (
         <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-10 text-center">
           <h3 className="font-semibold text-destructive">Could not load listings</h3>
@@ -52,12 +52,16 @@ function ManageListingsContent() {
           <div className="rounded-xl border border-dashed border-border p-10 text-center">
             <h3 className="font-semibold">No expired listings</h3>
             <p className="mt-1 text-sm text-muted-foreground">Listings past their period appear here.</p>
-            <Link href="/manage/listings" className="btn-primary mt-4 inline-flex">View all listings</Link>
+            <Link href="/dashboard/listings" className="btn-primary mt-4 inline-flex">
+              View all listings
+            </Link>
           </div>
         ) : (
           <div className="rounded-xl border border-dashed border-border p-10 text-center">
             <h3 className="font-semibold">No listings yet</h3>
-            <Link href="/manage/listings/new" className="btn-primary mt-4 inline-flex">Create your first listing</Link>
+            <Link href="/dashboard/listings/new" className="btn-primary mt-4 inline-flex">
+              Create your first listing
+            </Link>
           </div>
         )
       ) : (
@@ -71,21 +75,33 @@ function ManageListingsContent() {
                     {formatListingStatusLabel(listing.status)}
                   </span>
                 </div>
-                <p className="text-sm text-muted-foreground">{formatPrice(listing.price, listing.currency, listing.price_period)}</p>
+                <p className="text-sm text-muted-foreground">{formatListingPrice(listing)}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">{formatRelativeTime(listing.created_at)}</p>
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                <Link href={`/listings/${listing.slug}`} className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground hover:text-accent hover:border-accent">
+                <Link
+                  href={`/listings/${listing.slug}`}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground hover:text-accent hover:border-accent"
+                >
                   <Eye className="h-3.5 w-3.5" />
                 </Link>
-                <Link href={`/manage/listings/${listing.id}/edit`} className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground hover:text-accent hover:border-accent">
+                <Link
+                  href={`/dashboard/listings/${listing.id}/edit`}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground hover:text-accent hover:border-accent"
+                >
                   <Edit className="h-3.5 w-3.5" />
                 </Link>
                 {listing.status === "draft" && (
-                  <button onClick={() => publishListing(listing.id)} className="text-xs font-medium text-accent hover:underline px-2">Publish</button>
+                  <button onClick={() => publishListing(listing.id)} className="text-xs font-medium text-accent hover:underline px-2">
+                    Publish
+                  </button>
                 )}
-                <button onClick={() => { if (confirm("Delete this listing?")) deleteListing(listing.id); }}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground hover:text-destructive hover:border-destructive">
+                <button
+                  onClick={() => {
+                    if (confirm("Delete this listing?")) deleteListing(listing.id);
+                  }}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground hover:text-destructive hover:border-destructive"
+                >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
               </div>
@@ -97,14 +113,14 @@ function ManageListingsContent() {
   );
 }
 
-export default function ManageListingsPage() {
+export default function DashboardListingsPage() {
   return (
     <Suspense
       fallback={
         <div className="space-y-3">{Array.from({ length: 4 }).map((_, i) => <div key={i} className="skeleton h-20 rounded-xl" />)}</div>
       }
     >
-      <ManageListingsContent />
+      <MyListingsContent />
     </Suspense>
   );
 }

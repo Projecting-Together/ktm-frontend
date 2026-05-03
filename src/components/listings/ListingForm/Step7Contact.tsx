@@ -4,8 +4,7 @@ import type { ListingFormData } from "@/lib/validations/listingSchema";
 import { Phone, MessageCircle } from "lucide-react";
 
 export function Step7Contact() {
-  const { register, watch, formState: { errors } } = useFormContext<ListingFormData>();
-  const showPhone = watch("show_phone");
+  const { register, formState: { errors } } = useFormContext<ListingFormData>();
 
   return (
     <div className="space-y-6">

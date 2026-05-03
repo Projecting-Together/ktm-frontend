@@ -1,10 +1,14 @@
 import { expect, test } from "@playwright/test";
 import { measureActionMs, writePerfSnapshot } from "./helpers/perfReport";
 
-test.describe("Auth/manage performance (mocked)", () => {
+test.describe("Auth / legacy manage redirect performance (mocked)", () => {
+  /**
+   * Unauthenticated GET /manage: Next redirects legacy path to /dashboard (next.config redirects),
+   * then middleware sends unauthenticated users to /login?next=... Timings include that chain when using waitUntil: "domcontentloaded".
+   */
   test.skip(process.env.PERF_USE_REAL_BACKEND === "1", "Mocked suite is skipped in real-backend mode.");
 
-  test("login route and manage redirect emit audit findings", async ({ page }, testInfo) => {
+  test("login route and unauthenticated /manage → login emit audit findings", async ({ page }, testInfo) => {
     const loginLoadMs = await measureActionMs(async () => {
       await page.goto("/login", { waitUntil: "domcontentloaded" });
       await expect(page.getByRole("heading", { name: /welcome back/i })).toBeVisible();
@@ -23,7 +27,7 @@ test.describe("Auth/manage performance (mocked)", () => {
         pass: loginLoadMs < 1200,
       },
       {
-        name: "manage_redirect_ms",
+        name: "legacy_manage_to_login_redirect_ms",
         threshold: 800,
         actual: redirectMs,
         pass: redirectMs < 800,
@@ -44,31 +48,31 @@ test.describe("Auth/manage performance (mocked)", () => {
     }
     if (redirectMs > 800) {
       findings.push({
-        id: "slow_manage_auth_redirect",
-        title: "Manage-to-login redirect exceeds threshold",
+        id: "slow_legacy_manage_auth_redirect",
+        title: "Legacy /manage to login redirect exceeds threshold",
         impact: "medium",
         confidence: "high",
         effort: "S",
         metricValue: Number(redirectMs.toFixed(2)),
-        action: "minimize middleware path work for unauthenticated manage redirects",
+        action: "minimize middleware path work for unauthenticated dashboard/login redirects",
       });
     }
     if (findings.length === 0) {
       findings.push({
-        id: "auth_manage_within_budget",
-        title: "Auth route load and manage redirect stay within budget",
+        id: "auth_legacy_manage_within_budget",
+        title: "Auth route load and legacy manage redirect stay within budget",
         impact: "low",
         confidence: "high",
         effort: "S",
         metricValue: Number(Math.max(loginLoadMs, redirectMs).toFixed(2)),
-        action: "keep auth/manage route dependencies stable to preserve current latency",
+        action: "keep auth and dashboard redirect dependencies stable to preserve current latency",
       });
     }
 
     await writePerfSnapshot(testInfo, {
       testName: testInfo.title,
       mode: "mocked",
-      route: "/login -> /manage",
+      route: "/login -> GET /manage (308 -> /dashboard) -> middleware -> /login",
       auditPhase: "auth_manage",
       metrics: {
         loginLoadMs: Number(loginLoadMs.toFixed(2)),
@@ -83,7 +87,7 @@ test.describe("Auth/manage performance (mocked)", () => {
           manageRedirectMs: Number(redirectMs.toFixed(2)),
         },
       },
-      notes: ["Mocked auth/manage audit validates unauthenticated redirect path latency deterministically."],
+      notes: ["Mocked audit validates unauthenticated legacy /manage redirect path latency deterministically."],
     });
 
     expect(budgets.every((budget) => budget.pass)).toBeTruthy();

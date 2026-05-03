@@ -70,7 +70,7 @@ export function useCreateListing() {
     onSuccess: (data) => {
       void revalidatePublicListingCache(data.id);
       qc.invalidateQueries({ queryKey: listingKeys.lists() });
-      qc.invalidateQueries({ queryKey: ["manage"] });
+      qc.invalidateQueries({ queryKey: ["dashboard", "owner-listings"] });
       qc.invalidateQueries({ queryKey: ["dashboard", "listings", "my-expired-total"] });
       toast.success("Listing created successfully");
     },
@@ -89,7 +89,7 @@ export function useUpdateListing() {
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: listingKeys.detail(data.id) });
       qc.invalidateQueries({ queryKey: listingKeys.lists() });
-      qc.invalidateQueries({ queryKey: ["manage"] });
+      qc.invalidateQueries({ queryKey: ["dashboard", "owner-listings"] });
       qc.invalidateQueries({ queryKey: ["dashboard", "listings", "my-expired-total"] });
       toast.success("Listing updated");
     },
@@ -106,7 +106,7 @@ export function useDeleteListing() {
     onSuccess: (_void, deletedId) => {
       void revalidatePublicListingCache(deletedId);
       qc.invalidateQueries({ queryKey: listingKeys.lists() });
-      qc.invalidateQueries({ queryKey: ["manage"] });
+      qc.invalidateQueries({ queryKey: ["dashboard", "owner-listings"] });
       qc.invalidateQueries({ queryKey: ["dashboard", "listings", "my-expired-total"] });
       toast.success("Listing deleted");
     },
@@ -125,7 +125,7 @@ export function usePublishListing() {
       void revalidatePublicListingCache(data.id);
       qc.invalidateQueries({ queryKey: listingKeys.detail(data.id) });
       qc.invalidateQueries({ queryKey: listingKeys.lists() });
-      qc.invalidateQueries({ queryKey: ["manage"] });
+      qc.invalidateQueries({ queryKey: ["dashboard", "owner-listings"] });
       qc.invalidateQueries({ queryKey: ["dashboard", "listings", "my-expired-total"] });
       toast.success("Listing submitted for review");
     },
@@ -144,7 +144,7 @@ export function useMarkRented() {
       void revalidatePublicListingCache(data.id);
       qc.invalidateQueries({ queryKey: listingKeys.detail(data.id) });
       qc.invalidateQueries({ queryKey: listingKeys.lists() });
-      qc.invalidateQueries({ queryKey: ["manage"] });
+      qc.invalidateQueries({ queryKey: ["dashboard", "owner-listings"] });
       qc.invalidateQueries({ queryKey: ["dashboard", "listings", "my-expired-total"] });
       toast.success("Listing marked as rented");
     },

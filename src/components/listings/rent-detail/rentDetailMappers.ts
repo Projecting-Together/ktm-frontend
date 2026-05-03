@@ -1,4 +1,5 @@
 import type { Listing } from "@/lib/api/types";
+import { formatFurnishingLabel } from "@/lib/utils";
 
 import { MISSING_DETAIL_TEXT, type RentDetailRow, type RentStatusRow } from "./types";
 
@@ -48,10 +49,6 @@ function getAmenitySignals(listing: Listing): Set<string> {
   }
 
   return signals;
-}
-
-function hasAnyAmenityCode(amenityCodes: Set<string>, codes: string[]): boolean {
-  return codes.some((code) => amenityCodes.has(code));
 }
 
 function hasAnyAmenitySignal(amenitySignals: Set<string>, values: string[]): boolean {
@@ -125,7 +122,7 @@ export function toUnitUtilityRows(listing: Listing): RentStatusRow[] {
   const hasBalcony = hasAnyAmenitySignal(amenitySignals, ["balcony", "terrace", "balcony terrace"]);
   const hasAirConditioning = hasAnyAmenitySignal(amenitySignals, ["ac", "a c", "air conditioning"]);
   const hasHeating = hasAnyAmenitySignal(amenitySignals, ["heating", "heater", "room heater"]);
-  const furnishingStatus = listing.furnishing ? String(listing.furnishing) : MISSING_DETAIL_TEXT;
+  const furnishingStatus = listing.furnishing ? formatFurnishingLabel(listing.furnishing) : MISSING_DETAIL_TEXT;
 
   const parkingStatus = toBinaryStatus(listing.parking, "Available");
   const petsStatus = toBinaryStatus(listing.pets_allowed, "Allowed");
@@ -194,7 +191,10 @@ export function toRentDetailRows(listing: Listing): RentDetailRow[] {
     { key: "Bedrooms", value: listing.bedrooms != null ? String(listing.bedrooms) : MISSING_DETAIL_TEXT },
     { key: "Bathrooms", value: listing.bathrooms != null ? String(listing.bathrooms) : MISSING_DETAIL_TEXT },
     { key: "Area", value: areaM2Label },
-    { key: "Furnishing", value: listing.furnishing ?? MISSING_DETAIL_TEXT },
+    {
+      key: "Furnishing",
+      value: listing.furnishing ? formatFurnishingLabel(listing.furnishing) : MISSING_DETAIL_TEXT,
+    },
     { key: "Floor", value: floorLabel },
     { key: "Parking", value: toBinaryStatus(listing.parking, "Available") },
     { key: "Pets", value: toBinaryStatus(listing.pets_allowed, "Allowed") },

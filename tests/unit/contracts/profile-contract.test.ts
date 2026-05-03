@@ -5,7 +5,7 @@ describe("mapProfileDto", () => {
     const result = mapProfileDto({
       id: "agent-1",
       email: "ramesh@example.com",
-      role: "agent",
+      role: "user",
       profile: {
         first_name: "Ramesh",
         last_name: "Sharma",
@@ -19,7 +19,7 @@ describe("mapProfileDto", () => {
     const result = mapProfileDto({
       id: "agent-2",
       email: "sita.thapa@example.com",
-      role: "owner",
+      role: "user",
       profile: {
         first_name: "",
         last_name: " ",
@@ -33,7 +33,7 @@ describe("mapProfileDto", () => {
     const result = mapProfileDto({
       id: "agent-3",
       email: "",
-      role: "agent",
+      role: "user",
       profile: {
         first_name: " ",
         last_name: null,
@@ -47,7 +47,7 @@ describe("mapProfileDto", () => {
     const result = mapProfileDto({
       id: "agent-4",
       email: "active@example.com",
-      role: "owner",
+      role: "user",
     });
 
     expect(result.activeListings).toBe(0);
@@ -57,7 +57,7 @@ describe("mapProfileDto", () => {
     const result = mapProfileDto({
       id: "agent-5",
       email: "nullsafe@example.com",
-      role: "agent",
+      role: "user",
       profile: {
         phone: null,
         bio: null,

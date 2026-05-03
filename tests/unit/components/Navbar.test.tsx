@@ -1,5 +1,5 @@
 import React from "react";
-import { fireEvent, render, screen, waitFor } from "@/test-utils/renderWithProviders";
+import { fireEvent, render, screen } from "@/test-utils/renderWithProviders";
 import { Navbar } from "@/components/layout/Navbar";
 import { useAuthStore } from "@/lib/stores/authStore";
 import { toast } from "sonner";
@@ -28,6 +28,22 @@ jest.mock("sonner", () => ({
 const mockUseAuthStore = useAuthStore as unknown as jest.Mock;
 const mockToastError = toast.error as jest.Mock;
 
+function mockAuth(overrides: Partial<ReturnType<typeof useAuthStore>> & Record<string, unknown>) {
+  const base = {
+    isAuthenticated: true,
+    user: {
+      id: "u1",
+      email: "user@example.com",
+      role: "user" as const,
+      profile: { first_name: "Test" },
+      stats: { active_listings: 1 },
+    },
+    canCreateListing: () => true,
+    ...overrides,
+  };
+  mockUseAuthStore.mockReturnValue(base);
+}
+
 describe("Navbar listing entry capability gating", () => {
   beforeEach(() => {
     mockPush.mockReset();
@@ -35,130 +51,92 @@ describe("Navbar listing entry capability gating", () => {
     mockToastError.mockReset();
   });
 
-  it("shows upgrade modal for capped owner and keeps user in place on cancel", async () => {
-    mockUseAuthStore.mockReturnValue({
-      isAuthenticated: true,
+  it("shows toast when default user exceeds free listing cap", () => {
+    mockAuth({
       user: {
         id: "u1",
-        email: "owner@example.com",
-        role: "owner",
-        profile: { first_name: "Owner" },
+        email: "user@example.com",
+        role: "user",
+        profile: { first_name: "User" },
         stats: { active_listings: 2 },
       },
-      upgradeToAgent: jest.fn(),
+      canCreateListing: () => true,
     });
 
     render(<Navbar />);
     fireEvent.click(screen.getByRole("button", { name: /post listing/i }));
 
-    expect(screen.getByRole("heading", { name: "Upgrade to Pro" })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /cancel/i }));
-
-    await waitFor(() => {
-      expect(screen.queryByRole("heading", { name: "Upgrade to Pro" })).not.toBeInTheDocument();
-    });
+    expect(mockToastError).toHaveBeenCalledWith(expect.stringMatching(/listing limit/i));
     expect(mockPush).not.toHaveBeenCalled();
-  });
-
-  it("upgrades and continues to listing creation on confirm", async () => {
-    mockPurposeParam = "sale";
-
-    const upgradeToAgent = jest.fn().mockResolvedValue(undefined);
-    mockUseAuthStore.mockReturnValue({
-      isAuthenticated: true,
-      user: {
-        id: "u1",
-        email: "owner@example.com",
-        role: "owner",
-        profile: { first_name: "Owner" },
-        stats: { active_listings: 2 },
-      },
-      upgradeToAgent,
-    });
-
-    render(<Navbar />);
-    fireEvent.click(screen.getByRole("button", { name: /post listing/i }));
-    fireEvent.click(screen.getByRole("button", { name: /upgrade and continue/i }));
-
-    await waitFor(() => {
-      expect(upgradeToAgent).toHaveBeenCalledTimes(1);
-      expect(mockPush).toHaveBeenCalledWith("/manage/listings/new?purpose=sale");
-    });
   });
 
   it("navigates directly with sale purpose when buy context is active", () => {
     mockPurposeParam = "sale";
 
-    mockUseAuthStore.mockReturnValue({
-      isAuthenticated: true,
+    mockAuth({
       user: {
         id: "u1",
-        email: "owner@example.com",
-        role: "owner",
-        profile: { first_name: "Owner" },
+        email: "user@example.com",
+        role: "user",
+        profile: { first_name: "User" },
         stats: { active_listings: 1 },
       },
-      upgradeToAgent: jest.fn(),
+      canCreateListing: () => true,
     });
 
     render(<Navbar />);
     fireEvent.click(screen.getByRole("button", { name: /post listing/i }));
 
-    expect(mockPush).toHaveBeenCalledWith("/manage/listings/new?purpose=sale");
-    expect(screen.queryByRole("heading", { name: "Upgrade to Pro" })).not.toBeInTheDocument();
+    expect(mockPush).toHaveBeenCalledWith("/dashboard/listings/new?purpose=sale");
   });
 
   it("keeps default listing route when purpose context is invalid", () => {
     mockPurposeParam = "invalid-value";
 
-    mockUseAuthStore.mockReturnValue({
-      isAuthenticated: true,
+    mockAuth({
       user: {
         id: "u1",
-        email: "owner@example.com",
-        role: "owner",
-        profile: { first_name: "Owner" },
+        email: "user@example.com",
+        role: "user",
+        profile: { first_name: "User" },
         stats: { active_listings: 1 },
       },
-      upgradeToAgent: jest.fn(),
+      canCreateListing: () => true,
     });
 
     render(<Navbar />);
     fireEvent.click(screen.getByRole("button", { name: /post listing/i }));
 
-    expect(mockPush).toHaveBeenCalledWith("/manage/listings/new");
-    expect(screen.queryByRole("heading", { name: "Upgrade to Pro" })).not.toBeInTheDocument();
+    expect(mockPush).toHaveBeenCalledWith("/dashboard/listings/new");
   });
 
-  it("allows renter users to enter listing flow below cap", () => {
-    mockUseAuthStore.mockReturnValue({
-      isAuthenticated: true,
+  it("allows users to enter listing flow below cap", () => {
+    mockAuth({
       user: {
         id: "u-renter-1",
-        email: "renter@example.com",
-        role: "renter",
-        profile: { first_name: "Renter" },
+        email: "member@example.com",
+        role: "user",
+        profile: { first_name: "Member" },
         stats: { active_listings: 1 },
       },
-      upgradeToAgent: jest.fn(),
+      canCreateListing: () => true,
     });
 
     render(<Navbar />);
     fireEvent.click(screen.getByRole("button", { name: /post listing/i }));
 
-    expect(mockPush).toHaveBeenCalledWith("/manage/listings/new");
+    expect(mockPush).toHaveBeenCalledWith("/dashboard/listings/new");
   });
 
-  it("blocks continuation when active listing count is unavailable for normal users", () => {
-    mockUseAuthStore.mockReturnValue({
-      isAuthenticated: true,
+  it("blocks continuation when active listing count is unavailable for default users", () => {
+    mockAuth({
       user: {
         id: "u-renter-2",
-        email: "renter2@example.com",
-        role: "renter",
-        profile: { first_name: "Renter" },
+        email: "member2@example.com",
+        role: "user",
+        profile: { first_name: "Member" },
       },
-      upgradeToAgent: jest.fn(),
+      canCreateListing: () => true,
     });
 
     render(<Navbar />);
@@ -168,27 +146,20 @@ describe("Navbar listing entry capability gating", () => {
     expect(mockToastError).toHaveBeenCalledWith(expect.stringMatching(/couldn't verify your active listings/i));
   });
 
-  it("shows actionable feedback when upgrade fails", async () => {
-    const upgradeToAgent = jest.fn().mockRejectedValue(new Error("Upgrade endpoint unavailable"));
-    mockUseAuthStore.mockReturnValue({
-      isAuthenticated: true,
+  it("allows admin to post without listing stats", () => {
+    mockAuth({
       user: {
-        id: "u-owner-err",
-        email: "owner@example.com",
-        role: "owner",
-        profile: { first_name: "Owner" },
-        stats: { active_listings: 2 },
+        id: "adm",
+        email: "admin@example.com",
+        role: "admin",
+        profile: { first_name: "Admin" },
       },
-      upgradeToAgent,
+      canCreateListing: () => true,
     });
 
     render(<Navbar />);
     fireEvent.click(screen.getByRole("button", { name: /post listing/i }));
-    fireEvent.click(screen.getByRole("button", { name: /upgrade and continue/i }));
 
-    await waitFor(() => {
-      expect(mockToastError).toHaveBeenCalledWith(expect.stringMatching(/upgrade endpoint unavailable/i));
-    });
-    expect(mockPush).not.toHaveBeenCalled();
+    expect(mockPush).toHaveBeenCalledWith("/dashboard/listings/new");
   });
 });

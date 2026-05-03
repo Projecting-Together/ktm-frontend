@@ -2,7 +2,7 @@
   {
     "id": "usr-renter-001",
     "email": "ram.sharma@gmail.com",
-    "role": "renter",
+    "role": "user",
     "status": "active",
     "is_verified": true,
     "created_at": "2024-09-01T10:00:00Z",
@@ -18,7 +18,7 @@
   {
     "id": "usr-owner-001",
     "email": "sita.thapa@gmail.com",
-    "role": "owner",
+    "role": "user",
     "status": "active",
     "is_verified": true,
     "created_at": "2024-06-15T08:00:00Z",
@@ -34,7 +34,7 @@
   {
     "id": "usr-agent-001",
     "email": "bikash.gurung@ktmrealty.com",
-    "role": "agent",
+    "role": "user",
     "status": "active",
     "is_verified": true,
     "created_at": "2024-03-10T09:00:00Z",

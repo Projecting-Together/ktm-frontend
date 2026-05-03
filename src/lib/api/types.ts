@@ -5,16 +5,18 @@
  */
 
 import type { components } from "@/lib/api/generated/openapi-types";
+import type { UserRole } from "@/lib/constants/userRole";
 
-/** Canonical role codes (OpenAPI `UserRole`). */
-export type UserRole = components["schemas"]["UserRole"];
-export const USER_ROLE_VALUES = ["renter", "owner", "agent", "moderator", "admin"] as const satisfies readonly UserRole[];
-
-/** Roles allowed to create listings (moderator is staff moderation-only in current product rules). */
-export const LISTING_CREATOR_ROLE_VALUES = ["renter", "owner", "agent", "admin"] as const satisfies readonly UserRole[];
-
-/** Roles that may access moderation / admin-queue flows. */
-export const MODERATION_ROLE_VALUES = ["moderator", "admin"] as const satisfies readonly UserRole[];
+export type { UserRole } from "@/lib/constants/userRole";
+export {
+  USER_ROLE_USER,
+  USER_ROLE_ADMIN,
+  USER_ROLE_VALUES,
+  LISTING_CREATOR_ROLE_VALUES,
+  MODERATION_ROLE_VALUES,
+  isAdminRole,
+  canAccessAdminPortal,
+} from "@/lib/constants/userRole";
 
 /** Canonical account status codes (OpenAPI `UserStatus`). */
 export type UserStatus = components["schemas"]["UserStatus"];
@@ -150,7 +152,6 @@ export interface ListingListItem {
   furnishing?: FurnishingType | null;
   status: ListingStatus;
   is_verified?: boolean;
-  is_moderated?: boolean;
   is_sponsored?: boolean;
   sponsored_weight?: number | null;
   sponsored_until?: string | null;
@@ -176,7 +177,6 @@ export interface Listing {
   furnishing?: FurnishingType | null;
   status: ListingStatus;
   is_verified?: boolean;
-  is_moderated?: boolean;
   is_sponsored?: boolean;
   sponsored_weight?: number | null;
   sponsored_until?: string | null;
@@ -238,7 +238,8 @@ export interface ListingFilters {
   min_bathrooms?: number;
   /** Maximum bathroom count (API `max_bathrooms`). */
   max_bathrooms?: number;
-  furnishing?: string;
+  /** Repeat `furnishing` query param (OR): listing matches if its furnishing is in this set. Omitted or empty = no filter. */
+  furnishing?: FurnishingType[];
   parking?: boolean;
   pets_allowed?: boolean;
   verified?: boolean;

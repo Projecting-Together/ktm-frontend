@@ -93,7 +93,6 @@ export function mapListingDto(dto: ListingDto): ListingListItem {
     furnishing: normalizeEnum(dto.furnishing, ALLOWED_FURNISHING_TYPES),
     status: dto.status ?? DEFAULT_STATUS,
     is_verified: dto.is_verified ?? false,
-    is_moderated: dto.is_moderated ?? false,
     pets_allowed: dto.pets_allowed ?? null,
     parking: dto.parking ?? null,
     location: normalizeLocation(dto.location),

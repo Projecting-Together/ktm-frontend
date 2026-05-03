@@ -1,8 +1,8 @@
 {
   "loginAccounts": [
-    { "email": "ram.sharma@gmail.com", "password": "password123", "tokens": "renter" },
-    { "email": "sita.thapa@gmail.com", "password": "password123", "tokens": "owner" },
-    { "email": "bikash.gurung@ktmrealty.com", "password": "password123", "tokens": "agent" },
+    { "email": "ram.sharma@gmail.com", "password": "password123", "tokens": "user" },
+    { "email": "sita.thapa@gmail.com", "password": "password123", "tokens": "user" },
+    { "email": "bikash.gurung@ktmrealty.com", "password": "password123", "tokens": "user" },
     { "email": "admin@ktmapartments.com", "password": "password123", "tokens": "admin" }
   ],
   "registerConflictEmail": "existing@gmail.com"

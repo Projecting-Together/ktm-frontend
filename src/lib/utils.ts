@@ -1,9 +1,18 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import type { ListingListItem, Listing, ListingStatus } from "@/lib/api/types";
+import type { FurnishingType, ListingListItem, Listing, ListingStatus } from "@/lib/api/types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
+}
+
+/** Public UI label for search API `FurnishingType` values. */
+export function formatFurnishingLabel(furnishing: FurnishingType | null | undefined): string {
+  if (furnishing == null) return "—";
+  if (furnishing === "fully") return "Fully furnished";
+  if (furnishing === "semi") return "Semi furnished";
+  if (furnishing === "unfurnished") return "Unfurnished";
+  return String(furnishing);
 }
 
 export function formatPrice(price: string | number | null | undefined, currency = "NPR", period?: string | null): string {
@@ -13,6 +22,16 @@ export function formatPrice(price: string | number | null | undefined, currency 
   const formatted = new Intl.NumberFormat("en-NP", { maximumFractionDigits: 0 }).format(num);
   const suffix = period ? `/${period}` : "";
   return `${currency} ${formatted}${suffix}`;
+}
+
+/** Full purchase price for sale; rent/lease still uses `price_period` (e.g. /monthly). */
+export function formatListingPrice(
+  listing: Pick<ListingListItem, "price" | "currency" | "price_period" | "purpose">,
+  defaultCurrency = "NPR",
+): string {
+  const period = listing.purpose === "sale" ? null : listing.price_period;
+  const currency = listing.currency?.trim() || defaultCurrency;
+  return formatPrice(listing.price, currency, period);
 }
 
 export function formatNPR(amount: number): string {

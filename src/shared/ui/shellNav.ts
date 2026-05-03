@@ -5,11 +5,6 @@ export type ShellNavItemDef = {
   exact?: boolean;
 };
 
-/** Dashboard nav may include Compare, which opens the global compare drawer instead of routing. */
-export type DashboardShellNavItem =
-  | ShellNavItemDef
-  | { id: string; label: string; behavior: "compare-drawer" };
-
 export const DASHBOARD_MEMBER_HUB_TITLE = "Member dashboard";
 
 export const DASHBOARD_NEW_LISTING_LABEL = "New listing";
@@ -23,7 +18,7 @@ export const DASHBOARD_NEW_LISTING_LABEL = "New listing";
  */
 export const DASHBOARD_NAV_GROUPS: ReadonlyArray<{
   title: string;
-  items: ReadonlyArray<DashboardShellNavItem>;
+  items: ReadonlyArray<ShellNavItemDef>;
 }> = [
   {
     title: "Activity",
@@ -33,7 +28,6 @@ export const DASHBOARD_NAV_GROUPS: ReadonlyArray<{
       { id: "recent", href: "/dashboard/recently-viewed", label: "Recently viewed" },
       { id: "inquiries-sent", href: "/dashboard/inquiries", label: "Inquiries sent" },
       { id: "visits-mine", href: "/dashboard/visits", label: "My visits" },
-      { id: "compare", label: "Compare", behavior: "compare-drawer" },
       { id: "settings", href: "/dashboard/settings", label: "Settings" },
     ],
   },

@@ -11,10 +11,10 @@ import {
 } from "@/lib/hooks/useNews";
 import { useAuthStore } from "@/lib/stores/authStore";
 
-export default function ManageNewsPage() {
+export default function DashboardNewsPage() {
   const { user } = useAuthStore();
   const role = user?.role;
-  const workspaceEnabled = !!role && role !== "renter";
+  const workspaceEnabled = role === "user" || role === "admin";
 
   const articleQuery = useNewsWorkspace({ enabled: workspaceEnabled });
   const submitMut = useNewsWorkspaceSubmit();
@@ -25,14 +25,14 @@ export default function ManageNewsPage() {
   const article = articleQuery.data;
   const newsStatus = article?.status ?? "draft";
 
-  const canSubmit = role === "owner";
-  const canPublish = role === "agent" || role === "admin";
+  const canSubmit = role === "user";
+  const canPublish = role === "admin";
 
   const roleLabel = useMemo(() => {
     if (!role) return "Unauthenticated";
-    if (role === "agent") return "Agent";
     if (role === "admin") return "Admin";
-    return "Owner";
+    if (role === "user") return "User";
+    return role;
   }, [role]);
 
   const submitDecision = getNewsSubmitTransitionDecision(role, newsStatus);
@@ -77,7 +77,7 @@ export default function ManageNewsPage() {
 
       {!workspaceEnabled ? (
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-5">
-          <p className="text-sm font-medium text-amber-800">Sign in as owner, agent, or admin to use the news workspace.</p>
+          <p className="text-sm font-medium text-amber-800">Sign in with a user or administrator account to use the news workspace.</p>
         </div>
       ) : articleQuery.isError ? (
         <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800">
@@ -111,8 +111,8 @@ export default function ManageNewsPage() {
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <section className="rounded-xl border border-border bg-card p-5">
-          <h2 className="font-semibold">Owner Draft</h2>
-          <p className="mt-2 text-sm text-muted-foreground">Owners can draft and submit stories for moderation.</p>
+          <h2 className="font-semibold">Your draft</h2>
+          <p className="mt-2 text-sm text-muted-foreground">Signed-in users can draft and submit stories for moderation.</p>
           <button
             type="button"
             onClick={() => void onSubmitForReview()}
@@ -124,8 +124,8 @@ export default function ManageNewsPage() {
         </section>
 
         <section className="rounded-xl border border-border bg-card p-5">
-          <h2 className="font-semibold">Trusted publisher</h2>
-          <p className="mt-2 text-sm text-muted-foreground">Agents and admins can publish items that are in pending review.</p>
+          <h2 className="font-semibold">Administrator publish</h2>
+          <p className="mt-2 text-sm text-muted-foreground">Administrators can publish items that are in pending review.</p>
           <button
             type="button"
             onClick={() => void onPublishNow()}

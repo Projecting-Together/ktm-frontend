@@ -1,7 +1,7 @@
 "use client";
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 import { useDropzone } from "react-dropzone";
-import { Upload, X, Star, Image as ImageIcon } from "lucide-react";
+import { Upload, X, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface UploadedImage {
@@ -87,6 +87,7 @@ export function Step6Images({ images, onImagesChange }: Props) {
             {images.map((img) => (
               <div key={img.id} className={cn("group relative aspect-square overflow-hidden rounded-xl border-2 transition-all",
                 img.isCover ? "border-accent" : "border-border")}>
+                {/* eslint-disable-next-line @next/next/no-img-element -- object URL preview from dropzone */}
                 <img src={img.preview} alt="" className="h-full w-full object-cover" />
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all" />
                 {img.isCover && (

@@ -24,7 +24,7 @@ const uploadTemplatesSchema = z.object({
 const loginAccountSchema = z.object({
   email: z.string(),
   password: z.string(),
-  tokens: z.enum(["renter", "owner", "agent", "admin"]),
+  tokens: z.enum(["user", "admin", "renter", "owner", "agent"]),
 });
 
 const authLoginsSchema = z.object({

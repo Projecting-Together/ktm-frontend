@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
@@ -53,7 +53,7 @@ interface ListingFormProps {
   initialPurpose?: "rent" | "sale";
 }
 
-export function ListingForm({ listingId, initialPurpose = "rent" }: ListingFormProps = {}) {
+export function ListingForm({ listingId: _listingId, initialPurpose = "rent" }: ListingFormProps = {}) {
   const [currentStep, setCurrentStep] = useState(1);
   const [images, setImages] = useState<UploadedImage[]>([]);
   const router = useRouter();
@@ -98,7 +98,7 @@ export function ListingForm({ listingId, initialPurpose = "rent" }: ListingFormP
         purpose: data.purpose === "sale" ? "sale" : "rent",
         source: "listing_form_submit",
       });
-      router.push(`/manage/listings`);
+      router.push(`/dashboard/listings`);
     } catch (err) {
       console.error(err);
     }

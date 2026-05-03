@@ -58,11 +58,11 @@ describe("FilterPanel", () => {
     expect(screen.getByTestId("area-range-summary")).toHaveTextContent("150 m²");
   });
 
-  it("renders furnishing radio labels", () => {
+  it("renders furnishing checkboxes", () => {
     render(<FilterPanel />);
-    expect(screen.getByText(/fully furnished/i)).toBeInTheDocument();
-    expect(screen.getByText(/semi furnished/i)).toBeInTheDocument();
-    expect(screen.getByText(/unfurnished/i)).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: /fully furnished/i })).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: /semi furnished/i })).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: /unfurnished/i })).toBeInTheDocument();
   });
 
   it("shows verified switch by default and hides parking/pets until More filters", () => {
@@ -95,15 +95,14 @@ describe("FilterPanel", () => {
     expect(screen.getByRole("button", { name: /reset/i })).toBeInTheDocument();
   });
 
-  it("allows clearing furnishing selection via Any option", () => {
+  it("toggles furnishing checkboxes and clears when last option is unchecked", () => {
     render(<FilterPanel />);
 
-    const fullyFurnished = screen.getByRole("radio", { name: /fully furnished/i });
+    const fullyFurnished = screen.getByRole("checkbox", { name: /fully furnished/i });
     fireEvent.click(fullyFurnished);
-    expect(useFilterStore.getState().furnishing).toBe("fully");
+    expect(useFilterStore.getState().furnishing).toEqual(["fully"]);
 
-    const anyFurnishing = screen.getByRole("radio", { name: /any furnishing/i });
-    fireEvent.click(anyFurnishing);
+    fireEvent.click(fullyFurnished);
     expect(useFilterStore.getState().furnishing).toBeUndefined();
   });
 });

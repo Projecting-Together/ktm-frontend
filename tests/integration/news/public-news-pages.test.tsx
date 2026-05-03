@@ -2,7 +2,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { fireEvent, render, screen, waitFor } from "@/test-utils/renderWithProviders";
 import PublicNewsPage from "@/app/(public)/news/page";
 import PublicNewsDetailPage from "@/app/(public)/news/[slug]/page";
-import ManageNewsPage from "@/app/manage/news/page";
+import DashboardNewsPage from "@/app/dashboard/news/page";
 import AdminNewsPage from "@/app/admin/news/page";
 import {
   getNews,
@@ -56,7 +56,7 @@ describe("news public and moderation pages", () => {
     (patchNewsModeration as jest.Mock).mockReset();
     (useAuthStore as jest.Mock).mockReset();
     (notFound as jest.Mock).mockClear();
-    (useAuthStore as jest.Mock).mockReturnValue({ user: { role: "owner" } });
+    (useAuthStore as jest.Mock).mockReturnValue({ user: { role: "user" } });
   });
 
   it("public news index excludes draft content from render output", async () => {
@@ -159,7 +159,7 @@ describe("news public and moderation pages", () => {
     expect(html).toContain(">We could not load this news article right now. Please try again shortly.<");
   });
 
-  it("manage news page allows owner submit intent with visible feedback", async () => {
+  it("dashboard news page allows user submit intent with visible feedback", async () => {
     (getNewsWorkspaceArticle as jest.Mock)
       .mockResolvedValueOnce({ data: workspaceDraft, error: null })
       .mockResolvedValue({
@@ -171,7 +171,7 @@ describe("news public and moderation pages", () => {
       error: null,
     });
 
-    render(<ManageNewsPage />);
+    render(<DashboardNewsPage />);
 
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "Submit For Review" })).not.toBeDisabled();
@@ -180,7 +180,7 @@ describe("news public and moderation pages", () => {
     fireEvent.click(screen.getByRole("button", { name: "Submit For Review" }));
 
     await waitFor(() => {
-      expect(screen.getByRole("status")).toHaveTextContent("Owner draft submitted to moderation queue as pending review.");
+      expect(screen.getByRole("status")).toHaveTextContent("Draft submitted to moderation queue as pending review.");
     });
     expect(postNewsWorkspaceSubmit).toHaveBeenCalled();
   });
@@ -230,8 +230,8 @@ describe("news public and moderation pages", () => {
     expect(screen.getByText("Latest rejection reason: Needs factual sources.")).toBeInTheDocument();
   });
 
-  it("manage news page blocks invalid publish transition with explicit feedback", async () => {
-    (useAuthStore as jest.Mock).mockReturnValue({ user: { role: "agent" } });
+  it("dashboard news page blocks invalid publish transition with explicit feedback", async () => {
+    (useAuthStore as jest.Mock).mockReturnValue({ user: { role: "admin" } });
     (getNewsWorkspaceArticle as jest.Mock).mockResolvedValue({
       data: {
         id: "news-workspace-001",
@@ -245,7 +245,7 @@ describe("news public and moderation pages", () => {
       error: null,
     });
 
-    render(<ManageNewsPage />);
+    render(<DashboardNewsPage />);
 
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "Publish Now" })).not.toBeDisabled();
@@ -257,7 +257,7 @@ describe("news public and moderation pages", () => {
   });
 
   it("admin news page blocks moderation actions for non-admin users", () => {
-    (useAuthStore as jest.Mock).mockReturnValue({ user: { role: "owner" } });
+    (useAuthStore as jest.Mock).mockReturnValue({ user: { role: "user" } });
 
     render(<AdminNewsPage />);
 

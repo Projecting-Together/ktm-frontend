@@ -233,14 +233,14 @@ export default async function HomePage() {
           </p>
           <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
-              href="/manage/listings/new?purpose=rent"
+              href="/dashboard/listings/new?purpose=rent"
               className="inline-flex items-center justify-center gap-2 rounded-lg bg-white px-6 py-3 text-sm font-semibold text-accent shadow-sm transition-all hover:bg-white/90 active:scale-95"
             >
               Post for Rent
               <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
-              href="/manage/listings/new?purpose=sale"
+              href="/dashboard/listings/new?purpose=sale"
               className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-sm transition-all hover:bg-primary/90 active:scale-95"
             >
               Post for Sale

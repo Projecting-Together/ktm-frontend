@@ -1,11 +1,10 @@
 "use client";
-import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { adminGetAuditLog } from "@/lib/api/client";
 import { formatDate } from "@/lib/utils";
 
 export default function AuditLogPage() {
-  const [page, setPage] = useState(1);
+  const page = 1;
   const { data, isLoading } = useQuery({
     queryKey: ["admin", "audit-log", page],
     queryFn: async () => {

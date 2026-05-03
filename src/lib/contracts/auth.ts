@@ -16,7 +16,7 @@ export interface AuthUserModel {
   avatarUrl: string | null;
 }
 
-const DEFAULT_ROLE: UserRole = "renter";
+const DEFAULT_ROLE: UserRole = "user";
 const DEFAULT_STATUS: UserStatus = "active";
 
 const normalize = (value?: string | null): string => value?.trim() ?? "";

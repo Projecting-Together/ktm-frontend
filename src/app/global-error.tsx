@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import Link from "next/link";
 import { logger } from "@/lib/observability/logger";
 
 interface GlobalErrorProps {
@@ -54,7 +55,7 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
           >
             Try again
           </button>
-          <a
+          <Link
             href="/"
             style={{
               padding: "0.5rem 1rem",
@@ -67,7 +68,7 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
             }}
           >
             Go home
-          </a>
+          </Link>
         </div>
       </body>
     </html>

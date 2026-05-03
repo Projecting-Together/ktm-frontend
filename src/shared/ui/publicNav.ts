@@ -20,7 +20,7 @@ export type MobileNavItemDef = {
 export const MOBILE_NAV_ITEMS: ReadonlyArray<MobileNavItemDef> = [
   { id: "home", href: "/", label: "Home", exact: true },
   { id: "search", href: "/listings", label: "Search" },
-  { id: "post", href: "/manage/listings/new", label: "Post", accent: true },
+  { id: "post", href: "/dashboard/listings/new", label: "Post", accent: true },
   { id: "saved", href: "/dashboard/favorites", label: "Saved" },
   { id: "profile", href: "/dashboard", label: "Profile" },
 ];

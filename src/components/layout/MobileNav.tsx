@@ -28,8 +28,8 @@ export function MobileNav() {
         const Icon = item.icon;
 
         // Hide Post and Saved/Profile if not authenticated
-        if (!isAuthenticated && (item.href.startsWith("/dashboard") || item.href.startsWith("/manage"))) {
-          const loginHref = item.href.startsWith("/manage") ? "/login" : "/login";
+        if (!isAuthenticated && item.href.startsWith("/dashboard")) {
+          const loginHref = "/login";
           return (
             <Link
               key={item.id}

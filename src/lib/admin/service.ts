@@ -188,6 +188,14 @@ async function updateUser(id: string, patch: AdminUserUpdatePatch): Promise<Admi
 
   const { id: _ignoredId, ...safePatch } = patch as AdminUserUpdatePatch & { id?: string };
   void _ignoredId;
+
+  if (patch.role === "admin") {
+    const existingOtherAdmin = userStore.find((u) => u.role === "admin" && u.id !== id);
+    if (existingOtherAdmin) {
+      throw new Error("Only one administrator account is allowed. Demote the existing admin first.");
+    }
+  }
+
   Object.assign(user, safePatch);
   return { ...user };
 }

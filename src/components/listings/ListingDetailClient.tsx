@@ -3,14 +3,12 @@
 import Link from "next/link";
 import { useState } from "react";
 import {
-  MapPin, Bed, Bath, Square, Calendar, Phone, MessageCircle,
+  MapPin, Bed, Bath, Square, Calendar, MessageCircle,
   Heart, Share2, Flag, ChevronLeft, ChevronRight, ShieldCheck,
-  Wifi, Car, Zap, Droplets
 } from "lucide-react";
 import { AddToCompareButton } from "@/components/compare/AddToCompareButton";
 import { listingDetailToCompareSnapshot } from "@/lib/compare/listingToCompareSnapshot";
 import { VerifiedBadge } from "@/components/common/VerifiedBadge";
-import { ModeratedBadge } from "@/components/common/ModeratedBadge";
 import { ListingCoverImage } from "@/components/listings/ListingCoverImage";
 import { useToggleFavorite, useIsFavorite } from "@/lib/hooks/useFavorites";
 import { ListingCard } from "@/components/listings/ListingCard";
@@ -18,7 +16,7 @@ import { RentDetailSections } from "@/components/listings/rent-detail/RentDetail
 import { useListing, useListings } from "@/lib/hooks/useListings";
 import { useAuthStore } from "@/lib/stores/authStore";
 import { trackInquiryCtaClick } from "@/lib/observability";
-import { formatPrice, formatDate, buildWhatsAppUrl, cn, getStatusColor } from "@/lib/utils";
+import { formatListingPrice, formatDate, formatFurnishingLabel, buildWhatsAppUrl, cn, getStatusColor } from "@/lib/utils";
 import type { Listing } from "@/lib/api/types";
 
 interface Props {
@@ -103,12 +101,9 @@ export default function ListingDetailClient({ listing: initialListing, slugOrId 
                 sizes="(max-width: 1024px) 100vw, 66vw"
                 priority
               />
-              {(listing.is_verified || listing.is_moderated) && (
+              {listing.is_verified && (
                 <div className="absolute left-4 top-4 flex flex-col gap-2">
-                  {listing.is_verified && (
-                    <VerifiedBadge size="md" showLabel={false} ariaLabel="Verified owner" />
-                  )}
-                  {listing.is_moderated && <ModeratedBadge size="md" />}
+                  <VerifiedBadge size="md" showLabel={false} ariaLabel="Verified owner" />
                 </div>
               )}
               {listing.status !== "active" && (
@@ -232,7 +227,7 @@ export default function ListingDetailClient({ listing: initialListing, slugOrId 
               <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
                 {[
                   ["Type", listing.listing_type],
-                  ["Furnishing", listing.furnishing],
+                  ["Furnishing", listing.furnishing ? formatFurnishingLabel(listing.furnishing) : null],
                   ["Floor", listing.floor != null ? `${listing.floor}${listing.total_floors ? ` of ${listing.total_floors}` : ""}` : null],
                   ["Parking", listing.parking ? "Available" : "Not available"],
                   ["Pets", listing.pets_allowed ? "Allowed" : "Not allowed"],
@@ -255,7 +250,7 @@ export default function ListingDetailClient({ listing: initialListing, slugOrId 
             {/* Price card */}
             <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
               <p className="price text-3xl font-bold text-accent">
-                {formatPrice(listing.price, listing.currency, listing.price_period)}
+                {formatListingPrice(listing)}
               </p>
               {listing.price_negotiable && (
                 <p className="mt-1 text-xs text-muted-foreground">Price is negotiable</p>

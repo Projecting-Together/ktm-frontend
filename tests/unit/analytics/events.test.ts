@@ -1,19 +1,28 @@
 import {
-  buildPurposeModeChangeEvent,
-  buildInquirySentEvent,
-  buildInquiryCtaClickEvent,
-  buildListingPostCompletedEvent,
-} from "@/lib/analytics/events";
+  trackPurposeModeChange,
+  trackInquirySent,
+  trackInquiryCtaClick,
+  trackListingPostCompleted,
+} from "@/lib/observability/analytics";
 
-describe("analytics events helpers", () => {
-  it("builds purpose-mode-change payload with mode mapping", () => {
-    expect(
-      buildPurposeModeChangeEvent({
-        nextPurpose: "sale",
-        previousPurpose: "rent",
-        source: "search_page_toggle",
-      }),
-    ).toEqual({
+describe("analytics track helpers", () => {
+  beforeEach(() => {
+    jest.spyOn(window, "dispatchEvent").mockImplementation(() => true);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it("dispatches purpose_mode_change with mode mapping", () => {
+    trackPurposeModeChange({
+      nextPurpose: "sale",
+      previousPurpose: "rent",
+      source: "search_page_toggle",
+    });
+    const evt = (window.dispatchEvent as jest.Mock).mock.calls[0][0] as CustomEvent;
+    expect(evt.type).toBe("ktm-telemetry");
+    expect(evt.detail).toEqual({
       event: "purpose_mode_change",
       payload: {
         purpose: "sale",
@@ -25,14 +34,14 @@ describe("analytics events helpers", () => {
     });
   });
 
-  it("builds inquiry-sent payload with listing context", () => {
-    expect(
-      buildInquirySentEvent({
-        listingId: "listing-123",
-        purpose: "sale",
-        source: "listing_detail_cta",
-      }),
-    ).toEqual({
+  it("dispatches inquiry_sent with listing context", () => {
+    trackInquirySent({
+      listingId: "listing-123",
+      purpose: "sale",
+      source: "listing_detail_cta",
+    });
+    const evt = (window.dispatchEvent as jest.Mock).mock.calls[0][0] as CustomEvent;
+    expect(evt.detail).toEqual({
       event: "inquiry_sent",
       payload: {
         listing_id: "listing-123",
@@ -43,14 +52,14 @@ describe("analytics events helpers", () => {
     });
   });
 
-  it("builds inquiry-cta-click payload with listing context", () => {
-    expect(
-      buildInquiryCtaClickEvent({
-        listingId: "listing-123",
-        purpose: "sale",
-        source: "listing_detail_cta",
-      }),
-    ).toEqual({
+  it("dispatches inquiry_cta_click with listing context", () => {
+    trackInquiryCtaClick({
+      listingId: "listing-123",
+      purpose: "sale",
+      source: "listing_detail_cta",
+    });
+    const evt = (window.dispatchEvent as jest.Mock).mock.calls[0][0] as CustomEvent;
+    expect(evt.detail).toEqual({
       event: "inquiry_cta_click",
       payload: {
         listing_id: "listing-123",
@@ -61,14 +70,14 @@ describe("analytics events helpers", () => {
     });
   });
 
-  it("builds listing-post-completed payload with purpose context", () => {
-    expect(
-      buildListingPostCompletedEvent({
-        listingId: "listing-999",
-        purpose: "rent",
-        source: "listing_form_submit",
-      }),
-    ).toEqual({
+  it("dispatches listing_post_completed with purpose context", () => {
+    trackListingPostCompleted({
+      listingId: "listing-999",
+      purpose: "rent",
+      source: "listing_form_submit",
+    });
+    const evt = (window.dispatchEvent as jest.Mock).mock.calls[0][0] as CustomEvent;
+    expect(evt.detail).toEqual({
       event: "listing_post_completed",
       payload: {
         listing_id: "listing-999",

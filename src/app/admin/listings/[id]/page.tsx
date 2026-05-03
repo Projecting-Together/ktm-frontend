@@ -3,7 +3,6 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { getListing } from "@/lib/api/client";
 import { notFound } from "next/navigation";
-import { adminApproveListing, adminRejectListing } from "@/lib/api/client";
 
 export const metadata: Metadata = { title: "Review Listing | Admin" };
 

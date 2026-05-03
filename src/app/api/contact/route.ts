@@ -18,7 +18,6 @@ export async function POST(request: Request) {
   }
 
   if (process.env.NODE_ENV === "development") {
-    // eslint-disable-next-line no-console -- intentional dev-only contact funnel trace
     console.info("[contact] submission", {
       email: parsed.data.email,
       nameLength: parsed.data.name.length,
